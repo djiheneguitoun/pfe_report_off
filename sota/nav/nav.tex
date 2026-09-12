@@ -40,77 +40,170 @@ the risk of collision~\cite{pore2026uavqr}.
 
 
 
-\subsection{Criteria Used for the Comparison}%
-\label{subsec:nav:criteria}
-
 \section{Open-Loop Methods: Classical Algorithms}%
 \label{sec:nav:classical}
+
+Classical algorithms come from robotics and operations research, and they form
+the first family in the standard taxonomy of trajectory design
+methods~\cite{krayani2023goal}. They all share one assumption: the workspace is
+known before the flight and does not change during the mission. The first four
+methods search for a path inside a graph. The last two describe the mission as an
+optimisation problem and solve it with a solver.
 
 \subsection{Dynamic Programming}%
 \label{subsec:nav:dp}
 
-\paragraph*{Definition.}
+Dynamic programming is not really a competitor of the methods that follow. It is
+the general principle behind several of them. The idea is to cut a large decision
+problem into a series of smaller steps, solve each step one after the other, and
+then build the global solution from these partial results.
 
-\paragraph*{How does it work?}
-
-\paragraph*{UAV applications.}
-
-\paragraph*{Strengths and limitations.}
+For \glspl{abb:uav}, it has been used to build a trajectory that fits inside a
+fixed mission time, and to choose in which order a drone should visit wireless
+sensor nodes to collect data~\cite{krayani2023goal}. Its cost grows quickly with
+the number of nodes, which makes it too slow for real time, and it works poorly
+on fine grids, because more accuracy means more
+computation~\cite{krayani2023goal}.
 
 \subsection{Dijkstra's Algorithm}%
 \label{subsec:nav:dijkstra}
 
-\paragraph*{Definition.}
+Dijkstra looks for the shortest path between two points in a graph. It starts
+from the departure point and explores the graph in all directions, like a circle
+that grows, until this circle reaches the goal~\cite{chang2023review}. Because it
+explores everything around the start, it always finds the shortest path.
 
-\paragraph*{How does it work?}
-
-\paragraph*{UAV applications.}
-
-\paragraph*{Strengths and limitations.}
+It has been used to bring a drone to its target in the shortest time for a given
+battery level~\cite{krayani2023goal}. Its advantages are that the result is
+guaranteed, that it is simple to implement, and that it works in any
+environment~\cite{kumar2025comprehensive}. Its drawbacks come from the same
+behaviour: it is slow, it becomes expensive on large graphs, and it only works in
+static environments~\cite{kumar2025comprehensive}.
 
 \subsection{A* Algorithm}%
 \label{subsec:nav:astar}
 
-\paragraph*{Definition.}
+A* improves Dijkstra with one simple idea. Instead of exploring in all
+directions, it also estimates how far each point still is from the goal, and it
+explores first the points that seem closer to it~\cite{chang2023review}. The
+search becomes directed instead of blind, so A* reaches the target after visiting
+far fewer points, and it returns a path that is close to the best
+one~\cite{kumar2025comprehensive}.
 
-\paragraph*{How does it work?}
-
-\paragraph*{UAV applications.}
-
-\paragraph*{Strengths and limitations.}
+This gain has a price. A* uses a lot of memory in large environments, and the
+quality of the result depends on the quality of the estimate it
+uses~\cite{kumar2025comprehensive}. The path is also not smooth, because the
+drone can only move towards a fixed set of neighbouring directions, which gives a
+route with sharp turns~\cite{chang2023review}. Finally, A* returns a list of
+waypoints, not a trajectory that the vehicle can directly
+follow~\cite{krayani2023goal}.
 
 \subsection{D* and Its Variants}%
 \label{subsec:nav:dstar}
 
-\paragraph*{Definition.}
+D* was created to remove the main weakness of the two previous methods. When the
+map changes, it does not start again from zero. It only updates the part of the
+path that is affected, and it keeps the rest~\cite{krayani2023goal}. This makes
+it much faster when new obstacles appear in a cluttered environment.
 
-\paragraph*{How does it work?}
+It also works on maps that are not grids and keeps a low computation
+time~\cite{kumar2025comprehensive}. On the other hand, it needs a good initial
+path, it can become expensive in some situations~\cite{kumar2025comprehensive},
+and it gives no guarantee on the quality of the result in a large environment
+that keeps changing~\cite{krayani2023goal}. As explained in
+\Cref{subsec:nav:closedloop-principle}, D* sits on the border of the open-loop
+family: it starts from a complete path, like the other methods here, but it
+corrects that path during the flight.
 
-\paragraph*{UAV applications.}
-
-\paragraph*{Strengths and limitations.}
+The next two methods work differently. They do not search inside a graph. They
+write the mission as an optimisation problem and let a solver find the answer.
 
 \subsection{Mixed-Integer Linear Programming}%
 \label{subsec:nav:milp}
 
-\paragraph*{Definition.}
+Linear programming looks for the minimum or the maximum of a linear function
+under a set of linear constraints. This fits path planning well, because the goal
+is often to minimise a distance, a time, or an
+energy~\cite{kumar2025comprehensive}. Mixed-integer linear programming, or
+\glsxtrshort{abb:milp}, extends this to problems that mix continuous values, such
+as a position, with discrete choices, such as visiting a point or
+not~\cite{kumar2025comprehensive}.
 
-\paragraph*{How does it work?}
-
-\paragraph*{UAV applications.}
-
-\paragraph*{Strengths and limitations.}
+For a \gls{abb:uav}, the flight is cut into time steps, and each step describes
+the state of the drone. The solver then returns a complete trajectory before the
+mission starts~\cite{krayani2023goal}. This method is designed for offline
+planning, and it has two known limits: the search has no guide, so it can get
+stuck, and it does not work well for long trajectories in complex
+environments~\cite{krayani2023goal}.
 
 \subsection{Traveling Salesman Problem and Its Profit Variant}%
 \label{subsec:nav:tsp}
 
-\paragraph*{Definition.}
+The travelling salesman problem, or \glsxtrshort{abb:tsp}, is used when the
+mission is not to reach one goal but to visit several places. The drone must pass
+through a fixed set of points, visit each one only once, and come back to its
+starting position before the battery runs out~\cite{krayani2023goal}.
 
-\paragraph*{How does it work?}
+The problem is NP-hard, which means that finding the exact best tour takes too
+much time as soon as the number of points grows. In practice, two solutions are
+used: local-search methods such as 2-OPT and 3-OPT, which improve a tour step by
+step, or evolutionary algorithms~\cite{krayani2023goal}. The \gls{abb:tspwp} is a
+version where each point also carries a reward, and the algorithm then looks for
+the best compromise between the distance travelled and the reward
+collected~\cite{krayani2023goal}. This is useful when some targets matter more
+than others. Its main limit is important for our case: the \glsxtrshort{abb:tsp}
+is offline, so if a new target appears during the flight, the whole tour must be
+recomputed from the beginning~\cite{krayani2023goal}.
 
-\paragraph*{UAV applications.}
+\subsubsection*{Comparison}
 
-\paragraph*{Strengths and limitations.}
+These six methods differ less in what they compute than in what they assume.
+\Cref{tab:nav:classical-comparison} compares them on three points: the quality of
+the result, the computational cost, and what happens when the environment
+changes.
+
+\begin{table}[!htb]
+    \centering
+    \caption{Comparison of the classical open-loop algorithms.}%
+    \label{tab:nav:classical-comparison}
+    \small
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{3.1cm}
+            >{\raggedright\arraybackslash}p{3.5cm}
+            >{\raggedright\arraybackslash}p{3.3cm}
+            >{\raggedright\arraybackslash}p{3.5cm}@{}}
+        \toprule
+        \textbf{Method} & \textbf{Solution quality} & \textbf{Computational cost}
+        & \textbf{Environment changes} \\
+        \midrule
+        Dynamic programming                            & Optimal per stage        & Grows with node count & Not real-time          \\
+        \addlinespace
+        Dijkstra                                       & Shortest path guaranteed & High, slow            & Static only            \\
+        \addlinespace
+        A*                                             & Near-optimal             & Moderate, high memory & Impractical if dynamic \\
+        \addlinespace
+        D* and variants                                & Not guaranteed           & Low to moderate       & Local replanning       \\
+        \addlinespace
+        \glsxtrshort{abb:milp}                         & Feasible trajectory      & Poor scaling          & Offline only           \\
+        \addlinespace
+        \glsxtrshort{abb:tsp} / \glsxtrshort{abb:tspwp} & Near-optimal with 2-OPT & NP-hard               & Full replan needed     \\
+        \bottomrule
+    \end{tabular}
+
+    \vspace{0.6em}
+    {\footnotesize Compiled from~\cite{kumar2025comprehensive, krayani2023goal}.}
+\end{table}
+
+\FloatBarrier
+
+Behind their differences, these methods share the same limitation. All of them
+need a description of the workspace before the flight, as a graph, a grid, or a
+list of targets with known costs. This is exactly the assumption that does not
+hold in our mission, where the layout is discovered while the drone inspects it.
+Even D*, the most flexible of the six, still starts from a complete path and only
+repairs it. The next section presents a second group of open-loop methods. They
+keep the same assumption, but they replace exact search with stochastic
+optimisation.
 
 \section{Open-Loop Methods: Biologically Inspired Algorithms}%
 \label{sec:nav:metaheuristics}
