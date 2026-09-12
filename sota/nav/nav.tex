@@ -1,1175 +1,405 @@
-\chapter{Autonomous Navigation, Decision-Making and Control for UAV-based Inventory Inspection}%
+\chapter{Chapter title}%
 \label{chap:nav}
 
 \subimport{.}{intro}
 
 % --- Chapter skeleton (sections referenced by the roadmap in intro.tex) ------
 % Fill each section below; the \label keys match the \Cref calls in intro.tex.
-\section{Path Planning, Trajectory Design and Decision-Making for UAVs}%
+\section{Section 1}%
 \label{sec:nav:planning}
 
-\subsection{Foundations}%
+\subsection{Subsection 1.1}%
 \label{subsec:nav:foundations}
 
-This subsection establishes the vocabulary, the structuring concepts, and the
-taxonomy used throughout the rest of \Cref{sec:nav:planning}.
+% Content here.
 
-\paragraph{Path planning, trajectory design, and decision-making.}
-These three terms describe related but distinct problems:
-\begin{itemize}[itemsep=0.4em]
-    \item \textbf{Path planning} produces a geometric route from a start position
-          to a goal, that is, a sequence of waypoints in space that avoids
-          obstacles. The output has no time dimension and does not specify when
-          the \gls{abb:uav} passes each point.
-    \item \textbf{Trajectory design} turns a geometric route into a
-          time-parameterized motion that the \gls{abb:uav} can execute. It assigns
-          a velocity profile and respects the dynamics of the vehicle, including
-          maximum speed, acceleration, and turn rate.
-    \item \textbf{Decision-making} operates step by step. At each instant, the
-          \gls{abb:uav} observes its environment, updates an internal estimate of
-          the world, and selects the next action. Its output is a policy that maps
-          states or beliefs to actions~\cite{sandino2020autonomous}.
-\end{itemize}
-Path planning and trajectory design are \emph{open-loop}: the solution is computed
-in advance and executed as is. Decision-making is \emph{closed-loop}: a fresh
-action is selected at every step, conditioned on the most recent observation.
+\paragraph{Rubric 1.}
+% Content here.
 
-\paragraph{Three structuring axes.}
-Three distinctions cut across the literature:
-\begin{itemize}[itemsep=0.4em]
-    \item \textbf{Point-to-point versus coverage.} Point-to-point planning targets
-          a single goal or a discrete set of goals, whereas coverage planning
-          requires that every point of a region be visited.
-    \item \textbf{Global versus local.} Global planning operates on the whole map
-          and produces a complete route, while local planning runs on board at
-          high frequency and reacts to obstacles or events that were not known in
-          advance.
-    \item \textbf{Offline versus online.} Offline planning is computed once before
-          the mission, while online planning is re-computed during the flight as
-          new observations arrive. This axis is aligned with the open-loop versus
-          closed-loop distinction.
-\end{itemize}
+\paragraph{Rubric 2.}
+% Content here.
 
-\paragraph{A taxonomy of methods.}
-Krayani et~al.~\cite{krayani2023goaldirected} classify \gls{abb:uav} trajectory
-design algorithms into three families:
-\begin{enumerate}[itemsep=0.4em]
-    \item \textbf{Classical algorithms:} deterministic search and exact
-          optimization on a known workspace.
-    \item \textbf{Biologically inspired metaheuristics:} population-based
-          stochastic search inspired by natural processes.
-    \item \textbf{Advanced learning-based methods:} policies learned from
-          interaction with the environment.
-\end{enumerate}
+\paragraph{Rubric 3.}
+% Content here.
 
-\subsection{Classical algorithms}%
+\subsection{Subsection 1.2}%
 \label{subsec:nav:classical}
 
-Classical algorithms originate in robotics and operations research, and they form
-the first of the three families identified in \Cref{subsec:nav:foundations}. They
-share one defining assumption: the workspace is fully known and either static or
-only slowly changing, which lets the planning problem be cast as deterministic
-graph search or exact optimization over that known
-structure~\cite{krayani2023goaldirected}. The remainder of this subsection reviews
-the representatives most often used in the \gls{abb:uav} literature, from dynamic
-programming to combinatorial multi-target tours.
+% Content here.
 
-% Each acronym is introduced in its subsubsection title below; unset the first-use
-% flag so the body and tables render the short forms (DP, MILP, TSP, TSPWP).
-\glsunset{abb:dp}\glsunset{abb:milp}\glsunset{abb:tsp}\glsunset{abb:tspwp}
+\subsubsection{Subsubsection 1.2.1}
 
-\subsubsection{Dynamic programming (DP)}
-
-\paragraph*{Definition.} \gls{abb:dp} is an optimization method that solves a problem
-by breaking it into a sequence of smaller subproblems whose solutions are combined to
-build the global one. Its objective is to find the globally optimal sequence of
-decisions over multiple stages.
+\paragraph*{Definition.}
+% Content here.
 
 \paragraph*{How does it work?}
-\begin{enumerate}[itemsep=0.4em]
-    \item The problem is divided into stages (typically time steps).
-    \item At each stage, all possible states and their costs are enumerated.
-    \item The optimal decision at each state is computed by reasoning backwards from
-          the final stage.
-    \item The optimal global solution is reconstructed by following the chain of
-          optimal decisions from the start.
-\end{enumerate}
+% Content here.
 
-\paragraph*{UAV applications.}
-\begin{itemize}[itemsep=0.4em]
-    \item Used to plan \gls{abb:uav} trajectories under time constraints, ensuring that
-          the drone reaches all targeted hotspots within a fixed mission
-          duration~\cite{krayani2023goaldirected}.
-    \item Applied to \gls{abb:uav}-based data collection from wireless sensor nodes,
-          where the algorithm picks the visiting order under time
-          constraints~\cite{krayani2023goaldirected}.
-\end{itemize}
+\paragraph*{Applications.}
+% Content here.
 
 \paragraph*{Strengths and limitations.}
-\begin{center}
-    \small
-    \renewcommand{\arraystretch}{1.3}
-    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.45\linewidth} >{\raggedright\arraybackslash}p{0.45\linewidth}@{}}
-        \toprule
-        \textbf{Strengths} & \textbf{Limitations} \\
-        \midrule
-        Returns the globally optimal solution by exact backward induction. & Complexity grows quickly with the number of hovering nodes, limiting real-time use~\cite{krayani2023goaldirected}. \\
-        Well suited to problems with a clear stage structure. & Does not handle fine-grained grids efficiently~\cite{krayani2023goaldirected}. \\
-        Provides a feasible, time-aware trajectory before the mission starts. & Assumes a static environment---conditions cannot change during the flight~\cite{krayani2023goaldirected}. \\
-        \bottomrule
-    \end{tabular}
-\end{center}
+% Content here.
 
-\subsubsection{Dijkstra's algorithm}
+\subsubsection{Subsubsection 1.2.2}
 
-\paragraph*{Definition.} Dijkstra is a graph-search algorithm whose objective is to
-find the shortest path between two nodes in a weighted graph with non-negative edge
-weights.
+\paragraph*{Definition.}
+% Content here.
 
 \paragraph*{How does it work?}
-\begin{enumerate}[itemsep=0.4em]
-    \item The starting node is assigned a distance of $0$; all other nodes are assigned
-          $\infty$.
-    \item The unvisited node with the smallest known distance is selected.
-    \item The distances of its neighbors are updated (relaxation) if a shorter path is
-          found through it.
-    \item The process repeats until the destination node is reached.
-\end{enumerate}
+% Content here.
 
-\paragraph*{UAV applications.}
-\begin{itemize}[itemsep=0.4em]
-    \item Computes the shortest route between two locations on a discretized workspace,
-          where nodes are candidate positions and edges carry travel costs such as
-          distance or energy consumption~\cite{krayani2023goaldirected}.
-    \item Applied to battery-aware \gls{abb:uav} missions, where the algorithm finds
-          the route that reaches the target in the shortest time given a fixed energy
-          budget~\cite{krayani2023goaldirected}.
-\end{itemize}
+\paragraph*{Applications.}
+% Content here.
 
 \paragraph*{Strengths and limitations.}
-\begin{center}
-    \small
-    \renewcommand{\arraystretch}{1.3}
-    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.45\linewidth} >{\raggedright\arraybackslash}p{0.45\linewidth}@{}}
-        \toprule
-        \textbf{Strengths} & \textbf{Limitations} \\
-        \midrule
-        Returns the globally optimal shortest path between two nodes. & Requires the graph to be fully known in advance. \\
-        Deterministic, well understood, and easy to implement. & Assumes a static environment---any change in edge cost forces a full re-execution from scratch. \\
-        Composable as a subroutine inside larger planners. & Runtime grows with the size of the graph, limiting real-time replanning on large discretizations~\cite{krayani2023goaldirected}. \\
-        & Solves only single-source shortest path---does not handle multi-target visiting or coverage. \\
-        \bottomrule
-    \end{tabular}
-\end{center}
+% Content here.
 
-\subsubsection{A* algorithm}
+\subsubsection{Subsubsection 1.2.3}
 
-\paragraph*{Definition.} A* is an informed graph-search algorithm that extends Dijkstra
-with a heuristic. Its objective is to find the shortest path to a goal while exploring
-fewer nodes than Dijkstra by guiding the search toward the goal.
+\paragraph*{Definition.}
+% Content here.
 
 \paragraph*{How does it work?}
-\begin{enumerate}[itemsep=0.4em]
-    \item For each node $v$, define $g(v)$, the known cost from the start to $v$, and
-          $h(v)$, a heuristic estimate of the remaining cost to the goal.
-    \item The priority of node $v$ is $f(v) = g(v) + h(v)$.
-    \item The node with the smallest $f(v)$ is selected for expansion.
-    \item The values $g$ and $f$ of its neighbors are updated.
-    \item The process repeats until the goal is selected.
-\end{enumerate}
+% Content here.
 
-\paragraph*{UAV applications.}
-\begin{itemize}[itemsep=0.4em]
-    \item Used to identify suitable node pairs and compute the shortest path between
-          them in a known static environment, ensuring that the path follows the
-          shortest direction toward the target~\cite{krayani2023goaldirected}.
-    \item Applied as a fast point-to-point subroutine inside larger \gls{abb:uav}
-          mission planners.
-\end{itemize}
+\paragraph*{Applications.}
+% Content here.
 
 \paragraph*{Strengths and limitations.}
-\begin{center}
-    \small
-    \renewcommand{\arraystretch}{1.3}
-    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.45\linewidth} >{\raggedright\arraybackslash}p{0.45\linewidth}@{}}
-        \toprule
-        \textbf{Strengths} & \textbf{Limitations} \\
-        \midrule
-        Optimal under an admissible heuristic, while exploring fewer nodes than Dijkstra. & Assumes a static environment---impractical when conditions change during the flight~\cite{krayani2023goaldirected}. \\
-        Fast in practice on large grids, given a well-designed heuristic. & Performance depends heavily on the quality of the heuristic. \\
-        Easy to integrate as a point-to-point subroutine. & Does not produce a continuous trajectory; outputs a sequence of waypoints~\cite{krayani2023goaldirected}. \\
-        \bottomrule
-    \end{tabular}
-\end{center}
+% Content here.
 
-\subsubsection{D* and its variants}
+\subsubsection{Subsubsection 1.2.4}
 
-\paragraph*{Definition.} D* and its variants---D*, Focused D*, and D* Lite---form a
-family of replanning graph-search algorithms that extend A* to dynamic environments.
-Their objective is to update an existing path locally when the cost map changes,
-instead of replanning everything from scratch.
+\paragraph*{Definition.}
+% Content here.
 
 \paragraph*{How does it work?}
-\begin{enumerate}[itemsep=0.4em]
-    \item An initial path is computed with A* on the known cost map.
-    \item The \gls{abb:uav} starts executing the path.
-    \item When a cost change is detected (a new obstacle, an edge becoming
-          impassable), only the affected nodes have their cost updated.
-    \item The change is propagated locally to repair the existing path.
-    \item The \gls{abb:uav} resumes execution on the patched path.
-\end{enumerate}
+% Content here.
 
-\paragraph*{UAV applications.}
-\begin{itemize}[itemsep=0.4em]
-    \item Used as an efficient replanning tool in cluttered \gls{abb:uav} environments,
-          where new obstacles or cost changes appear during the
-          mission~\cite{krayani2023goaldirected}.
-    \item Allows the \gls{abb:uav} to reuse a previously computed path rather than
-          recomputing it entirely after each update~\cite{krayani2023goaldirected}.
-\end{itemize}
+\paragraph*{Applications.}
+% Content here.
 
 \paragraph*{Strengths and limitations.}
-\begin{center}
-    \small
-    \renewcommand{\arraystretch}{1.3}
-    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.45\linewidth} >{\raggedright\arraybackslash}p{0.45\linewidth}@{}}
-        \toprule
-        \textbf{Strengths} & \textbf{Limitations} \\
-        \midrule
-        Handles dynamic cost maps without restarting from scratch. & The quality of the solution is no longer guaranteed in very large or highly dynamic environments~\cite{krayani2023goaldirected}. \\
-        Much faster than re-running A* after each update. & Still assumes the map is observable and updates are reliable. \\
-        Reuses previously computed information. & Remains a point-to-point planner---no coverage, no multi-target. \\
-        \bottomrule
-    \end{tabular}
-\end{center}
+% Content here.
 
-\subsubsection{Mixed-integer linear programming (MILP)}
+\subsubsection{Subsubsection 1.2.5}
 
-\paragraph*{Definition.} \gls{abb:milp} is an optimization framework that mixes
-continuous variables (positions, velocities) and integer variables (typically binary,
-for discrete decisions). Its objective is to find the globally optimal trajectory under
-linear constraints by solving a branch-and-bound problem.
+\paragraph*{Definition.}
+% Content here.
 
 \paragraph*{How does it work?}
-\begin{enumerate}[itemsep=0.4em]
-    \item The \gls{abb:uav} trajectory is discretized into time steps.
-    \item Continuous variables encode the \gls{abb:uav} state at each step (position,
-          velocity).
-    \item Binary variables encode discrete choices (which side of an obstacle, which
-          waypoint to activate).
-    \item The objective function and the constraints (dynamics, obstacles, time) are
-          written linearly.
-    \item A branch-and-bound solver returns the globally optimal trajectory.
-\end{enumerate}
+% Content here.
 
-\paragraph*{UAV applications.}
-\begin{itemize}[itemsep=0.4em]
-    \item Used to plan \gls{abb:uav} trajectories in discrete time steps, where each
-          step represents the dynamic state of the \gls{abb:uav} in the
-          environment~\cite{krayani2023goaldirected}.
-    \item Designed for offline planning, producing a feasible trajectory before the
-          \gls{abb:uav} starts executing its task~\cite{krayani2023goaldirected}.
-\end{itemize}
+\paragraph*{Applications.}
+% Content here.
 
 \paragraph*{Strengths and limitations.}
-\begin{center}
-    \small
-    \renewcommand{\arraystretch}{1.3}
-    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.45\linewidth} >{\raggedright\arraybackslash}p{0.45\linewidth}@{}}
-        \toprule
-        \textbf{Strengths} & \textbf{Limitations} \\
-        \midrule
-        Returns the globally optimal trajectory under linear constraints. & Tends to get stuck because of its blind, exhaustive nature~\cite{krayani2023goaldirected}. \\
-        Naturally encodes integer choices (waypoint, obstacle side). & Cannot generate long trajectories in complex environments without severe scaling issues~\cite{krayani2023goaldirected}. \\
-        Explicit, interpretable optimization formulation. & Offline by design---no online adaptation during the mission. \\
-        \bottomrule
-    \end{tabular}
-\end{center}
+% Content here.
 
-\subsubsection{Traveling salesman problem (TSP) and its profit variant (TSPWP)}
+\subsubsection{Subsubsection 1.2.6}
 
-\paragraph*{Definition.} The \gls{abb:tsp} is a combinatorial routing problem whose
-objective is to find the shortest tour that visits each location exactly once and
-returns to the starting point. The profit-augmented variant, the \gls{abb:tspwp}, adds
-a reward at each location, and the objective balances minimizing travel cost and
-maximizing collected reward.
+\paragraph*{Definition.}
+% Content here.
 
 \paragraph*{How does it work?}
-\begin{enumerate}[itemsep=0.4em]
-    \item The set of locations to visit and the pairwise travel costs $c_{ij}$ are
-          defined.
-    \item For the \gls{abb:tspwp} only, a reward $r_j$ is associated with each
-          location.
-    \item An initial tour is built (e.g., random permutation or nearest-neighbor
-          heuristic).
-    \item A local-search heuristic (2-opt, 3-opt) iteratively improves the tour by
-          swapping small portions of the route.
-    \item The process stops when no further improvement is found.
+% --- Example: numbered steps followed by a displayed, labelled equation -----
+\begin{enumerate}
+    \item Step.
+    \item Step.
+    \item Step.
 \end{enumerate}
-The \gls{abb:tspwp} objective combines the two terms:
 \begin{equation}
-    \min \quad \alpha \sum_{(v_i, v_j) \in E} c_{ij}\, x_{ij}
-    \;-\; \beta \sum_{v_j \in V} r_j\, y_j ,
+    % Formula here.
     \label{eq:nav:tspwp}
 \end{equation}
-where $x_{ij} \in \{0,1\}$ indicates whether edge $(v_i, v_j)$ is in the tour,
-$y_j \in \{0,1\}$ indicates whether location $j$ is visited, and $\alpha + \beta = 1$
-trades off cost against reward~\cite{krayani2023goaldirected}.
+% Content here.
 
-\paragraph*{UAV applications.}
-\begin{itemize}[itemsep=0.4em]
-    \item Used to plan \gls{abb:uav} trajectories when the mission consists of visiting
-          a fixed set of locations within a battery-limited time
-          window~\cite{krayani2023goaldirected}.
-    \item The \gls{abb:tspwp} has been applied to \gls{abb:uav}-assisted wireless
-          networks, where the \gls{abb:uav} chooses which hotspots to serve, balancing
-          travel cost against the data-rate reward of each
-          hotspot~\cite{krayani2023goaldirected}.
-\end{itemize}
+\paragraph*{Applications.}
+% Content here.
 
 \paragraph*{Strengths and limitations.}
-\begin{center}
-    \small
-    \renewcommand{\arraystretch}{1.3}
-    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.45\linewidth} >{\raggedright\arraybackslash}p{0.45\linewidth}@{}}
-        \toprule
-        \textbf{Strengths} & \textbf{Limitations} \\
-        \midrule
-        Direct formulation of multi-target missions (visit each location once, return to base). & NP-hard---exact solutions intractable for realistic instance sizes~\cite{krayani2023goaldirected}. \\
-        The \gls{abb:tspwp} captures non-uniform priorities through the reward term. & Offline by design---a new target forces a full replan from the start~\cite{krayani2023goaldirected}. \\
-        Near-optimal solutions reachable in reasonable time with 2-opt\,/\,3-opt. & Does not handle vehicle dynamics or partial observability. \\
-        \bottomrule
-    \end{tabular}
-\end{center}
+% Content here.
 
-\subsection{Biologically inspired metaheuristics}%
+\subsection{Subsection 1.3}%
 \label{subsec:nav:metaheuristics}
 
-When the planning problem is non-convex, NP-hard, or simply too large for the exact
-methods of \Cref{subsec:nav:classical}, the literature turns to biologically
-inspired metaheuristics---the second family identified in
-\Cref{subsec:nav:foundations}. These algorithms replace exact optimization with
-population-based stochastic search inspired by natural processes, trading the
-guarantee of global optimality for the ability to explore very large and irregular
-search spaces. The three most common in \gls{abb:uav} path planning are the genetic
-algorithm, particle swarm optimization, and ant colony
-optimization~\cite{krayani2023goaldirected}.
+% Content here.
 
-% Each acronym is introduced in its subsubsection title below; unset the first-use
-% flag so the body and tables render the short forms (GA, PSO, ACO).
-\glsunset{abb:ga}\glsunset{abb:pso}\glsunset{abb:aco}
+\subsubsection{Subsubsection 1.3.1}
 
-\subsubsection{Genetic algorithm (GA)}
-
-\paragraph*{Definition.} \gls{abb:ga} is a population-based optimization method
-inspired by natural selection. Its objective is to find a near-optimal solution by
-evolving a population of candidate solutions through selection, crossover, and mutation
-across multiple generations.
+\paragraph*{Definition.}
+% Content here.
 
 \paragraph*{How does it work?}
-\begin{enumerate}[itemsep=0.4em]
-    \item An initial population of candidate solutions (chromosomes) is generated,
-          often randomly.
-    \item Each candidate is evaluated using a fitness function derived from the cost.
-    \item Parents are selected with probability proportional to their fitness.
-    \item Crossover combines pairs of parents to produce offspring that mix their
-          characteristics.
-    \item Mutation randomly perturbs some offspring to maintain diversity.
-    \item The new offspring replace the worst members of the population.
-    \item The process repeats over multiple generations until convergence.
-\end{enumerate}
+% Content here.
 
-\paragraph*{UAV applications.}
-\begin{itemize}[itemsep=0.4em]
-    \item Used to obtain near-optimal \gls{abb:uav} paths in target-coverage problems
-          and combinatorial routing tasks such as \gls{abb:tsp}-style trajectory
-          design~\cite{krayani2023goaldirected}.
-    \item Frequently combined with other metaheuristics (e.g., \gls{abb:pso}) to
-          balance global search and local refinement~\cite{krayani2023goaldirected}.
-\end{itemize}
+\paragraph*{Applications.}
+% Content here.
 
 \paragraph*{Strengths and limitations.}
-\begin{center}
-    \small
-    \renewcommand{\arraystretch}{1.3}
-    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.45\linewidth} >{\raggedright\arraybackslash}p{0.45\linewidth}@{}}
-        \toprule
-        \textbf{Strengths} & \textbf{Limitations} \\
-        \midrule
-        Explores large, non-convex solution spaces well. & Convergence is relatively slow, which limits time-critical \gls{abb:uav} missions~\cite{krayani2023goaldirected}. \\
-        Works on non-differentiable, non-linear cost functions. & No guarantee of optimality. \\
-        Easy to adapt to different mission types by changing the fitness function. & Whenever the mission changes, the search must restart from scratch. \\
-        Naturally parallelizable across the population. & Tuning operators (crossover rate, mutation rate, population size) is non-trivial. \\
-        \bottomrule
-    \end{tabular}
-\end{center}
+% Content here.
 
-\subsubsection{Particle swarm optimization (PSO)}
+\subsubsection{Subsubsection 1.3.2}
 
-\paragraph*{Definition.} \gls{abb:pso} is a population-based optimization method
-inspired by the social behavior of bird flocks and fish schools. Its objective is to
-find a near-optimal solution by having a swarm of particles move through the solution
-space under the joint influence of their own best and the swarm's best.
+\paragraph*{Definition.}
+% Content here.
 
 \paragraph*{How does it work?}
-\begin{enumerate}[itemsep=0.4em]
-    \item A swarm of particles is initialized with random positions and velocities in
-          the solution space.
-    \item Each particle's position represents a candidate solution and is evaluated
-          using the cost function.
-    \item Each particle remembers its personal best position $p_i$.
-    \item The swarm shares the global best position $g$ found so far.
-    \item At each iteration, every particle updates its velocity using:
-\end{enumerate}
 \begin{equation}
-    v_i^{t+1} = \omega\, v_i^{t} + c_1 r_1 \bigl(p_i - x_i^{t}\bigr)
-    + c_2 r_2 \bigl(g - x_i^{t}\bigr),
+    % Formula here.
     \label{eq:nav:pso}
 \end{equation}
-then updates its position as $x_i^{t+1} = x_i^{t} + v_i^{t+1}$, where $\omega$ is an
-inertia weight, $c_1$ and $c_2$ are cognitive and social coefficients, and
-$r_1, r_2 \sim \mathcal{U}(0,1)$. The process repeats until convergence to the global
-best.
+% Content here.
 
-\paragraph*{UAV applications.}
-\begin{itemize}[itemsep=0.4em]
-    \item Used for local optimization of \gls{abb:uav} trajectories, where fast
-          convergence around a known region is needed~\cite{krayani2023goaldirected}.
-    \item Frequently combined with \gls{abb:ga}, with \gls{abb:ga} driving the global
-          search and \gls{abb:pso} refining locally~\cite{krayani2023goaldirected}.
-    \item Variants such as spherical-vector \gls{abb:pso} have been applied to
-          safety-enhanced \gls{abb:uav} path planning.
-\end{itemize}
+\paragraph*{Applications.}
+% Content here.
 
 \paragraph*{Strengths and limitations.}
-\begin{center}
-    \small
-    \renewcommand{\arraystretch}{1.3}
-    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.45\linewidth} >{\raggedright\arraybackslash}p{0.45\linewidth}@{}}
-        \toprule
-        \textbf{Strengths} & \textbf{Limitations} \\
-        \midrule
-        Faster convergence than \gls{abb:ga} for local refinement~\cite{krayani2023goaldirected}. & Can get trapped in local optima, especially in highly multimodal landscapes. \\
-        Few parameters to tune compared to \gls{abb:ga}. & No guarantee of optimality. \\
-        Naturally parallelizable across the swarm. & Like all metaheuristics, must be re-run when the mission changes. \\
-        Easy to combine with other metaheuristics (hybrid \gls{abb:ga}--\gls{abb:pso}). & Performance depends on careful tuning of inertia and acceleration coefficients. \\
-        \bottomrule
-    \end{tabular}
-\end{center}
+% Content here.
 
-\subsubsection{Ant colony optimization (ACO)}
+\subsubsection{Subsubsection 1.3.3}
 
-\paragraph*{Definition.} \gls{abb:aco} is a population-based optimization method
-inspired by how real ants find the shortest path between a nest and a food source
-through pheromone trails. Its objective is to find near-optimal solutions to
-combinatorial routing problems by indirect communication between artificial ants via a
-shared pheromone matrix.
+\paragraph*{Definition.}
+% Content here.
 
 \paragraph*{How does it work?}
-\begin{enumerate}[itemsep=0.4em]
-    \item A colony of artificial ants is placed at the starting node.
-    \item Each ant builds a candidate solution (a path) by choosing the next node
-          probabilistically, biased toward edges with stronger pheromone and shorter
-          distance.
-    \item Once all ants have built their solutions, the pheromone on each edge is
-          updated: it evaporates partially, and ants reinforce the edges they used in
-          their tour.
-    \item Better solutions deposit more pheromone, which makes them more attractive in
-          the next iteration.
-    \item The process repeats until convergence to a high-quality tour.
-\end{enumerate}
-The pheromone update on edge $(i,j)$ is:
 \begin{equation}
-    \tau_{ij}^{t+1} = (1 - \rho)\, \tau_{ij}^{t}
-    + \sum_{k=1}^{m} \Delta\tau_{ij}^{k},
+    % Formula here.
     \label{eq:nav:aco}
 \end{equation}
-where $\rho \in (0,1)$ is the evaporation rate, $m$ is the number of ants, and
-$\Delta\tau_{ij}^{k}$ is the pheromone deposited by ant $k$ on edge $(i,j)$.
+% Content here.
 
-\paragraph*{UAV applications.}
-\begin{itemize}[itemsep=0.4em]
-    \item Used to solve \gls{abb:uav} path-planning problems formulated as
-          combinatorial routing tasks (\gls{abb:tsp}-like)~\cite{krayani2023goaldirected}.
-    \item Applied to coverage path planning on grid-discretized areas, including a
-          chaotic \gls{abb:aco} variant for cooperative coverage with multiple
-          \glspl{abb:uav}.
-    \item Naturally adapted to multi-agent settings, since the pheromone trail provides
-          indirect communication between drones.
-\end{itemize}
+\paragraph*{Applications.}
+% Content here.
 
 \paragraph*{Strengths and limitations.}
-\begin{center}
-    \small
-    \renewcommand{\arraystretch}{1.3}
-    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.45\linewidth} >{\raggedright\arraybackslash}p{0.45\linewidth}@{}}
-        \toprule
-        \textbf{Strengths} & \textbf{Limitations} \\
-        \midrule
-        Finds good solutions for combinatorial routing problems. & Requires a large number of iterations to converge---slow~\cite{krayani2023goaldirected}. \\
-        Naturally suited to multi-agent (multi-\gls{abb:uav}) coordination through shared pheromones. & High simulation time and computational cost~\cite{krayani2023goaldirected}. \\
-        Adaptive---the pheromone trail can reinforce successful behaviors over time. & Performance sensitive to the evaporation rate and the pheromone\,/\,heuristic balance. \\
-        Robust to local changes through pheromone dynamics. & Like other metaheuristics, no optimality guarantee. \\
-        \bottomrule
-    \end{tabular}
-\end{center}
+% Content here.
 
-\subsection{Advanced learning-based methods}%
+\subsection{Subsection 1.4}%
 \label{subsec:nav:learning}
 
-Advanced learning-based methods form the third and last family identified in
-\Cref{subsec:nav:foundations}. They replace explicit optimization with a policy
-learned from interactions with the environment. The dominant paradigm is
-\gls{abb:rl}, which casts the problem as a \gls{abb:mdp} or its partially observable
-variant, the \gls{abb:pomdp}, and solves it through value-based, policy-based, or
-actor-critic algorithms. This subsection first introduces the \gls{abb:mdp} and
-\gls{abb:pomdp} formal foundations, then reviews the main \gls{abb:rl} families used
-in \gls{abb:uav} path planning and decision-making.
+% Content here.
 
-% Each acronym is introduced in its subsubsection title below; unset the first-use
-% flag so the body and tables render the short forms (DQN, MARL, HRL).
-\glsunset{abb:dqn}\glsunset{abb:marl}\glsunset{abb:hrl}
+\subsubsection{Subsubsection 1.4.1}
 
-\subsubsection{Markov decision process (MDP)}
+\paragraph*{Definition.}
+% Content here.
 
-\paragraph*{Definition.} The \gls{abb:mdp} is the mathematical framework for sequential
-decision-making under uncertainty. Its objective is to find a policy that maximizes
-the expected cumulative reward over time, assuming full observability of the state.
-
-\paragraph*{Formal definition.} An \gls{abb:mdp} is a tuple
-$\mathcal{M} = (\mathcal{S}, \mathcal{A}, P, R, \gamma)$, where:
-\begin{itemize}[itemsep=0.4em]
-    \item $\mathcal{S}$ is the state space;
-    \item $\mathcal{A}$ is the action space;
-    \item $P(s' \mid s, a)$ is the state transition probability;
-    \item $R(s, a)$ is the reward function;
-    \item $\gamma \in [0, 1)$ is the discount factor.
-\end{itemize}
-A policy $\pi(a \mid s)$ maps states to action distributions. The objective is to
-maximize the expected discounted return:
+\paragraph*{Formal definition.}
 \begin{equation}
-    J(\pi) = \mathbb{E}_\pi\!\left[\sum_{t=0}^{\infty} \gamma^t\, R(s_t, a_t)\right].
+    % Formula here.
     \label{eq:nav:mdp-return}
 \end{equation}
+% Content here.
 
 \paragraph*{How does it work?}
-\begin{enumerate}[itemsep=0.4em]
-    \item At each time step, the agent observes the current state $s_t$.
-    \item It selects an action $a_t$ according to its policy $\pi$.
-    \item The environment transitions to a new state $s_{t+1}$ following
-          $P(s' \mid s, a)$.
-    \item The agent receives a reward $r_t = R(s_t, a_t)$.
-    \item The policy is updated to maximize the long-term return.
-\end{enumerate}
+% Content here.
 
-\subsubsection{Partially observable MDP (POMDP)}
+\subsubsection{Subsubsection 1.4.2}
 
-\paragraph*{Definition.} The \gls{abb:pomdp} extends the \gls{abb:mdp} to environments
-where the agent cannot directly observe the state. Its objective is to find a policy
-that maximizes the expected cumulative reward based on a belief over states, rather
-than the state itself.
+\paragraph*{Definition.}
+% Content here.
 
-\paragraph*{Formal definition.} A \gls{abb:pomdp} is a tuple
-$\mathcal{M} = (\mathcal{S}, \mathcal{A}, P, R, \Omega, O, \gamma)$, where the
-additional elements are:
-\begin{itemize}[itemsep=0.4em]
-    \item $\Omega$ is the observation space;
-    \item $O(o \mid s', a)$ is the observation probability.
-\end{itemize}
-The agent maintains a belief state $b_t$, which is a probability distribution over
-$\mathcal{S}$, updated through Bayesian inference at each step.
+\paragraph*{Formal definition.}
+% Content here.
 
 \paragraph*{How does it work?}
-\begin{enumerate}[itemsep=0.4em]
-    \item At each time step, the agent receives a partial observation $o_t$, not the
-          true state.
-    \item It updates its belief $b_t$ over possible states using Bayes' rule.
-    \item It selects an action $a_t$ based on the belief $b_t$.
-    \item The environment transitions; a new observation $o_{t+1}$ is received.
-    \item The belief is updated again, and the cycle continues.
-\end{enumerate}
+% Content here.
 
-\paragraph*{UAV applications.}
-\begin{itemize}[itemsep=0.4em]
-    \item Used in \gls{abb:uav} navigation for active perception of targets in
-          uncertain and cluttered environments, where sensor noise and occlusion make
-          direct state observation impossible~\cite{sandino2020autonomous}.
-    \item Solved online with samplers such as \gls{abb:pomcp} or the
-          \gls{abb:abt}~\cite{sandino2020autonomous}.
-\end{itemize}
+\paragraph*{Applications.}
+% Content here.
 
-\subsubsection{Q-learning}
+\subsubsection{Subsubsection 1.4.3}
 
-\paragraph*{Definition.} Q-learning is a model-free, off-policy \gls{abb:rl} algorithm
-whose objective is to learn the action-value function $Q^\pi(s, a)$, i.e., the
-expected return of taking action $a$ in state $s$ and following $\pi$ thereafter.
+\paragraph*{Definition.}
+% Content here.
 
 \paragraph*{How does it work?}
-\begin{enumerate}[itemsep=0.4em]
-    \item The Q-values $Q(s, a)$ are initialized arbitrarily for all state-action
-          pairs.
-    \item At each step, the agent observes state $s_t$, selects an action $a_t$ (e.g.,
-          $\varepsilon$-greedy on $Q$), and receives reward $r_t$ and next state
-          $s_{t+1}$.
-    \item The Q-value is updated using the Bellman equation:
-\end{enumerate}
 \begin{equation}
-    Q(s_t, a_t) \leftarrow Q(s_t, a_t) + \alpha \Bigl[\, r_t
-    + \gamma \max_{a'} Q(s_{t+1}, a') - Q(s_t, a_t) \,\Bigr].
+    % Formula here.
     \label{eq:nav:qlearning}
 \end{equation}
-The process repeats until convergence, and the optimal policy is recovered as
-$\pi^*(s) = \arg\max_a Q^*(s, a)$.
+% Content here.
 
-\paragraph*{UAV applications.}
-\begin{itemize}[itemsep=0.4em]
-    \item Used for \gls{abb:uav} trajectory design to maximize sum-rate, \gls{abb:qoe},
-          or user-coverage fairness in wireless
-          networks~\cite{krayani2023goaldirected}.
-    \item Multi-agent Q-learning has been applied to coordinate several \glspl{abb:uav}
-          in user-mobility prediction tasks~\cite{krayani2023goaldirected}.
-\end{itemize}
+\paragraph*{Applications.}
+% Content here.
 
 \paragraph*{Strengths and limitations.}
-\begin{center}
-    \small
-    \renewcommand{\arraystretch}{1.3}
-    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.45\linewidth} >{\raggedright\arraybackslash}p{0.45\linewidth}@{}}
-        \toprule
-        \textbf{Strengths} & \textbf{Limitations} \\
-        \midrule
-        Model-free---no need to know the environment dynamics. & Suffers from the curse of dimensionality: table size grows exponentially with state variables~\cite{krayani2023goaldirected}. \\
-        Converges to the optimal Q-function under mild conditions. & Cannot handle continuous state or action spaces directly. \\
-        Easy to implement and well understood. & Tied to a specific environment---generalizes poorly to unseen scenarios~\cite{krayani2023goaldirected}. \\
-        \bottomrule
-    \end{tabular}
-\end{center}
+% Content here.
 
-\subsubsection{Deep Q-network (DQN) and its variants}
+\subsubsection{Subsubsection 1.4.4}
 
-\paragraph*{Definition.} The \gls{abb:dqn} extends Q-learning by replacing the Q-table
-with a neural network $Q(s, a; \theta)$. Its objective is to scale Q-learning to
-high-dimensional state spaces (e.g., raw sensor data).
+\paragraph*{Definition.}
+% Content here.
 
 \paragraph*{How does it work?}
-\begin{enumerate}[itemsep=0.4em]
-    \item The Q-function is parameterized by a neural network with weights $\theta$.
-    \item The agent interacts with the environment and stores transitions
-          $(s_t, a_t, r_t, s_{t+1})$ in a replay buffer.
-    \item Minibatches are sampled from the buffer to break temporal correlations.
-    \item A target network with frozen weights $\theta^-$ is used to compute stable
-          targets.
-    \item The network is trained to minimize the loss:
-\end{enumerate}
 \begin{equation}
-    L(\theta) = \mathbb{E}\!\left[\bigl(r + \gamma \max_{a'} Q(s', a'; \theta^-)
-    - Q(s, a; \theta)\bigr)^2\right].
+    % Formula here.
     \label{eq:nav:dqn}
 \end{equation}
-The target network is periodically updated to track $\theta$.
+% Content here.
 
-\paragraph*{Variants.} Double DQN reduces overestimation bias by decoupling action
-selection from value estimation; Dueling DQN separates state value and action
-advantage in the network architecture.
+\paragraph*{Variants.}
+% Content here.
 
-\paragraph*{UAV applications.}
-\begin{itemize}[itemsep=0.4em]
-    \item Used to provide \gls{abb:uav} network service to ground users in rapidly
-          changing environments~\cite{krayani2023goaldirected}.
-    \item Applied to spectrum sharing and dynamic resource allocation for
-          \gls{abb:uav} swarms~\cite{ding2024external}.
-\end{itemize}
+\paragraph*{Applications.}
+% Content here.
 
 \paragraph*{Strengths and limitations.}
-\begin{center}
-    \small
-    \renewcommand{\arraystretch}{1.3}
-    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.45\linewidth} >{\raggedright\arraybackslash}p{0.45\linewidth}@{}}
-        \toprule
-        \textbf{Strengths} & \textbf{Limitations} \\
-        \midrule
-        Handles high-dimensional discrete action spaces. & Training requires a large number of samples. \\
-        Replay buffer and target network stabilize training. & Restricted to discrete actions only. \\
-        Once trained, inference is fast. & Online learning is sensitive to the strong correlation between successive samples~\cite{ding2024external}. \\
-        & Generalizes poorly to environments not seen during training~\cite{arshid2026active}. \\
-        \bottomrule
-    \end{tabular}
-\end{center}
+% Content here.
 
-\subsubsection{Policy-gradient methods: PPO, DDPG, and actor-critic}
+\subsubsection{Subsubsection 1.4.5}
 
-\paragraph*{Definition.} Policy-gradient methods form a family of \gls{abb:rl}
-algorithms that directly optimize a parameterized policy $\pi_\theta(a \mid s)$ instead
-of learning a value function. Their objective is to handle continuous action spaces
-(\gls{abb:uav} velocity, heading) and obtain smoother policies.
+\paragraph*{Definition.}
+% Content here.
 
 \paragraph*{How does it work?}
-\begin{enumerate}[itemsep=0.4em]
-    \item A policy $\pi_\theta$ is parameterized by a neural network (the actor).
-    \item A value function $V_\phi$ or $Q_\phi$ is parameterized by another network
-          (the critic).
-    \item The agent collects trajectories by executing $\pi_\theta$.
-    \item The critic estimates the advantage $\hat{A}_t = R_t - V_\phi(s_t)$.
-    \item The actor is updated to increase the probability of actions with positive
-          advantage.
-    \item The critic is updated to better predict the return.
-\end{enumerate}
+% Content here.
 
-\paragraph*{Main variants used in the UAV literature.}
+\paragraph*{Main variants.}
+% --- Example: bullet list embedding a displayed, labelled equation ----------
 \begin{itemize}[itemsep=0.4em]
-    \item \gls{abb:ppo} uses a clipped objective to prevent destructive policy updates:
+    \item Item text.
           \begin{equation}
-              L^{\text{CLIP}}(\theta) = \mathbb{E}_t\!\left[\min\bigl(r_t(\theta)\,
-              \hat{A}_t, \; \mathrm{clip}(r_t(\theta), 1 - \epsilon, 1 + \epsilon)\,
-              \hat{A}_t\bigr)\right],
+              % Formula here.
               \label{eq:nav:ppo}
           \end{equation}
-          where $r_t(\theta) = \pi_\theta(a_t \mid s_t) / \pi_{\theta_{\text{old}}}(a_t \mid s_t)$.
-    \item \gls{abb:ddpg} learns a deterministic policy $\mu_\theta(s)$ in an
-          actor-critic architecture with target networks and experience replay; suited
-          to continuous control such as \gls{abb:uav} trajectory
-          optimization~\cite{ding2024external}.
-    \item \gls{abb:td3} improves \gls{abb:ddpg} stability through twin critics and
-          delayed policy updates.
+          Item text.
+    \item Item text.
+    \item Item text.
 \end{itemize}
 
-\paragraph*{UAV applications.}
-\begin{itemize}[itemsep=0.4em]
-    \item \gls{abb:ddpg} used for \gls{abb:uav} trajectory optimization in dynamic
-          spectrum sharing networks, with offline experience replay improving data
-          efficiency~\cite{ding2024external}.
-    \item \gls{abb:ppo} applied to \gls{abb:uav} trajectory optimization for spectrum
-          cartography~\cite{krayani2023goaldirected}.
-    \item Actor-critic combined with attention mechanisms for resource allocation in
-          multi-\gls{abb:uav} vehicular networks.
-\end{itemize}
+\paragraph*{Applications.}
+% Content here.
 
 \paragraph*{Strengths and limitations.}
-\begin{center}
-    \small
-    \renewcommand{\arraystretch}{1.3}
-    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.45\linewidth} >{\raggedright\arraybackslash}p{0.45\linewidth}@{}}
-        \toprule
-        \textbf{Strengths} & \textbf{Limitations} \\
-        \midrule
-        Naturally handles continuous action spaces. & Very high training cost, often hundreds of thousands of episodes~\cite{ding2024external}. \\
-        Smoother and more stable than \gls{abb:dqn} in continuous control. & Online learning is data-inefficient and tends to fall into suboptimal solutions when the environment varies~\cite{ding2024external}. \\
-        \gls{abb:ppo} is robust to hyperparameter choices. & Sensitive to reward shaping; poor reward design leads to poor policies. \\
-        \gls{abb:ddpg} and \gls{abb:td3} are well suited to \gls{abb:uav} trajectory optimization~\cite{ding2024external}. & Generalization to unseen environments is limited; retraining often required~\cite{arshid2026active}. \\
-        \bottomrule
-    \end{tabular}
-\end{center}
+% Content here.
 
-\subsubsection{Multi-agent reinforcement learning (MARL)}
+\subsubsection{Subsubsection 1.4.6}
 
-\paragraph*{Definition.} \gls{abb:marl} extends \gls{abb:rl} to systems with multiple
-interacting agents. Its objective is to learn coordinated policies for several
-\glspl{abb:uav} operating in the same environment.
+\paragraph*{Definition.}
+% Content here.
 
 \paragraph*{How does it work?}
-\begin{enumerate}[itemsep=0.4em]
-    \item Each \gls{abb:uav} is modeled as an agent with its own observation and action
-          space.
-    \item Agents can be centralized (a single controller with full information) or
-          decentralized (each agent acts on its local view).
-    \item A common paradigm is \gls{abb:ctde}: training uses global information, but at
-          execution each agent acts on its local observations only.
-    \item Algorithms include \gls{abb:ma2c}, \gls{abb:maddpg}, and hybrid frameworks
-          such as MA2C-DDPG for mixed discrete-continuous
-          decisions~\cite{ding2024external}.
-\end{enumerate}
+% Content here.
 
-\paragraph*{UAV applications.}
-\begin{itemize}[itemsep=0.4em]
-    \item Used to optimize spectrum allocation and \gls{abb:uav} trajectory jointly in
-          anti-jamming networks, with \gls{abb:ma2c} handling discrete spectrum
-          decisions and \gls{abb:ddpg} handling continuous trajectory
-          updates~\cite{ding2024external}.
-    \item Applied to dynamic resource allocation in multi-\gls{abb:uav} vehicular
-          networks.
-\end{itemize}
+\paragraph*{Applications.}
+% Content here.
 
 \paragraph*{Strengths and limitations.}
-\begin{center}
-    \small
-    \renewcommand{\arraystretch}{1.3}
-    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.45\linewidth} >{\raggedright\arraybackslash}p{0.45\linewidth}@{}}
-        \toprule
-        \textbf{Strengths} & \textbf{Limitations} \\
-        \midrule
-        Captures interactions and cooperation between multiple \glspl{abb:uav}. & Non-stationary environment from each agent's viewpoint (other agents change too). \\
-        \gls{abb:ctde} provides a practical balance between coordination and on-board execution~\cite{ding2024external}. & Training scales poorly with the number of agents. \\
-        Naturally fits multi-\gls{abb:uav} mission scenarios. & Strong coupling between agents complicates credit assignment. \\
-        \bottomrule
-    \end{tabular}
-\end{center}
+% Content here.
 
-\subsubsection{Hierarchical reinforcement learning (HRL)}
+\subsubsection{Subsubsection 1.4.7}
 
-\paragraph*{Definition.} \gls{abb:hrl} is an \gls{abb:rl} framework that decomposes a
-complex task into a hierarchy of sub-tasks, each governed by its own policy. Its
-objective is to handle long-horizon \gls{abb:uav} missions by separating high-level
-decisions (which sub-task to execute) from low-level ones (how to execute it).
+\paragraph*{Definition.}
+% Content here.
 
 \paragraph*{How does it work?}
-\begin{enumerate}[itemsep=0.4em]
-    \item The task is decomposed into options (or sub-policies), each representing a
-          temporally extended action.
-    \item A high-level policy selects which option to execute given the current state.
-    \item The chosen option is executed by its own low-level policy until a termination
-          condition is met.
-    \item Control returns to the high-level policy for the next option selection.
-\end{enumerate}
-The Option-Critic architecture uses four learning updates: option-selection policy,
-option-value function, termination policy, and option-intra-action policy.
+% Content here.
 
-\paragraph*{UAV applications.}
-\begin{itemize}[itemsep=0.4em]
-    \item Used for multi-\gls{abb:uav} collaborative \gls{abb:dnn} model inference,
-          where the high-level policy decides where to partition the model and the
-          low-level policy executes the corresponding layer~\cite{arshid2026active}.
-    \item Applied in long-horizon \gls{abb:uav} missions where the sub-task structure
-          is well defined.
-\end{itemize}
+\paragraph*{Applications.}
+% Content here.
 
 \paragraph*{Strengths and limitations.}
-\begin{center}
-    \small
-    \renewcommand{\arraystretch}{1.3}
-    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.45\linewidth} >{\raggedright\arraybackslash}p{0.45\linewidth}@{}}
-        \toprule
-        \textbf{Strengths} & \textbf{Limitations} \\
-        \midrule
-        Handles long-horizon tasks by decomposing them into reusable sub-policies. & Requires defining the option structure, which is task-specific. \\
-        Improves sample efficiency by reusing sub-policies. & Training is more complex than flat \gls{abb:rl}. \\
-        Naturally fits hierarchical mission structures (mission $>$ sub-task $>$ primitive action). & Termination conditions and option discovery remain open research issues. \\
-        \bottomrule
-    \end{tabular}
-\end{center}
+% Content here.
 
-\subsubsection{POMDP online solvers: POMCP and ABT}
+\subsubsection{Subsubsection 1.4.8}
 
-\paragraph*{Definition.} \gls{abb:pomcp} and the \gls{abb:abt} are sampling-based
-algorithms that solve \glspl{abb:pomdp} in real time by combining Monte Carlo tree
-search with belief tracking. Their objective is to compute an approximately optimal
-policy on the fly without solving the full \gls{abb:pomdp} offline.
+\paragraph*{Definition.}
+% Content here.
 
 \paragraph*{How does it work?}
-\begin{enumerate}[itemsep=0.4em]
-    \item The agent maintains a set of particles representing its belief over states.
-    \item At each decision step, it runs Monte Carlo simulations from the current
-          belief, exploring the most promising action sequences.
-    \item The simulations use the \gls{abb:pomdp} model as a generative simulator (no
-          need to enumerate the full state space).
-    \item After a budget of simulations, the agent selects the action with the highest
-          estimated value.
-    \item After execution, the belief is updated based on the new observation, and the
-          search resumes from the updated belief.
-\end{enumerate}
-\gls{abb:pomcp} restarts the search at each step. The \gls{abb:abt} reuses the
-previously computed policy and only updates the affected branches when changes in the
-model are detected~\cite{sandino2020autonomous}.
+% Content here.
 
-\paragraph*{UAV applications.}
-\begin{itemize}[itemsep=0.4em]
-    \item Used for autonomous \gls{abb:uav} navigation in cluttered,
-          \gls{abb:gps}-denied environments to find targets under sensor
-          uncertainty~\cite{sandino2020autonomous}.
-    \item The \gls{abb:abt} is preferred over \gls{abb:pomcp} for real-world conditions
-          where the environment changes gradually, since it avoids discarding previous
-          computation at each step~\cite{sandino2020autonomous}.
-\end{itemize}
+\paragraph*{Applications.}
+% Content here.
 
 \paragraph*{Strengths and limitations.}
-\begin{center}
-    \small
-    \renewcommand{\arraystretch}{1.3}
-    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.45\linewidth} >{\raggedright\arraybackslash}p{0.45\linewidth}@{}}
-        \toprule
-        \textbf{Strengths} & \textbf{Limitations} \\
-        \midrule
-        Solves \glspl{abb:pomdp} online, without offline policy computation. & Performance depends on the number of simulations per step. \\
-        Handles continuous state spaces through particle approximations. & Quality of the belief depends on the number and diversity of particles. \\
-        The \gls{abb:abt} reuses prior computation, reducing waste between steps~\cite{sandino2020autonomous}. & Requires a generative model of the environment, which may be hard to build. \\
-        Well-suited to cluttered, partially observable \gls{abb:uav} scenarios~\cite{sandino2020autonomous}. & Latency may still be too high for high-frequency control loops. \\
-        \bottomrule
-    \end{tabular}
-\end{center}
+% Content here.
 
-
-\section{Active Inference for UAV Systems}%
+\section{Section 2}%
 \label{sec:nav:activeinf}
 
-\Gls{abb:aif} is a unified probabilistic framework that combines perception,
-prediction, and action selection under a single objective: minimizing free
-energy. Originally proposed in computational neuroscience by Friston, it has
-progressively been adopted in robotics and, more recently, in \gls{abb:uav}
-systems. This section reviews the foundations of \gls{abb:aif} and the way it has
-been instantiated for \gls{abb:uav} state estimation, control, and
-decision-making, in single-agent and multi-agent settings. It then identifies the
-gaps that remain in the current literature.
+% Content here.
 
-\subsection{Theoretical foundations}%
+\subsection{Subsection 2.1}%
 \label{subsec:nav:aif-foundations}
 
-The free-energy machinery rests on a single principle and two derived
-quantities---one for perceiving the present, one for planning the future---which
-can in turn be instantiated in a continuous or a discrete form. These four
-building blocks are introduced below.
+% Content here.
 
-% FEP is first named in the subsubsection title just below, so unset its
-% first-use flag to render the short form in the body. VFE and EFE are first used
-% in the body of this subsection and are left to expand on first use.
-\glsunset{abb:fep}
+\subsubsection{Subsubsection 2.1.1}
 
-\subsubsection{The Free Energy Principle (FEP)}
+% Content here.
 
-The \gls{abb:fep} is a theoretical framework rooted in neuroscience and
-statistical physics. It states that any self-organizing system, biological or
-artificial, survives by keeping its sensory inputs close to what it expects to
-perceive. To this end, the agent carries an internal generative model of its
-environment and tries to make the world match the model in two complementary
-ways:
-\begin{itemize}[itemsep=0.4em]
-    \item \textbf{Perception:} updating its beliefs when the observations
-          contradict the model.
-    \item \textbf{Action:} acting on the world to bring the observations back in
-          line with the model.
-\end{itemize}
-The two mechanisms run together in a continuous closed
-loop~\cite{krayani2023goaldirected, pan2026active}.
+\subsubsection{Subsubsection 2.1.2}
 
-In principle, the quantity the agent should minimize is \emph{surprise}, that is,
-how unexpected its current sensory input is. Surprise cannot be computed directly,
-however, because it requires integrating over every possible cause of the
-observation. \Gls{abb:aif} turns the principle into a usable algorithm by
-replacing surprise with a tractable upper bound called \emph{free energy}, and by
-splitting it into two complementary forms: \gls{abb:vfe} for inference at the
-current time step, and \gls{abb:efe} for planning into the
-future~\cite{pan2026active, ji2024integration}.
-
-\subsubsection{Variational Free Energy (VFE) for perception}
-
-\Gls{abb:vfe} is the quantity the agent minimizes to figure out where it is and
-what is going on around it. It measures how far the agent's current beliefs about
-the hidden state of the world are from the true posterior given the observations.
-Each time a new observation arrives, the agent adjusts its beliefs so that
-\gls{abb:vfe} decreases, which in practice means moving its internal estimate
-closer to the most plausible explanation of what it has just sensed.
-
-Formally, letting $z_t$ denote the agent's belief about the hidden state, $x_t$
-the true hidden state, and $y_t$ the observation, \gls{abb:vfe} is defined as the
-Kullback--Leibler divergence between the approximate posterior $q(z_t)$ and the
-true posterior $p(x_t \mid y_t)$~\cite{ji2024integration}:
 \begin{equation}
-    F_{\text{AIF}} = D_{\mathrm{KL}}\bigl(q(z_t)\,\|\,p(x_t \mid y_t)\bigr)
-    - \ln p(y_t, a_t).
+    % Formula here.
     \label{eq:nav:vfe}
 \end{equation}
-Minimizing $F_{\text{AIF}}$ with respect to the belief $z_t$ yields state
-inference, while minimizing it with respect to the action $a_t$ yields active
-control~\cite{ji2024integration}. \Gls{abb:vfe} is also an upper bound on the
-model evidence: pulling free energy down is equivalent to making the agent's model
-explain its observations better.
+% Content here.
 
-\subsubsection{Expected Free Energy (EFE) for action selection}
+\subsubsection{Subsubsection 2.1.3}
 
-While \gls{abb:vfe} handles inference at the current step, \gls{abb:efe} handles
-planning into the future. For each policy---each candidate sequence of
-actions---the agent computes how much free energy that policy would generate if
-executed, and selects the policy with the lowest expected value. \Gls{abb:efe}
-breaks naturally into two terms with intuitive
-meaning~\cite{krayani2023goaldirected, pan2026active}:
-\begin{itemize}[itemsep=0.4em]
-    \item \textbf{Pragmatic term:} how well the policy is expected to achieve the
-          agent's preferred outcomes (its goals).
-    \item \textbf{Epistemic term:} how much the policy is expected to reduce
-          uncertainty about the world.
-\end{itemize}
-This decomposition is one of the central appeals of \gls{abb:aif}: a single
-objective unifies goal-directed behaviour (exploitation of preferences) and
-information-seeking behaviour (exploration to reduce uncertainty), without
-requiring an external reward signal as in
-\gls{abb:rl}~\cite{krayani2023goaldirected, pan2026active}.
+% Content here.
 
-\subsubsection{Continuous and discrete Active Inference}
+\subsubsection{Subsubsection 2.1.4}
 
-The same \gls{abb:vfe} and \gls{abb:efe} machinery can be instantiated in two
-different ways, depending on whether the states and actions are continuous or
-discrete:
-\begin{itemize}[itemsep=0.6em]
-    \item \textbf{Continuous \gls{abb:aif}} is used when hidden states and actions
-          live in a continuous space (positions, velocities, accelerations,
-          control inputs) and when the dynamics and observations can be
-          approximated as Gaussian. In that regime, \gls{abb:vfe} minimization
-          collapses into a Kalman-filter-like update for perception, and
-          \gls{abb:efe} minimization collapses into a Proportional--Integral
-          controller for action~\cite{ji2024integration, ji2023delay}. This is the
-          natural choice for low-level control, where the question is \emph{how} to
-          follow a trajectory.
-    \item \textbf{Discrete \gls{abb:aif}} is used when states and actions take
-          discrete values (visiting hotspot~A or hotspot~B, selecting the motion
-          primitive \emph{up} or \emph{down}, switching from nominal to evasive
-          mode). The generative model becomes a \gls{abb:pomdp}, policies are
-          sequences of discrete actions, and free energy is computed over
-          them~\cite{krayani2023goaldirected, arshid2026active}. This is the
-          natural choice for high-level decision-making, where the question is
-          \emph{which} trajectory to follow.
-\end{itemize}
-Both formulations are used in \gls{abb:uav} systems. In practice, several recent
-works combine them in a hierarchical architecture: discrete \gls{abb:aif} on top
-to plan the mission, and continuous \gls{abb:aif} at the bottom to execute the
-motion.
+% Content here.
 
-\subsection{Discrete AIF for trajectory planning and decision-making}%
+\subsection{Subsection 2.2}%
 \label{subsec:nav:aif-discrete}
 
-Once the question shifts from \emph{how} to follow the trajectory to \emph{which}
-trajectory to follow, the decisions become discrete choices among finite options:
-which target to visit next, which region to traverse, which motion primitive to
-apply, which spectrum band to use. The setting is then modeled as a
-\gls{abb:pomdp}, where the \gls{abb:uav} maintains beliefs over discrete hidden
-states that represent the mission, the current route, or the active threat. What
-turns this \gls{abb:pomdp} into a tractable \gls{abb:aif} problem is a structure
-that recurs across the entire \gls{abb:uav} corpus: a world model learned offline
-from expert demonstrations, encoded as a hierarchical \gls{abb:gdbn}. At
-deployment, the \gls{abb:uav} does not search the action space from scratch; it
-scores candidate decisions by their \gls{abb:efe} on the learned world model,
-which gives it a way to generalize to scenarios that were not present in the
-training data without retraining. \Cref{fig:nav:aif-discrete-recipe} summarizes
-this offline-to-online recipe.
+% Content here.
 
+% --- Example: figure with a short (list-of-figures) and a long caption ------
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.95\textwidth]{aif_discret_recette_uav.png}
-    \caption[The recurring discrete-AIF recipe for UAV decision-making]{The
-        recurring discrete-\gls{abb:aif} recipe across the \gls{abb:uav} corpus.
-        \emph{Offline}, a world model is learned from expert demonstrations
-        (\gls{abb:tspwp}, \gls{abb:ga}, heuristics) generated on randomized
-        scenarios, and encoded as a hierarchical \gls{abb:gdbn} with three
-        abstraction levels (Mission, Route, Motion). \emph{Online}, the
-        \gls{abb:uav} scores candidate actions by their \gls{abb:efe} to select
-        the next discrete decision, without retraining.}%
+    \caption[Short caption for the list of figures]{Long caption displayed under
+        the figure.}%
     \label{fig:nav:aif-discrete-recipe}
 \end{figure}
 
-\subsubsection{Goal-directed trajectory in wireless networks}
+\subsubsection{Subsubsection 2.2.1}
 
-The founding instance of this recipe asks a \gls{abb:uav} to visit a set of
-hotspots within a battery time window. Offline, a \gls{abb:tspwp} solver refined
-by 2-OPT is run on many randomized hotspot configurations, and the resulting
-trajectories serve as expert demonstrations from which the \gls{abb:uav} learns a
-coupled multi-scale world model. The model captures two scales jointly: hotspot
-order at the event scale, and inter-hotspot motion at the slot scale. Online, the
-\gls{abb:uav} infers the most plausible plan for the current configuration and
-scores actions by their \gls{abb:efe}, achieving faster convergence and stronger
-generalization than Q-learning~\cite{krayani2023goaldirected}. A refinement keeps
-the same world model and replaces direct \gls{abb:efe} scoring with an
-expected-surprise criterion, measured as the Bhattacharyya distance between
-predicted and reference observations, which further speeds up adaptation to new
-scenarios without retraining~\cite{krayani2024selfsupervised}.
+% Content here.
 
-\subsubsection{Adapting to adversarial conditions}
+\subsubsection{Subsubsection 2.2.2}
 
-The recipe extends naturally when the environment becomes hostile. Against ground
-jammers whose positions are not known in advance, the world model is enriched with
-a third dictionary on top of region sequences and motion primitives: it encodes
-the typical \gls{abb:sinr} feedback the \gls{abb:uav} should expect at each region
-under nominal and jammed conditions. Online, the agent minimizes \gls{abb:efe}
-jointly across the three levels, switching motion primitives between nominal and
-evasive behaviour and reacting to \gls{abb:sinr} feedback to detect and localize
-the jammers. A Kalman-filter-based attractor at the motion layer smooths the
-trajectory between symbolic switches. The framework reaches the performance of an
-expert that knows the jammer positions in advance, while Q-learning collapses as
-jammer density grows~\cite{krayani2026bayesian}. The same logic has been applied
-earlier at the spectrum layer rather than the motion layer, with an Active
-\gls{abb:gdbn} capturing joint signal--jammer dynamics and the action being the
-choice of frequency band that minimizes an abnormality measure equivalent to free
-energy~\cite{krayani2022novel}.
+% Content here.
 
-\subsubsection{Scaling to a cooperating swarm}
+\subsubsection{Subsubsection 2.2.3}
 
-The recipe also scales beyond a single \gls{abb:uav}. For a swarm that must
-cooperatively visit a set of targets under inter-agent distance constraints,
-expert demonstrations are produced offline by a \gls{abb:ga} with Repulsion
-Forces, and the world model is structured into three abstraction levels: a Mission
-level that assigns subsets of targets to individual \glspl{abb:uav}, a Route level
-that determines each \gls{abb:uav}'s visiting order, and a Motion level that
-produces dynamically feasible inter-target segments. Each \gls{abb:uav} runs its
-own \gls{abb:aif} inference on the shared model structure, and an Extended Kalman
-Filter at the motion layer prevents collisions when the world model and the real
-environment drift apart. Compared to a Q-learning baseline trained on the same
-expert data, the framework converges faster and yields lower mission times with
-smoother and safer trajectories under static and dynamic
-obstacles~\cite{arshid2026active}.
+% Content here.
 
-\subsection{AIF in multi-UAV and multi-agent settings}%
+\subsection{Subsection 2.3}%
 \label{subsec:nav:aif-multiagent}
 
-When \gls{abb:aif} is extended from a single \gls{abb:uav} to a coordinated team,
-the technical question is no longer how each agent minimizes its own free energy,
-but what each agent must share with the others for the group as a whole to remain
-coherent. The free-energy objective itself does not specify a coordination
-mechanism, so the literature has explored three distinct things that
-\glspl{abb:uav} can exchange: their current intentions, their world model, or the
-wireless resources through which they observe each other.
+% Content here.
 
-\subsubsection{Sharing intentions}
+\subsubsection{Subsubsection 2.3.1}
 
-The lightest form of coordination is to have each \gls{abb:uav} broadcast the
-policy it is about to execute and let its peers fold this intention into their own
-preferences. Coordination then emerges without any explicit consensus protocol:
-every \gls{abb:uav} continues to minimize its own free energy, but its preference
-distribution now includes the intentions of others, which gradually steers the
-group toward compatible behaviors. This logic has been embedded into \gls{abb:bt}
-execution semantics, where deterministic branching is replaced by
-free-energy-driven policy selection that takes peer intentions as additional
-priors. The resulting framework keeps the modular and interpretable structure of
-conventional \glspl{abb:bt} while cutting node complexity by more than 70\% under
-partially observable cooperative tasks~\cite{wang2026bridging}.
+% Content here.
 
-\subsubsection{Sharing the world model}
+\subsubsection{Subsubsection 2.3.2}
 
-A stronger form of coordination has all \glspl{abb:uav} reason on the same
-hierarchical world model. The shared structure typically encodes coordinated
-behavior at three abstraction levels (mission allocation, route ordering, motion
-segments), and each \gls{abb:uav} independently minimizes the KL divergence
-between its current belief and the reference distribution at every level. Because
-they all reason on the same generative model, their individual decisions remain
-compatible by construction, without any centralized controller. An Extended Kalman
-Filter at the motion layer absorbs the inevitable drift between the world model and
-the real environment, and the approach produces smoother and safer trajectories
-than \gls{abb:rl} baselines trained on the same data~\cite{arshid2026active}.
+% Content here.
 
-\subsubsection{Sharing sensing resources}
+\subsubsection{Subsubsection 2.3.3}
 
-A third direction shifts the question from coordinating \glspl{abb:uav} to
-coordinating the infrastructure that observes them. The \gls{abb:uav} dynamics,
-the wireless sensing base station, and the resource allocation across users are
-encoded together in a single factor-graph generative model, so that \gls{abb:vfe}
-gives the state estimate and \gls{abb:efe} jointly selects the next control input
-and the next sensing allocation. The experimental setup is single-\gls{abb:uav},
-but the formulation extends naturally to fleets in which the base station
-distributes its sensing budget across multiple agents according to a shared
-free-energy objective, and it consistently outperforms greedy and random
-allocation strategies~\cite{pan2026active}.
+% Content here.
 
-\subsection{Critical synthesis}%
+\subsection{Subsection 2.4}%
 \label{subsec:nav:aif-synthesis}
 
-\Cref{tab:nav:aif-overview} provides a comparative overview of the \gls{abb:aif}
-works reviewed in this section, along eight dimensions ranging from the target
-objective and the simulation setup to the structure of the generative model, the
-control strategy, the baselines, and the evaluation metrics. It highlights a
-recurring recipe---a hierarchical, mostly discrete \gls{abb:aif} model learned
-offline from an expert optimizer and refined online against a Q-learning
-baseline---as well as the predominance of single-agent, simulation-only
-validation, with swarm coordination~\cite{arshid2026active} and real-world
-testing~\cite{wang2026bridging} remaining the exception rather than the rule.
+% Content here.
 
+% --- Example: wide landscape table (sidewaystable) with a legend ------------
 \begin{sidewaystable}
     \centering
-    \caption{Overview of AIF works for UAV systems.}%
+    \caption{Table caption.}%
     \label{tab:nav:aif-overview}
     \scriptsize
     \setlength{\tabcolsep}{3pt}
@@ -1185,290 +415,95 @@ testing~\cite{wang2026bridging} remaining the exception rather than the rule.
             >{\raggedright\arraybackslash}p{1.9cm}
             >{\raggedright\arraybackslash}p{2.7cm}@{}}
         \toprule
-        \textbf{Ref} & \textbf{Main objective} & \textbf{Simulator / testbed} &
-        \textbf{Single / swarm} & \textbf{Level of autonomy} &
-        \textbf{Key structure} & \textbf{Control strategy} & \textbf{Baselines} &
-        \textbf{Evaluation metrics} \\
+        \textbf{Header 1} & \textbf{Header 2} & \textbf{Header 3} &
+        \textbf{Header 4} & \textbf{Header 5} &
+        \textbf{Header 6} & \textbf{Header 7} & \textbf{Header 8} &
+        \textbf{Header 9} \\
         \midrule
-        Krayani 2023~\cite{krayani2023goaldirected} & Plan a trajectory that serves all wireless hotspots within battery time & Custom simulation, $1000\times1000$~m area, 5000 training missions & Single UAV & Supervised offline + autonomous online & Two-level world model: first level orders the hotspots to visit, second handles motion between them & Discrete AIF with hierarchical world model & Q-learning & Convergence speed, mission completion time, generalization to new scenarios \\
+         &  &  &  &  &  &  &  &  \\
         \addlinespace
-        Krayani 2024~\cite{krayani2024selfsupervised} & Adapt online to unseen hotspot configurations without retraining & Custom simulation, $2000\times2000$~m area, altitude 200~m & Single UAV & Supervised offline + autonomous online & Two-level world model as above, but candidate actions scored by expected surprise rather than expected free energy & Discrete AIF with expected-surprise scoring & Modified Q-learning & Sum-rate of the wireless link, mission completion time, generalization \\
+         &  &  &  &  &  &  &  &  \\
         \addlinespace
-        Krayani 2026~\cite{krayani2026bayesian} & Avoid signal interference and complete the mission even when jammers are present & Custom simulation, $1000\times1000$~m area, altitude 200~m & Single UAV & Supervised offline + autonomous online & Three-level world model: regions of interest, motion primitives (nominal and evasive), and expected SINR feedback & Discrete AIF with three-level hierarchy plus EKF at motion & Expert optimizer, Q-learning & Total signal interference, mission completion time, jammer localization error \\
-        \addlinespace
-        Krayani 2022~\cite{krayani2022novel} & Pick a frequency band that keeps the wireless link clean despite an active jammer & Custom simulation & Single UAV & Supervised offline + autonomous online & Single-level Active-GDBN modelling how UAV and jammer signals evolve jointly over time & Discrete AIF on Active-GDBN, no UAV motion & Frequency hopping, Q-learning & Cumulative reward, convergence speed \\
-        \addlinespace
-        Arshid 2026~\cite{arshid2026active} & Coordinate a UAV swarm to visit all targets without collisions & Custom simulation, $1000\times1000$~m area, 40 to 75 targets & Swarm & Supervised offline + autonomous online & Three-level world model shared across the swarm: target assignment, route ordering, motion segments, plus EKF at motion & Discrete AIF with three-level hierarchy plus EKF at motion & Modified Q-learning on the same expert data & Mission completion time, total distance covered, collision rate \\
-        \addlinespace
-        Wang 2026~\cite{wang2026bridging} & Reduce the number of decision blocks in a Behavior Tree while keeping cooperative adaptability & Custom simulation plus real-world experiments on two UGVs & Multi-agent & Fully autonomous & Standard Behavior Tree where each decision block embeds an Active Inference step & Discrete AIF embedded inside Behavior Tree nodes & Conventional Behavior Trees & Number of BT nodes, task success rate under uncertainty \\
-        \addlinespace
-        Pan 2026~\cite{pan2026active} & Decide UAV motion and wireless sensing allocation jointly within one closed loop & Custom simulation, 628 time steps & Single UAV + base station & Assisted by base station & Single-level factor graph linking UAV dynamics, wireless sensing, and resource allocation in one generative model & Continuous AIF with factor graph (VFE for estimation, EFE for joint control + sensing) & Greedy controller, random sensing & Control cost, sensing cost, total objective \\
-        \addlinespace
-        Ding 2024~\cite{ding2024external} & Maximize transmission rate when frequencies are shared between users and jammers are active & Custom simulation & Multi-agent & Fully autonomous & Single-level neural-network generative model: belief encoder, prior encoder, dynamics model, preference model & Deep AIF with neural-network generative model & FDD, DQN, Random & Sum transmission rate, training stability, convergence speed \\
+         &  &  &  &  &  &  &  &  \\
         \bottomrule
     \end{tabular}
 
     \vspace{0.6em}
     \begin{minipage}{0.95\linewidth}
         \footnotesize
-        \textbf{Abbreviations.} AIF: active inference; GDBN: generalized dynamic
-        Bayesian network; SINR: signal-to-interference-plus-noise ratio; EKF:
-        extended Kalman filter; BT: behavior tree; UGV: unmanned ground vehicle;
-        DQN: deep Q-network; FDD: frequency-distance directed.
+        \textbf{Abbreviations.} % Content here.
     \end{minipage}
 \end{sidewaystable}
 
-\section{Generative AI Integration for UAV Systems}%
+\section{Section 3}%
 \label{sec:nav:genai}
 
-The rapid progress of \glspl{abb:llm}, \glspl{abb:vlm}, and deep generative
-models has opened a new layer of possibilities for autonomous \gls{abb:uav}
-systems. Most of this literature does not focus on \glspl{abb:uav} specifically,
-but on how these models can be integrated into robotic agents at different levels:
-as planners that translate language into action, as perception modules that enrich
-what the agent sees, as policies that grow over time, or as deep formulations of
-free energy that scale Bayesian reasoning to neural networks. The following
-subsections extract the general patterns that emerge from this literature, detail
-how they work, and discuss in the final subsection which ones can be transposed to
-a \gls{abb:uav}-based warehouse inspection system.
+% Content here.
 
-\subsection{Language as a high-level control interface}%
+\subsection{Subsection 3.1}%
 \label{subsec:nav:genai-language}
 
-The first pattern uses an \gls{abb:llm} as the top layer of an otherwise classical
-control stack. The operator types a command in natural language, the \gls{abb:llm}
-converts it into a compact plan made of robot primitives, and a runtime executes
-that plan step by step while watching its progress. Keeping the latency acceptable
-on a real drone (under 1.5~seconds between the command and the first action in
-TypeFly) imposes three design choices: a target language denser than Python to
-save tokens, a streaming interpretation that executes each instruction as soon as
-it arrives instead of waiting for the full plan, and replanning triggers that call
-the \gls{abb:llm} again only when the situation actually drifts from the plan.
+% Content here.
 
 \paragraph*{Pipeline.}
-\begin{itemize}[itemsep=0.3em]
-    \item \textbf{Input:} user command in English plus the drone video stream.
-    \item \textbf{Step 1:} a lightweight visual encoder (typically YOLOv8) runs on
-          an edge server and turns the video into a textual scene description (a
-          list of objects with bounding boxes).
-    \item \textbf{Step 2:} a prompt generator combines the task, the scene
-          description, the target-language syntax (for instance MiniSpec), and a
-          few few-shot examples.
-    \item \textbf{Step 3:} the cloud \gls{abb:llm} streams back a plan, instruction
-          by instruction.
-    \item \textbf{Step 4:} a runtime parses each instruction as it arrives and
-          translates it into drone API calls.
-    \item \textbf{Step 5:} the runtime can call the \gls{abb:llm} back through a
-          \emph{probe} function when the scene is under-specified, or through a
-          \emph{replan} function when an action fails.
-    \item \textbf{Output:} the actual drone trajectory that realizes the task.
-\end{itemize}
+% Content here.
 
-This architecture is represented by TypeFly with its MiniSpec language and its
-streaming runtime~\cite{chen2024typefly}, and by ChatGPT for Robotics, which
-follows the same logic using Python as the target language and a high-level
-function library specific to the robotic platform~\cite{vemprala2023chatgpt}. The
-general pattern is that the \gls{abb:llm} does not replace low-level control or
-metric planning: it sits on top and translates human intent into structured
-commands, while the rest of the stack remains that of a classical drone.
-
-\subsection{Grounding language in what the agent can actually do}%
+\subsection{Subsection 3.2}%
 \label{subsec:nav:genai-grounding}
 
-\Gls{abb:llm}-generated actions are often linguistically plausible but physically
-infeasible: opening a closed door, flying through a wall, using an object that is
-not within reach. The grounding pattern addresses this through a two-stage
-decision loop in which the \gls{abb:llm} proposes several candidate actions in
-natural language and a second component scores them by feasibility in the current
-state, keeping only the most realistic among those that are actually executable.
+% Content here.
 
 \paragraph*{Pipeline.}
-\begin{itemize}[itemsep=0.3em]
-    \item \textbf{Input:} the current robot observation plus a task in natural
-          language.
-    \item \textbf{Step 1:} the \gls{abb:llm} generates $k$ candidate actions in
-          natural language (typically $k = 10$), each with a linguistic
-          probability.
-    \item \textbf{Step 2:} for each candidate, a pre-trained value function (a
-          Q-network trained by \gls{abb:rl} on elementary robotic skills) estimates
-          the probability of success in the current state.
-    \item \textbf{Step 3:} the decision combines the two scores, usually by
-          product: $\text{score} = p_{\text{LLM}}(\text{action}) \times
-          p_{\text{value}}(\text{action} \mid \text{state})$.
-    \item \textbf{Step 4:} the action with the highest score is executed by the
-          low-level controller.
-    \item \textbf{Step 5:} the loop restarts with the new observation.
-    \item \textbf{Output:} a sequence of executable and linguistically relevant
-          actions.
-\end{itemize}
+% Content here.
 
-The reference work is SayCan~\cite{ahn2022saycan}, which uses an \gls{abb:llm}
-(PaLM) for the linguistic component and value functions trained by \gls{abb:rl} on
-the skills of a mobile manipulator for the feasibility component. The general
-pattern is that the output of an \gls{abb:llm} should never be consumed raw by an
-embodied robot: it must always pass through a filter that reflects the agent's
-actual capabilities in the current state, otherwise the agent will attempt to
-execute invalid actions.
-
-\subsection{Vision-language models as semantic sensors}%
+\subsection{Subsection 3.3}%
 \label{subsec:nav:genai-perception}
 
-A second pattern uses \glspl{abb:vlm} as a perception layer that produces
-structured semantic statements about the scene, rather than raw geometry
-(occupancy, depth). The literature uses this layer in two complementary forms,
-depending on whether the categories of interest are known in advance or not.
+% Content here.
 
-\paragraph*{Pipeline --- known categories (lightweight detector).}
-\begin{itemize}[itemsep=0.3em]
-    \item \textbf{Input:} an RGB image from the onboard camera.
-    \item \textbf{Step 1:} a compact detector (YOLOv8 fine-tuned on the target
-          categories) outputs a list of bounding boxes annotated with a class and a
-          confidence score.
-    \item \textbf{Step 2:} a post-processor turns this list into a structure
-          consumable by the belief module (for example, a dictionary
-          \texttt{\{"shelf\_3\_row\_2": "QR detected, confidence 0.94"\}}).
-    \item \textbf{Output:} structured semantic observations ready to be fused with
-          the current belief.
-\end{itemize}
+\paragraph*{Pipeline --- variant A.}
+% Content here.
 
-\paragraph*{Pipeline --- open categories (full VLM).}
-\begin{itemize}[itemsep=0.3em]
-    \item \textbf{Input:} an RGB image plus a textual question
-          (\enquote{describe what you see on this shelf}).
-    \item \textbf{Step 1:} a \gls{abb:vlm} (GPT-4V, Claude Vision, LLaVA,
-          MiniCPM-V) receives the image and the question.
-    \item \textbf{Step 2:} the \gls{abb:vlm} produces a natural-language answer,
-          more or less free depending on the prompt.
-    \item \textbf{Step 3:} a parser extracts from the answer the relevant entities,
-          attributes, and anomalies (missing objects, misplaced items, unexpected
-          ones).
-    \item \textbf{Step 4:} the result is converted into the same structured format
-          as for the lightweight detector.
-    \item \textbf{Output:} high-level semantic observations, potentially novel,
-          that go beyond what a pre-trained detector could recognize.
-\end{itemize}
+\paragraph*{Pipeline --- variant B.}
+% Content here.
 
-This pattern appears in partial form in TypeFly through YOLOv8~\cite{chen2024typefly}
-and in a more open form in ChatGPT for Robotics, which dialogues with the user
-about the perceived scene~\cite{vemprala2023chatgpt}. The general pattern is that
-robotic perception should no longer stop at the geometric level: generative models
-offer a symbolic layer that can be consumed directly by the decision module.
-
-\subsection{Skill libraries that grow with experience}%
+\subsection{Subsection 3.4}%
 \label{subsec:nav:genai-skills}
 
-A third pattern, demonstrated in simulated environments and not yet applied to
-\glspl{abb:uav}, is the idea of an agent whose action repertoire grows over time.
-Instead of being limited to a fixed set of primitives, the agent stores each
-successful behavior as a reusable skill, indexed for later retrieval in similar
-situations.
+% Content here.
 
 \paragraph*{Pipeline.}
-\begin{itemize}[itemsep=0.3em]
-    \item \textbf{Input:} an open environment where the agent can test actions,
-          plus an \gls{abb:llm} that generates code.
-    \item \textbf{Step 1:} an automatic curriculum module asks the \gls{abb:llm} to
-          produce the next task adapted to the agent's current state
-          (\enquote{find a wooden object}, \enquote{build a stone pickaxe}).
-    \item \textbf{Step 2:} the \gls{abb:llm} generates code (typically JavaScript
-          or Python) that calls existing skills and environment primitives to solve
-          the task.
-    \item \textbf{Step 3:} this code is executed; runtime errors and environment
-          feedback (observable state, event log) are fed back into a prompt that
-          asks the \gls{abb:llm} to correct it.
-    \item \textbf{Step 4:} the loop continues until a self-verification module
-          confirms the task is solved.
-    \item \textbf{Step 5:} the final code is embedded (for example via
-          \texttt{text-embedding-ada-002}) and stored in a vector store indexed by
-          a semantic description of the skill.
-    \item \textbf{Step 6:} on a future task, the retrieval module queries the
-          vector store by similarity and suggests relevant skills as building
-          blocks.
-    \item \textbf{Output:} a skill library that grows mission after mission.
-\end{itemize}
+% Content here.
 
-This architecture is implemented by Voyager in the Minecraft
-environment~\cite{wang2024voyager}. The general pattern is that long-term autonomy
-benefits from an explicit memory of already-acquired skills, not only from updated
-model parameters: a learned skill remains accessible and reusable as is.
-
-\subsection{Scaling free-energy reasoning to deep models}%
+\subsection{Subsection 3.5}%
 \label{subsec:nav:genai-deepaif}
 
-The pattern most directly tied to \gls{abb:aif} is the replacement of the
-analytical generative model by neural encoders. The agent then maintains four
-components parameterized by deep networks (a belief encoder, a prior encoder, a
-dynamics model, and a preference model) and selects actions through the
-\gls{abb:feef}, which decomposes the planning objective into an exploration term
-that rewards uncertainty reduction and an exploitation term that rewards reaching
-preferred outcomes.
+% Content here.
 
 \paragraph*{Pipeline.}
 \begin{itemize}[itemsep=0.3em]
-    \item \textbf{Input:} the current environment observation.
-    \item \textbf{Step 1:} the belief encoder $h_\theta$ projects the observation
-          $o_t$ into a latent belief $s_t = h_\theta(o_t)$.
-    \item \textbf{Step 2:} for each candidate action $a_t$, the dynamics model
-          $d_\theta$ predicts the future belief $s_{t+1} = d_\theta(s_t, a_t)$.
-    \item \textbf{Step 3:} the prior encoder $h'_\theta$ predicts the expected
-          belief independently of the action, providing a reference against which
-          to measure surprise.
-    \item \textbf{Step 4:} the preference model $p_\theta$ evaluates how well the
-          future belief matches the agent's preferred outcomes.
-    \item \textbf{Step 5:} the \gls{abb:feef} combines the two terms:
+    \item \textbf{Input:} content here.
+    \item \textbf{Step 1:} content here.
           \begin{equation}
-              \text{FEEF}(a) = D_{\mathrm{KL}}\bigl(s_{t+1} \,\|\, s'_{t+1}\bigr)
-              - \mathbb{E}\bigl[\log \tilde{p}(\tilde{o}_t)\bigr],
+              % Formula here.
               \label{eq:nav:feef}
           \end{equation}
-          where the first term is the divergence between the prediction and the
-          prior (exploration) and the second is the log-likelihood of preferred
-          observations (exploitation).
-    \item \textbf{Step 6:} the action with the lowest \gls{abb:feef} is selected
-          and executed.
-    \item \textbf{Step 7:} the transition is added to a replay buffer prioritized
-          by \gls{abb:feef} values, which stabilizes learning by concentrating
-          updates on the most informative transitions.
-    \item \textbf{Output:} a learned policy that explicitly balances exploration
-          and exploitation.
+          Content here.
+    \item \textbf{Output:} content here.
 \end{itemize}
 
-This scheme is instantiated by Fang et~al.\ with an application to video-diffusion
-task offloading~\cite{fang2024resource}. The general pattern is that \gls{abb:aif}
-does not need to remain analytical: it can scale to neural architectures while
-keeping its principled exploration\,/\,exploitation split, and it then outperforms
-classical deep \gls{abb:rl} baselines (\gls{abb:ppo}, \gls{abb:sac},
-\gls{abb:ddpg}, \gls{abb:td3}) on convergence and asymptotic performance.
+% Content here.
 
-\subsection{Patterns transposable to a warehouse inspection system}%
+\subsection{Subsection 3.6}%
 \label{subsec:nav:genai-transposable}
 
-Of the five patterns presented, three transpose directly to a \gls{abb:uav}-based
-warehouse inspection system. \emph{Language as a high-level control interface}
-would let an operator formulate missions without scripting (\enquote{inspect
-aisle~3 and skip empty shelves}), with the \gls{abb:llm} producing a decomposition
-into sub-tasks that the underlying decision module executes. \emph{Grounding} is a
-necessary condition for this first brick: the sub-tasks generated by the
-\gls{abb:llm} must be projected onto the finite set of actions actually executable
-by the drone before being executed. \emph{Vision-language perception}, in turn,
-would turn the onboard camera into a semantic sensor producing structured
-observations (\enquote{missing pallet}, \enquote{unreadable \gls{abb:qr}},
-\enquote{unexpected object}) that complement the \gls{abb:lidar}-based occupancy
-belief.
+% Content here.
 
-The other two patterns are more indirect. The deep formulation of free energy with
-multi-step rollouts traces a path toward evolving a single-step \gls{abb:aif}
-planner into a learnable decision module aligned with the same objective, but it
-assumes a volume of training data and a GPU infrastructure that exceed the scope of
-a first prototype. The skill library belongs to a longer-term strategy, relevant
-for missions repeated in similar warehouse configurations, but it offers no
-immediate gain as long as the basic skills are not yet stabilized.
-
-\section{Cross-Cutting Synthesis Across Families}%
+\section{Section 4}%
 \label{sec:nav:synthesis}
 % TODO
 
-\section{Gaps and Positioning of This Thesis}%
+\section{Section 5}%
 \label{sec:nav:gaps}
 % TODO
 

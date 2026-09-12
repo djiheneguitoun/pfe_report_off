@@ -1,61 +1,6 @@
 \section{Chapter Introduction}\label{sec:uav:intro}
 
-Warehouse management is a central link in modern logistics chains. It covers
-the operations required to receive, store, track, and ship goods across the
-supply chain. Within these operations, inventory management plays a strategic
-role: it ensures that the right product is available in the right quantity at
-the right time, prevents stockouts and overstock, and directly affects both
-customer satisfaction and operational cost~\cite{pore2026drone}.
+% Content here.
 
-For decades, inventory has relied on manual methods such as human operators
-with handheld scanners, paper-based records, and periodic stocktaking cycles.
-These methods are slow, labor-intensive, error-prone, and expose workers to
-safety risks, especially when high racks must be inspected. The rise of
-Industry~4.0 has accelerated the adoption of more advanced technologies in
-warehouses, including \gls{abb:rfid} tags, ground-based mobile robots such as
-\glspl{abb:agv} and \glspl{abb:amr}, connected warehouse management systems,
-\gls{abb:iot} sensors, and AI-based solutions. While these tools improve
-real-time stock visibility, they still face limitations in infrastructure
-cost, spatial coverage, and flexibility in dynamic
-environments~\cite{pore2026drone}.
-
-In this context, \glspl{abb:uav}, commonly called drones, have emerged as a
-promising alternative. Their ability to move vertically, reach high shelves,
-and quickly scan large areas makes them well suited to inventory inspection. A
-recent review of more than 120 studies shows that drones are now used for a
-wide range of warehouse tasks, including inventory counting, mapping,
-inspection, surveillance, picking support, and intra-logistics
-transport~\cite{pore2026drone}. To identify items, most systems rely on optical
-markers placed on products or racks. Among the available
-technologies---1D~barcodes, \gls{abb:rfid}, fiducial markers such as ArUco or
-AprilTag, and \gls{abb:qr} codes---the \gls{abb:qr} code has progressively
-become the standard choice: it stores more information than a classical
-barcode, remains readable when partially damaged thanks to its built-in error
-correction, is cheap to print, and is well suited to onboard camera reading
-from a \gls{abb:uav}.
-
-Operating drones inside warehouses involves several technical challenges.
-Warehouses are \gls{abb:gps}-denied environments~\cite{chang2023review}, with
-narrow aisles and frequent proximity to human operators, which makes onboard localization a non-trivial problem. Image-based perception is also constrained by the
-flying platform itself, since motion blur, oblique viewing angles, variable
-altitude, and uneven warehouse lighting all reduce image quality and affect
-\gls{abb:qr} code reading~\cite{dong2024algorithm}. When coordination is
-extended from a single drone to a swarm, additional aspects come into play,
-including task allocation, inter-agent communication, and behavior under
-partial failures.
-
-This chapter provides a structured state of the art on \gls{abb:uav}-based
-warehouse inventory inspection and the associated \gls{abb:qr} code detection.
-It is organized as follows. \Cref{sec:uav:problem} introduces the problem of
-warehouse inventory inspection, reviews the limits of traditional methods that
-motivate the use of \glspl{abb:uav}, and describes the functional capabilities
-of a \gls{abb:uav}-based inspection system. \Cref{sec:uav:detection} focuses
-on item detection and identification from drones, with a particular emphasis
-on \gls{abb:qr} code detection methods (classical, deep learning, hybrid, and
-\gls{abb:uav}-specific pipelines). \Cref{sec:uav:swarm} discusses the move
-from single-\gls{abb:uav} to multi-\gls{abb:uav} and swarm architectures, and
-reviews the main coordination strategies. \Cref{sec:uav:evaluation} examines the
-simulators and co-simulation frameworks used in the community to validate UAV-based
-inspection systems, with particular attention to robot--network co-simulation for multi-UAV settings. Finally,
-\Cref{sec:uav:conclusion} summarizes the key findings of the chapter and
-identifies the main gaps in the literature.
+% Roadmap of the chapter: \Cref{sec:uav:problem}, \Cref{sec:uav:detection},
+% \Cref{sec:uav:swarm}, \Cref{sec:uav:evaluation}, \Cref{sec:uav:conclusion}.
