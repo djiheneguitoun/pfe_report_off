@@ -546,17 +546,84 @@ the inventory database synchronised, all at the same time~\cite{pore2026uavqr}.
 \section{QR Codes and Their Reading from a UAV}%
 \label{sec:bg:qr}
 
-\subsection{Identification Technologies and the Choice of QR Codes}%
-\label{subsec:bg:qr-technologies}
+\subsection{QR Codes and the Difficulty of Reading Them from a UAV}%
+\label{subsec:bg:qr-codes}
 
-\subsection{QR Code Structure and Data Encoding}%
-\label{subsec:bg:qr-structure}
+\Glspl{abb:qr} codes are two-dimensional visual identifiers that can store more
+information than traditional barcodes and include error-correction mechanisms
+that improve readability under partial
+degradation~\cite{dong2024motionblurred, pore2026uavqr}. A \gls{abb:qr} code is
+built from position detection patterns, format information, and data
+modules~\cite{dong2024motionblurred}. The three square markers placed in the
+corners have fixed proportions, which allows a decoder to locate the code and
+correct its perspective, while Reed--Solomon error correction recovers the data
+even when the symbol is partly hidden or blurred~\cite{pore2026uavqr}. These
+properties make \gls{abb:qr} codes suitable for identifying items in warehouse
+environments~\cite{pore2026uavqr}. Reading them from a \gls{abb:uav} is more
+difficult, however, because image quality changes continuously during flight.
+Five factors degrade the image at that moment.
+
+\begin{itemize}[itemsep=0.5em]
+    \item \textbf{Distance and scale}: The code becomes too small to decode
+          reliably when the \gls{abb:uav} is far from the
+          target~\cite{kalinov2020warevision, alsulami2026deep}.
+    \item \textbf{Viewing angle}: Labels may be observed from different angles,
+          producing perspective
+          distortion~\cite{pore2026drone, pore2026uavqr, alsulami2026deep}.
+    \item \textbf{Motion blur}: \Gls{abb:uav} movement and vibration can blur the
+          captured image and reduce recognition
+          accuracy~\cite{dong2024motionblurred, kalinov2020warevision}.
+    \item \textbf{Lighting}: Poor
+          illumination~\cite{kalinov2020warevision, alsulami2026deep} and
+          glare~\cite{pore2026drone} can significantly affect decoding
+          performance.
+    \item \textbf{Occlusion}: Shelves, packaging, or other objects may partially
+          hide the code and prevent successful
+          decoding~\cite{alsulami2026deep}.
+\end{itemize}
+
+These factors do not act separately: in flight they appear together, which
+explains why results obtained in simulation do not transfer directly to a real
+warehouse. One inventory system reached a \gls{abb:qr} accuracy of about 95 to
+96\% in simulation but only 86 to 90.5\% in a real testbed, and the gap grew with
+the complexity of the scenario, from around 5\% in the simplest case to more than
+10\% in the hardest one~\cite{pore2026uavqr}. The authors of that work attribute
+the difference to real lighting and occlusion conditions, and note that their
+simulation stayed accurate for dynamics and coordination but not for optical
+detection~\cite{pore2026uavqr}.
 
 \subsection{QR Code Detection and Recognition Methods}%
 \label{subsec:bg:qr-detection}
 
-\subsection{Challenges of QR Code Reading from a UAV}%
-\label{subsec:bg:qr-challenges}
+\Gls{abb:qr} code reading methods can be grouped into three main families.
+
+\begin{itemize}[itemsep=0.5em]
+    \item \textbf{Classical image processing}: These methods use hand-designed
+          operations such as template matching, projection analysis, or
+          segmentation~\cite{alsulami2026deep}. They are relatively simple, but
+          they are sensitive to lighting, distortion, noise, and
+          occlusion~\cite{alsulami2026deep}. Warehouse tests confirm these
+          limits: one template-matching approach gave poor results at one metre
+          and required a new set of patterns for each
+          environment~\cite{kalinov2020warevision}.
+    \item \textbf{Deep learning-based detection}: Neural networks learn visual
+          features directly and are generally more robust to variations in scale,
+          distortion, and partial occlusion~\cite{alsulami2026deep}.
+          Architectures such as Faster R-CNN, SSD, and YOLO have been applied to
+          this task~\cite{alsulami2026deep}. Recent \gls{abb:uav}-oriented work
+          using YOLOv8 reported 92.4\% mAP on simulated images with
+          millisecond-level inference, which makes this family suitable for
+          real-time applications~\cite{alsulami2026deep}. Computational cost
+          nevertheless remains an important constraint for onboard deployment,
+          since some deep learning pipelines require more computing power than a
+          drone can carry~\cite{kalinov2020warevision}.
+    \item \textbf{Image restoration}: These approaches first enhance or restore
+          degraded images before decoding. Recent methods use deep learning and
+          generative models to reduce blur and improve \gls{abb:qr} recognition
+          under difficult imaging conditions~\cite{dong2024motionblurred}.
+          Processing time remains a limitation of this family, and reducing it is
+          an explicit direction for future work~\cite{dong2024motionblurred}.
+\end{itemize}
 
 \section{Chapter Conclusion}%
 \label{sec:bg:conclusion}
