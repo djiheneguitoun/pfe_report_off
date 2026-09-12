@@ -9,8 +9,36 @@
 \subsection{Principle of Open-Loop Navigation}%
 \label{subsec:nav:openloop-principle}
 
+In open-loop navigation, the complete path is resolved before the drone starts
+moving. The planner takes as input a map of the environment, a start position,
+and a target~\cite{kumar2025comprehensive}, then searches for the route that
+minimises a chosen cost. That cost need not be distance: flight time, energy
+consumption, the number of turns, or path smoothness are all used in
+practice~\cite{kumar2025comprehensive}. Once the route has been obtained, the
+vehicle executes it as computed.
+
+This mode of operation is also known as offline planning, and it presupposes a
+static environment~\cite{kumar2025comprehensive}. Where that assumption holds, it
+offers a real advantage: the problem is solved once, on the ground, without the
+computational constraints of the onboard hardware.
+
 \subsection{Principle of Closed-Loop Navigation}%
 \label{subsec:nav:closedloop-principle}
+
+In closed-loop navigation, the decision is re-derived throughout the flight. The
+drone observes its surroundings, updates its internal representation of them, and
+selects its next action from that updated state. Online planning rests on the
+same principle and is designed to accommodate unexpected obstacles and changing
+conditions~\cite{kumar2025comprehensive}. Learning-based methods make this
+structure explicit: the agent executes an action, the environment returns an
+observation and a reward, and both are fed back into the following decision,
+closing the loop~\cite{chang2023review}.
+
+The benefit is robustness. Fixed waypoints and pre-computed paths adapt poorly to
+conditions that evolve and to obstacles that were not anticipated, which raises
+the risk of collision~\cite{pore2026uavqr}.
+
+
 
 \subsection{Criteria Used for the Comparison}%
 \label{subsec:nav:criteria}

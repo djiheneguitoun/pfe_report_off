@@ -1,2 +1,26 @@
 \section{Chapter Introduction}%
 \label{sec:nav:intro}
+
+The previous chapter showed that the platform and the perception pipeline are no
+longer the limiting factor in warehouse inspection. The bottleneck lies one level
+higher, in the way the drone decides where to go next. Most existing systems
+execute a route that was computed before take-off, over a layout assumed to be
+known, and under the hypothesis that the environment will remain unchanged for
+the duration of the mission.
+
+This chapter examines that decision layer. It compares the main families of
+autonomous navigation methods around a single criterion: the moment at which the
+path is committed. Some approaches resolve the entire route before the vehicle
+leaves the ground; others commit only to the next move, and derive it from what
+the drone has just observed. This distinction defines the two groups studied
+here.
+
+\Cref{sec:nav:principles} states the two principles and identifies the cases
+where the boundary between them becomes ambiguous.
+\Cref{sec:nav:classical,sec:nav:metaheuristics,sec:nav:openloop-limits} cover the
+open-loop methods, first the classical algorithms and then the biologically
+inspired ones, and close on the limits they share.
+\Cref{sec:nav:learning,sec:nav:activeinf,sec:nav:genai} cover the closed-loop
+methods, from learning-based approaches to active inference and to the recent use
+of language and vision-language models. \Cref{sec:nav:conclusion} summarises the
+chapter.
