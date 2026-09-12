@@ -151,8 +151,7 @@ step, or evolutionary algorithms~\cite{krayani2023goal}. The \gls{abb:tspwp} is 
 version where each point also carries a reward, and the algorithm then looks for
 the best compromise between the distance travelled and the reward
 collected~\cite{krayani2023goal}. This is useful when some targets matter more
-than others. Its main limit is important for our case: the \glsxtrshort{abb:tsp}
-is offline, so if a new target appears during the flight, the whole tour must be
+than others. Its main limit is being offline, so if a new target appears during the flight, the whole tour must be
 recomputed from the beginning~\cite{krayani2023goal}.
 
 \subsubsection*{Comparison}
@@ -198,8 +197,7 @@ changes.
 
 Behind their differences, these methods share the same limitation. All of them
 need a description of the workspace before the flight, as a graph, a grid, or a
-list of targets with known costs. This is exactly the assumption that does not
-hold in our mission, where the layout is discovered while the drone inspects it.
+list of targets with known costs. 
 Even D*, the most flexible of the six, still starts from a complete path and only
 repairs it. The next section presents a second group of open-loop methods. They
 keep the same assumption, but they replace exact search with stochastic
@@ -320,9 +318,7 @@ These methods remove the scalability barrier of the exact algorithms, but they d
 not remove the assumption behind them. They are optimisers, not decision loops:
 the candidate solutions, the cost function, and the set of targets must all be
 defined before the search starts. Variants designed for dynamic targets exist,
-yet they still re-optimise a model that is given in advance. The next section
-gathers the limits shared by the two open-loop families and explains why they are
-not sufficient for the mission considered in this work.
+yet they still re-optimise a model that is given in advance. 
 
 \section{Limits of Open-Loop Methods}%
 \label{sec:nav:openloop-limits}
@@ -363,13 +359,7 @@ assumption.
           current practice~\cite{kumar2025comprehensive}.
 \end{itemize}
 
-These four limits matter directly for the mission studied in this work. The
-warehouse layout is not known before the flight, since the drone discovers it
-while inspecting. Obstacles are not all static, because operators and forklifts
-move during the mission. New targets appear as the inspection progresses, in the
-form of unread codes and unexplored areas. And the work must be shared between
-several drones from what they observe, not from a plan fixed in advance. None of
-these four conditions is compatible with a route computed once before take-off.
+These four limits are not independent. They all follow from the same requirement, namely that the environment be described before the flight. They therefore apply together whenever the layout is discovered during the mission, whenever obstacles move, or whenever new targets appear while the drone operates
 
 The next sections therefore turn to the closed-loop methods, which recompute the
 decision as new observations arrive. \Cref{sec:nav:learning} presents the
@@ -379,78 +369,162 @@ learning-based approaches, \Cref{sec:nav:activeinf} active inference, and
 \section{Closed-Loop Methods: Learning-Based Approaches}%
 \label{sec:nav:learning}
 
+Learning-based methods form the third family in the standard
+taxonomy~\cite{krayani2023goal}. They replace the explicit optimisation of the
+previous sections with a policy learned from interaction. The structure is a loop
+with four elements: an agent, an environment, an action, and a reward. The agent
+performs an action, the environment returns a new state and a reward, and both
+feed back into the next decision~\cite{chang2023review}.
+
+The problem is usually written as a Markov decision process, or as its partially
+observable version, the \glsxtrshort{abb:pomdp}, when the drone cannot observe
+the true state of the world. A \glsxtrshort{abb:pomdp} is defined by the tuple
+$\langle S, A, T, R, O, Z, \gamma \rangle$, where $S$ is the set of states, $A$
+the set of actions, $T$ the transition probabilities, $R$ the reward, $O$ the set
+of observations, $Z$ the observation probabilities, and $\gamma$ the discount
+factor~\cite{sandino2020autonomous}. Since the state is hidden, the agent
+maintains a \emph{belief state}, a probability distribution over all possible
+states, updated from the history of actions, observations, and
+rewards~\cite{sandino2020autonomous}:
+
+\begin{equation}
+    b(h) = \bigl( \prob[S_t = s^1 \mid H_t = h], \; \dots,
+    \; \prob[S_t = s^n \mid H_t = h] \bigr)
+    \label{eq:nav:belief}
+\end{equation}
+
+The objective is then to find the policy $\pi$ that maps a belief to an action
+and maximises the discounted accumulated reward~\cite{sandino2020autonomous}:
+
+\begin{equation}
+    \pi^* = \argmax_{\pi} \; \esp_{\pi}\!\left[
+        \sum_{t=0}^{\infty} \gamma^t R_t \right]
+    \label{eq:nav:policy}
+\end{equation}
+
+The discount factor $\gamma \in [0, 1]$ controls how far into the future the
+agent looks. The methods below differ in how they compute or approximate this
+policy.
+
 \subsection{Q-Learning}%
 \label{subsec:nav:qlearning}
 
-\paragraph*{Definition.}
+Q-learning is the simplest of these methods. Instead of learning a policy
+directly, it learns a value $Q(s, a)$ for every state--action pair, which
+represents the expected return of taking action $a$ in state
+$s$~\cite{chang2023review}. The values are stored in a table and updated at each
+step:
 
-\paragraph*{How does it work?}
+\begin{equation}
+    Q(s_t, a_t) \leftarrow Q(s_t, a_t) + \alpha \Bigl[ r_t
+    + \gamma \max_{a'} Q(s_{t+1}, a') - Q(s_t, a_t) \Bigr]
+    \label{eq:nav:qlearning}
+\end{equation}
 
-\paragraph*{UAV applications.}
-
-\paragraph*{Strengths and limitations.}
+In \gls{abb:uav} work, Q-learning has been used for trajectory design, for
+example to maximise the sum-rate, the quality of experience, or the fairness of
+user coverage in wireless networks~\cite{krayani2023goal}. Its main weakness is
+the speed of learning: each step produces a single update of the table, and the
+algorithm cannot explain why an action was wrong, which slows down
+convergence~\cite{krayani2022novel}.
 
 \subsection{Deep Q-Networks and Their Variants}%
 \label{subsec:nav:dqn}
 
-\paragraph*{Definition.}
+Deep Q-networks replace the table by a neural network, which allows the method to
+work with high-dimensional inputs such as images or maps. One example applies a
+Double Deep Q-Network with two convolutional models, fed at the same time with a
+local map around the drone and with the global map, the first handling collision
+avoidance and the second the general direction~\cite{chang2023review}.
 
-\paragraph*{How does it work?}
-
-\paragraph*{Variants.}
-
-\paragraph*{UAV applications.}
-
-\paragraph*{Strengths and limitations.}
+Two mechanisms make training possible. Past transitions are stored and replayed
+in mini-batches, which breaks the strong correlation between successive samples,
+and reusing this past experience reduces the amount of data needed to train the
+model~\cite{ding2024external}. Even with these mechanisms, the method still
+requires a large number of samples, and it remains limited to discrete actions.
 
 \subsection{Policy-Gradient and Actor-Critic Methods}%
 \label{subsec:nav:policygradient}
 
-\paragraph*{Definition.}
+Policy-gradient methods optimise the policy directly instead of learning a value
+table, which makes them suitable for continuous actions such as a velocity or a
+heading. They use two networks: an actor that produces the action from the
+current state, and a critic that estimates the value of that
+action~\cite{ding2024external}.
 
-\paragraph*{How does it work?}
-
-\paragraph*{Main variants used in the UAV literature.}
-
-\paragraph*{UAV applications.}
-
-\paragraph*{Strengths and limitations.}
+\Glsxtrfull{abb:ddpg} follows this structure and has been used for continuous
+\gls{abb:uav} trajectory optimisation~\cite{ding2024external}. Training is
+unstable by nature, so target networks are added and updated slowly through a
+soft update rule, which keeps them behind the main networks and stabilises the
+process~\cite{ding2024external}.
 
 \subsection{Multi-Agent Reinforcement Learning}%
 \label{subsec:nav:marl}
 
-\paragraph*{Definition.}
+Multi-agent reinforcement learning extends this framework to several drones
+acting in the same environment. Each agent has its own local actor-critic
+network, selects its action from its own local state, and receives a global
+reward that measures the performance of the whole
+system~\cite{ding2024external}. Because the agents are fully decentralised, no
+central coordinator is needed, which simplifies the architecture and reduces the
+communication overhead~\cite{ding2024external}.
 
-\paragraph*{How does it work?}
-
-\paragraph*{UAV applications.}
-
-\paragraph*{Strengths and limitations.}
+Hybrid schemes combine several algorithms when the decisions are of different
+types. One framework uses a multi-agent actor-critic for the discrete part of the
+problem and \glsxtrshort{abb:ddpg} for the continuous
+trajectory~\cite{ding2024external}.
 
 \subsection{Hierarchical Reinforcement Learning}%
 \label{subsec:nav:hrl}
 
-\paragraph*{Definition.}
-
-\paragraph*{How does it work?}
-
-\paragraph*{UAV applications.}
-
-\paragraph*{Strengths and limitations.}
+Hierarchical reinforcement learning decomposes a long mission into a hierarchy of
+sub-tasks, each governed by its own policy. A high-level policy decides which
+sub-task to execute, and a low-level policy executes it until a termination
+condition is reached. The aim is to handle long-horizon missions, where a single
+flat policy would need too many steps to learn anything useful.
 
 \subsection{Online POMDP Solvers}%
 \label{subsec:nav:pomdp-solvers}
 
-\paragraph*{Definition.}
+Online \glsxtrshort{abb:pomdp} solvers belong to the same decision framework but
+do not learn a policy. They compute the next action directly during the flight,
+by running Monte Carlo simulations from the current belief and selecting the
+action with the best estimated value. The Adaptive Belief Tree follows this
+principle and has been used for autonomous navigation in cluttered,
+\gls{abb:gps}-denied environments, where sensor noise and occlusion prevent the
+drone from observing the true state~\cite{sandino2020autonomous}.
 
-\paragraph*{How does it work?}
-
-\paragraph*{UAV applications.}
-
-\paragraph*{Strengths and limitations.}
+This avoids the training phase entirely, but it moves the cost to the flight
+itself. Running an expensive decision algorithm together with object detection on
+the limited onboard hardware of a small drone is identified as an open
+challenge~\cite{sandino2020autonomous}.
 
 \subsection{Limits of Learning-Based Approaches}%
 \label{subsec:nav:learning-limits}
+
+Four limits are reported across this family.
+
+\begin{itemize}[itemsep=0.5em]
+    \item \textbf{Training cost.} Once the network is trained, a solution is
+          produced quickly, but training itself requires a large number of
+          samples and several epochs, which takes considerable
+          time~\cite{krayani2026bayesian}.
+    \item \textbf{Poor generalisation.} Most machine learning and reinforcement
+          learning methods cannot adapt to situations that were not part of their
+          training set. Adapting them requires extensive retraining, which is a
+          problem for real-time
+          decision-making~\cite{krayani2023goal, krayani2026bayesian}.
+    \item \textbf{Onboard computation.} Decision-making and perception must run
+          together on hardware with limited resources, and this remains an open
+          difficulty~\cite{sandino2020autonomous}.
+    \item \textbf{Reward design.} The behaviour of the agent depends entirely on
+          the reward function, which has to be designed by hand. A typical
+          formulation combines several weighted objectives with penalty
+          terms~\cite{ding2024external}, and these weights must be tuned for each
+          mission.
+\end{itemize}
+
+
 
 \section{Closed-Loop Methods: Active Inference}%
 \label{sec:nav:activeinf}
