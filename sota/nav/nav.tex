@@ -529,20 +529,175 @@ Four limits are reported across this family.
 \section{Closed-Loop Methods: Active Inference}%
 \label{sec:nav:activeinf}
 
+Active inference comes from neuroscience. The starting idea is that the brain
+does not passively receive information: it constantly predicts what it is about
+to perceive, and it reacts when reality does not match the prediction. This
+behaviour can be described by a single rule, the minimisation of what is called
+free energy~\cite{ding2024external}. Researchers in robotics then reused this
+rule to control machines~\cite{ji2023delay}.
+
+To understand what changes compared with the previous section, it helps to
+compare the two. A reinforcement learning agent learns because the environment
+gives it a reward, and its whole behaviour depends on that
+signal~\cite{ding2024external}. An active inference agent receives no reward. It
+carries inside itself a model of the world, that is, an expectation of what it
+should observe. Its only objective is to reduce the difference between this
+expectation and what its sensors actually report. This is why the framework is
+often described as a filter plus a controller~\cite{ji2023delay}.
+
 \subsection{The Free Energy Principle}%
 \label{subsec:nav:fep}
+
+The principle says that an agent builds a model of its environment from what its
+sensors measure, and then acts so that its observations stay close to what it
+expects~\cite{ji2024integration}.
+
+When a difference appears between the model and reality, the agent has two ways
+of reducing it. It can change its mind, which means updating its beliefs to match
+the observations. Or it can change the world, which means moving or acting so
+that the observations match the model again. The two mechanisms work together in
+a loop: what the agent believes determines what it does, and what it does changes
+what it observes~\cite{ji2024integration}.
+
+Ideally, the agent should minimise its \emph{surprise}, meaning how unexpected
+its current observation is. This cannot be computed in practice, because it would
+require considering every possible cause of that
+observation~\cite{ji2024integration}. This is why the framework uses two
+quantities that can actually be computed: one for understanding the present, one
+for choosing the future.
 
 \subsection{Variational Free Energy}%
 \label{subsec:nav:vfe}
 
+Variational free energy is used to answer the question ``where am I and what is
+happening around me?''.
+
+The difficulty is that the drone cannot know the true state of the world, only
+what its sensors show. The exact answer cannot be computed, so an approximate one
+is used instead, written $q(z_t)$, and the agent brings it as close as possible
+to the truth~\cite{ji2024integration}. Free energy measures this remaining
+distance:
+
+\begin{equation}
+    F_{\text{AIF}} = D_{\mathrm{KL}}\bigl( q(z_t) \,\|\, p(x_t \mid y_t) \bigr)
+    - \ln p(y_t, a_t)
+    \label{eq:nav:vfe}
+\end{equation}
+
+The first term is a mathematical distance between what the agent believes and the
+best possible explanation of its observations. The second is the quality of the
+model itself.
+
+This single quantity plays two roles. If the agent minimises it by changing its
+beliefs, it is doing perception. If it minimises it by changing its actions, it
+is doing control~\cite{ji2024integration}. In both cases, the effect is the same:
+the model explains the observations better. In practice, free energy works like
+the loss function of a neural network, a number that the system tries to push
+down~\cite{ji2024integration}.
+
 \subsection{Expected Free Energy}%
 \label{subsec:nav:efe}
 
-\subsection{Continuous and Discrete Active Inference}%
-\label{subsec:nav:aif-continuous-discrete}
+Variational free energy only looks at the present. It says nothing about which
+action to take next, because it uses observations the agent has already
+received~\cite{ding2024external}. To plan ahead, the framework uses a second
+quantity, the expected free energy. For each possible action, the agent imagines
+what would happen, computes the free energy that this action would produce, and
+then chooses the action with the lowest value.
+
+The interesting part is what this quantity contains. When a drone minimises
+expected free energy, it selects actions that combine two behaviours at once:
+gathering information about the environment, and moving towards its
+objective~\cite{wang2026bridging}. The formula shows these two behaviours as two
+separate terms~\cite{fang2024resource}:
+
+\begin{equation}
+    \begin{aligned}
+        G_{\text{AIF}} = {} & \underbrace{-\,\esp_{q(o_t)}\bigl[
+            D_{\mathrm{KL}}\bigl[ q(s_t \mid o_t) \,\|\,
+                q(s_t \mid s_{t-1}, a_{t-1}) \bigr]
+        \bigr]}_{\text{belief error}}                                  \\[0.4em]
+                            & \underbrace{-\,\esp_{q(o_t)}\bigl[
+            \log p(\tilde{o}_t) \bigr]}_{\text{preference}}
+    \end{aligned}
+    \label{eq:nav:efe}
+\end{equation}
+
+The first term is high when an action would teach the agent something new, so it
+pushes towards exploration. The second term is high when an action brings the
+agent closer to the situation it wants, so it pushes towards the
+goal~\cite{fang2024resource}.
+
+This is the main attraction of the framework. In reinforcement learning,
+exploration usually has to be added by hand, through an extra bonus in the
+reward. Here, it comes out of the same equation as the goal.
+
+\subsection{Active Inference for UAV Systems}%
+\label{subsec:nav:aif-uav}
+
+Several \gls{abb:uav} applications of this framework have been reported.
+
+\begin{itemize}[itemsep=0.5em]
+    \item \textbf{Resource allocation and anti-jamming.} Active inference has
+          been applied to spectrum allocation for a drone facing a jammer. The
+          reported advantage is speed of learning: the agent makes several
+          updates at each step and can identify why an action was wrong, whereas
+          Q-learning makes a single update without that
+          information~\cite{krayani2022novel}.
+    \item \textbf{Goal-directed trajectory design.} A model of the world is built
+          before the mission from solved instances of the travelling salesman
+          problem with profits. The drone then uses this model to infer its route
+          when it meets a new situation. The method is reported as faster, more
+          stable, and better at generalising than
+          Q-learning~\cite{krayani2023goal}. The same principle has been used for
+          anti-jamming trajectories, with an expert optimiser producing the
+          training examples~\cite{krayani2026bayesian}.
+    \item \textbf{Deep active inference.} For more complex tasks, neural networks
+          are used to approximate the probabilities involved in free energy,
+          which extends the framework beyond small
+          problems~\cite{ding2024external}.
+    \item \textbf{Low-level control.} Active inference has also been used to make
+          a quadrotor follow a trajectory, acting as a state estimator combined
+          with a controller. A variant handles the delay between a command and
+          its effect, which improves accuracy~\cite{ji2024integration}.
+    \item \textbf{Multi-UAV coordination.} Recent work places free-energy-based
+          inference inside the decision nodes of behaviour trees, so that several
+          drones can update their policies during the mission and adapt to each
+          other~\cite{wang2026bridging}. Active inference has also been proposed
+          for trajectory design in \gls{abb:uav}
+          swarms~\cite{arshid2024active}.
+\end{itemize}
 
 \subsection{Limits of Active Inference}%
 \label{subsec:nav:aif-limits}
+
+Four limits appear in this literature.
+
+\begin{itemize}[itemsep=0.5em]
+    \item \textbf{The model of the world must be built first.} The agent cannot
+          infer anything without an internal model of its environment. In the
+          trajectory design work, this model is learned before the mission from
+          examples produced by an expert
+          optimiser~\cite{krayani2023goal, krayani2026bayesian}. The difficulty
+          is therefore moved, not removed.
+    \item \textbf{The exact computation is impossible.} The true state of the
+          world cannot be computed directly, so the framework always works with
+          approximations, and in practice assumes that the distributions are
+          Gaussian~\cite{ji2024integration}.
+    \item \textbf{Scaling up requires neural networks.} Applying the framework to
+          complex tasks means approximating free energy with neural
+          networks~\cite{ding2024external}, which brings back part of the
+          training cost that active inference was supposed to avoid.
+    \item \textbf{Multi-agent use is still rare.} The framework works well for a
+          single agent, but its use for coordinating several drones remains
+          limited, and existing frameworks are often centralised, which makes
+          them hard to integrate into modular
+          architectures~\cite{wang2026bridging}.
+\end{itemize}
+
+The next section presents a more recent family of closed-loop methods, where the
+internal model of the environment is replaced by a pre-trained language or
+vision-language model.
 
 \section{Closed-Loop Methods: Language and Vision-Language Models}%
 \label{sec:nav:genai}
