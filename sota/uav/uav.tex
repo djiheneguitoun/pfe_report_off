@@ -171,6 +171,71 @@ provide flight, sensing, computation, and communication.
 \subsection{UAVs in Indoor Environments}%
 \label{subsec:bg:uav-indoor}
 
+Indoor \gls{abb:uav} operation differs from outdoor flight because warehouses are
+confined, \gls{abb:gps}-denied, and often contain both static and moving
+obstacles.
+
+\medskip
+\noindent\textbf{Characteristics of indoor environments}
+\begin{description}[style=unboxed, leftmargin=0pt, itemsep=0.4em,
+        font=\normalfont\bfseries]
+    \item[\textendash~Structured and confined spaces:] warehouses contain narrow
+          aisles and multi-level racks, leaving limited space for
+          manoeuvring~\cite{pore2026drone, pore2026uavqr}.
+    \item[\textendash~GPS-denied environments:] indoor conditions make
+          \gls{abb:gnss} unreliable, so \glspl{abb:uav} must rely on alternative
+          localisation methods~\cite{pore2026drone, chang2023review}.
+    \item[\textendash~Static and dynamic obstacles:] racks, shelves, workers, and
+          forklifts can obstruct the \gls{abb:uav}'s path. Real-time obstacle
+          detection and avoidance are therefore
+          required~\cite{pore2026drone, pore2026uavqr}.
+    \item[\textendash~Limited visual conditions:] illumination changes, motion
+          blur, and occlusions can affect both navigation and visual
+          inspection~\cite{pore2026uavqr}.
+    \item[\textendash~Communication constraints:] wireless communication must
+          also be considered, especially in multi-\gls{abb:uav} systems where
+          drones need to exchange information during the
+          mission~\cite{acharya2020cornet}.
+\end{description}
+
+\medskip
+\noindent\textbf{UAV capabilities for indoor operation}
+\begin{description}[style=unboxed, leftmargin=0pt, itemsep=0.4em,
+        font=\normalfont\bfseries]
+    \item[\textendash~Three-dimensional mobility:] multirotor \glspl{abb:uav} can
+          move in three dimensions and hover, allowing them to approach objects
+          from different positions~\cite{mohsan2023unmanned}.
+    \item[\textendash~Access to confined and elevated areas:] \glspl{abb:uav} can
+          reach storage locations at different heights without occupying floor
+          space or requiring modifications to the
+          warehouse~\cite{pore2026uavqr}.
+    \item[\textendash~Flexible sensing:] cameras, LiDAR, and other sensors can be
+          integrated according to the requirements of navigation and inspection
+          tasks~\cite{pore2026uavqr}.
+    \item[\textendash~Autonomous operation:] an indoor \gls{abb:uav} must detect
+          obstacles, plan safe trajectories, and adapt its movement when the
+          environment changes~\cite{pore2026uavqr}.
+\end{description}
+
+\medskip
+\noindent\textbf{Indoor UAV applications}
+\begin{description}[style=unboxed, leftmargin=0pt, itemsep=0.4em,
+        font=\normalfont\bfseries]
+    \item[\textendash~Inspection:] \glspl{abb:uav} can inspect infrastructure and
+          industrial facilities while reducing human exposure to repetitive or
+          risky tasks~\cite{tejeroruiz2024realistic, mohsan2023unmanned}.
+    \item[\textendash~Monitoring:] cameras and other sensors can be used to
+          monitor indoor facilities and environmental
+          conditions~\cite{pore2026drone}.
+    \item[\textendash~Mapping:] LiDAR and other depth sensors can support
+          three-dimensional mapping and obstacle
+          detection~\cite{pore2026drone}.
+    \item[\textendash~Inventory inspection:] \glspl{abb:uav} can scan codes
+          placed on racks and use the collected information to support warehouse
+          inventory
+          management~\cite{pore2026drone, kalinov2020warevision, cristiani2020inventory}.
+\end{description}
+
 \subsection{Multi-UAV Systems and Coordination}%
 \label{subsec:bg:uav-multi}
 
