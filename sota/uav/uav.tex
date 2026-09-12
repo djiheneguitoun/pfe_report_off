@@ -27,40 +27,32 @@ The literature generally distinguishes four main types of \glspl{abb:uav}:
 fixed-wing, single-rotor, multirotor, and hybrid
 platforms~\cite{mohsan2023unmanned}.
 
-\begin{description}[style=unboxed, leftmargin=0pt, itemsep=0.8em,
-        font=\normalfont\bfseries]
-    \item[\textendash~Fixed-wing UAVs:] These \glspl{abb:uav} use wings to generate lift and
-          are designed for efficient and fast flight. They offer long endurance
-          and are therefore suitable for large-area surveys and structure
-          inspection~\cite{mohsan2023unmanned}. However, they cannot hover and
-          require a conventional take-off and landing
-          procedure~\cite{mohsan2023unmanned}. These constraints make them
-          unsuitable for confined indoor environments.
+\textbf{Fixed-wing UAVs} use wings to generate lift and are designed for
+efficient and fast flight. They offer long endurance and are therefore suitable
+for large-area surveys and structure inspection~\cite{mohsan2023unmanned}.
+However, they cannot hover and require a conventional take-off and landing
+procedure~\cite{mohsan2023unmanned}. These constraints make them unsuitable for
+confined indoor environments.
 
-    \item[\textendash~Single-rotor UAVs:] Similar to helicopters, single-rotor
-          \glspl{abb:uav} can hover and carry relatively large
-          payloads~\cite{mohsan2023unmanned}. However, their mechanical
-          structure is more complex, and they are generally more expensive and
-          difficult to operate~\cite{mohsan2023unmanned}.
+\textbf{Single-rotor UAVs}, similar to helicopters, can hover and carry
+relatively large payloads~\cite{mohsan2023unmanned}. However, their mechanical
+structure is more complex, and they are generally more expensive and difficult to
+operate~\cite{mohsan2023unmanned}.
 
-    \item[\textendash~Multirotor UAVs:] Multirotor platforms are widely used for imaging and
-          inspection because of their low cost, compact size, manoeuvrability,
-          and ability to take off, land, and hover
-          vertically~\cite{mohsan2023unmanned}. Quadrotors are the most common
-          configuration. Their main limitations are shorter flight time and
-          lower payload capacity compared with larger
-          platforms~\cite{mohsan2023unmanned}.
+\textbf{Multirotor UAVs} are widely used for imaging and inspection because of
+their low cost, compact size, manoeuvrability, and ability to take off, land, and
+hover vertically~\cite{mohsan2023unmanned}. Quadrotors are the most common
+configuration. Their main limitations are shorter flight time and lower payload
+capacity compared with larger platforms~\cite{mohsan2023unmanned}.
 
-    \item[\textendash~Hybrid UAVs:] Hybrid platforms combine characteristics of fixed-wing
-          and rotary-wing \glspl{abb:uav}. They can perform vertical take-off
-          and landing and can hover, while also providing better flight
-          efficiency than conventional multirotors~\cite{mohsan2023unmanned}.
-          However, their design and control are more
-          complex~\cite{mohsan2023unmanned}.
-\end{description}
+\textbf{Hybrid UAVs} combine characteristics of fixed-wing and rotary-wing
+\glspl{abb:uav}. They can perform vertical take-off and landing and can hover,
+while also providing better flight efficiency than conventional
+multirotors~\cite{mohsan2023unmanned}. However, their design and control are more
+complex~\cite{mohsan2023unmanned}.
 
-\medskip
-\noindent\textbf{\textendash~Suitability for indoor applications:}
+\subsubsection*{Suitability for Indoor Applications}
+
 Among these types, multirotor \glspl{abb:uav} are particularly suitable for
 indoor inspection. Their ability to hover and move freely in three dimensions
 allows them to approach objects closely~\cite{mohsan2023unmanned}, and their
@@ -78,95 +70,102 @@ environment~\cite{mohsan2023unmanned}.
 
 A \gls{abb:uav} platform combines several subsystems that work together to
 provide flight, sensing, computation, and communication.
+\Cref{fig:bg:uav-architecture} gives an overview of these subsystems and of the
+information exchanged between them.
 
-\medskip
-\noindent\textbf{Airframe and propulsion system}
-\begin{description}[style=unboxed, leftmargin=0pt, itemsep=0.4em,
-        font=\normalfont\bfseries]
-    \item[\textendash~Frame:] provides the mechanical structure of the
-          \gls{abb:uav} and supports its main components~\cite{mohsan2023unmanned}.
-    \item[\textendash~Motors:] convert electrical energy into mechanical
-          rotation to drive the propellers~\cite{mohsan2023unmanned}.
-    \item[\textendash~Propellers:] generate the thrust required for flight and
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{uav_architecture}
+    \caption[Architecture of a UAV platform]{Architecture of a \gls{abb:uav}
+        platform. Onboard sensors feed measurements to the flight control
+        system, which turns them into actuator commands for the airframe and
+        propulsion subsystem, while the companion computer issues the high-level
+        mission commands and maintains the links to the ground station. The
+        power supply constrains the duration of the mission and is replenished at
+        a ground charging station.}%
+    \label{fig:bg:uav-architecture}
+\end{figure}
+
+\subsubsection*{Airframe and Propulsion System}
+
+\begin{itemize}[itemsep=0.5em]
+    \item \textbf{Frame}: Provides the mechanical structure of the \gls{abb:uav}
+          and supports its main components~\cite{mohsan2023unmanned}.
+    \item \textbf{Motors}: Convert electrical energy into mechanical rotation to
+          drive the propellers~\cite{mohsan2023unmanned}.
+    \item \textbf{Propellers}: Generate the thrust required for flight and
           movement. Their number and arrangement define the multirotor
           configuration, with quadrotors being the most
           common~\cite{mohsan2023unmanned}.
-\end{description}
+\end{itemize}
 
-\medskip
-\noindent\textbf{Flight control system}
-\begin{description}[style=unboxed, leftmargin=0pt, itemsep=0.4em,
-        font=\normalfont\bfseries]
-    \item[\textendash~Flight controller:] processes sensor measurements and
-          generates the commands required to maintain the \gls{abb:uav}'s
-          stability and control its
-          movement~\cite{pore2026drone, mohsan2023unmanned}.
-    \item[\textendash~Autopilot:] provides higher-level functions such as
-          mission planning and waypoint generation~\cite{mohsan2023unmanned}.
-          PX4 and ArduPilot are widely used open-source autopilot
+\subsubsection*{Flight Control System}
+
+\begin{itemize}[itemsep=0.5em]
+    \item \textbf{Flight controller}: Processes sensor measurements and generates
+          the commands required to maintain the \gls{abb:uav}'s stability and
+          control its movement~\cite{pore2026drone, mohsan2023unmanned}.
+    \item \textbf{Autopilot}: Provides higher-level functions such as mission
+          planning and waypoint generation~\cite{mohsan2023unmanned}. PX4 and
+          ArduPilot are widely used open-source autopilot
           stacks~\cite{acharya2020cornet}.
-    \item[\textendash~Low-level control:] regulates the \gls{abb:uav}'s
-          altitude, velocity, and orientation so that it follows the requested
-          trajectory. \Gls{abb:pid} controllers are widely used because they are
-          simple to implement~\cite{mohsan2023unmanned}.
-\end{description}
+    \item \textbf{Low-level control}: Regulates the \gls{abb:uav}'s altitude,
+          velocity, and orientation so that it follows the requested trajectory.
+          \Gls{abb:pid} controllers are widely used because they are simple to
+          implement~\cite{mohsan2023unmanned}.
+\end{itemize}
 
-\medskip
-\noindent\textbf{Onboard sensors}
-\begin{description}[style=unboxed, leftmargin=0pt, itemsep=0.4em,
-        font=\normalfont\bfseries]
-    \item[\textendash~IMU:] combines an accelerometer and a gyroscope to measure
+\subsubsection*{Onboard Sensors}
+
+\begin{itemize}[itemsep=0.5em]
+    \item \textbf{IMU}: Combines an accelerometer and a gyroscope to measure
           linear acceleration and angular motion~\cite{jacinto2024pegasus}.
-    \item[\textendash~Barometer and magnetometer:] provide altitude and heading
+    \item \textbf{Barometer and magnetometer}: Provide altitude and heading
           information, respectively~\cite{chandran2024network, jacinto2024pegasus}.
-    \item[\textendash~RGB camera:] provides visual information and is commonly
-          used for barcode and \gls{abb:qr} code detection in warehouse
+    \item \textbf{RGB camera}: Provides visual information and is commonly used
+          for barcode and \gls{abb:qr} code detection in warehouse
           applications~\cite{pore2026drone}.
-    \item[\textendash~Depth camera and LiDAR:] provide distance information for
+    \item \textbf{Depth camera and LiDAR}: Provide distance information for
           mapping and obstacle detection~\cite{pore2026drone, chang2023review}.
-    \item[\textendash~ToF sensors:] measure distance from the travel time of a
+    \item \textbf{ToF sensors}: Measure distance from the travel time of a
           signal, with accuracy decreasing as the distance
           grows~\cite{tejeroruiz2024realistic}. They are therefore suited to
           short-range proximity detection~\cite{pore2026drone}.
-    \item[\textendash~GNSS/GPS:] provides global positioning for outdoor
+    \item \textbf{GNSS/GPS}: Provides global positioning for outdoor
           flight~\cite{jacinto2024pegasus}. Since \gls{abb:gps} is unreliable
           indoors, other positioning methods are required in warehouse
           environments~\cite{pore2026uavqr}.
-\end{description}
+\end{itemize}
 
-\medskip
-\noindent\textbf{Onboard computing and communication}
-\begin{description}[style=unboxed, leftmargin=0pt, itemsep=0.4em,
-        font=\normalfont\bfseries]
-    \item[\textendash~Companion computer:] runs the high-level logic of the
-          mission, separately from the flight control
-          unit~\cite{acharya2020cornet}.
-    \item[\textendash~Communication interfaces:] allow the \gls{abb:uav} to
-          exchange information with a ground station and, in
-          multi-\gls{abb:uav} systems, with other
-          drones~\cite{chandran2024network, acharya2020cornet}.
-    \item[\textendash~Wi-Fi and telemetry radio:] Wi-Fi links are commonly used
-          for data exchange in warehouse prototypes~\cite{cristiani2020inventory},
+\subsubsection*{Onboard Computing and Communication}
+
+\begin{itemize}[itemsep=0.5em]
+    \item \textbf{Companion computer}: Runs the high-level logic of the mission,
+          separately from the flight control unit~\cite{acharya2020cornet}.
+    \item \textbf{Communication interfaces}: Allow the \gls{abb:uav} to exchange
+          information with a ground station and, in multi-\gls{abb:uav} systems,
+          with other drones~\cite{chandran2024network, acharya2020cornet}.
+    \item \textbf{Wi-Fi and telemetry radio}: Wi-Fi links are commonly used for
+          data exchange in warehouse prototypes~\cite{cristiani2020inventory},
           while the flight control unit uses a radio modem for telemetry and
           flight control~\cite{acharya2020cornet}.
-\end{description}
+\end{itemize}
 
-\medskip
-\noindent\textbf{Power supply}
-\begin{description}[style=unboxed, leftmargin=0pt, itemsep=0.4em,
-        font=\normalfont\bfseries]
-    \item[\textendash~Battery:] supplies energy to all \gls{abb:uav} subsystems
-          and directly affects flight
+\subsubsection*{Power Supply}
+
+\begin{itemize}[itemsep=0.5em]
+    \item \textbf{Battery}: Supplies energy to all \gls{abb:uav} subsystems and
+          directly affects flight
           endurance~\cite{kumar2025comprehensive, mohsan2023unmanned}.
-    \item[\textendash~Flight endurance:] depends mainly on vehicle weight, size,
-          and payload~\cite{mohsan2023unmanned}. Small \glspl{abb:uav} typically
-          fly for twenty to thirty minutes, so limited battery capacity restricts
-          the duration of an inspection mission~\cite{mohsan2023unmanned}.
-    \item[\textendash~Extended operation:] multiple \glspl{abb:uav} can
-          distribute the workload~\cite{kumar2025comprehensive}, while some
-          systems use ground charging stations that the drone visits when its
-          battery falls below a threshold~\cite{cristiani2020inventory}.
-\end{description}
+    \item \textbf{Flight endurance}: Depends mainly on vehicle weight, size, and
+          payload~\cite{mohsan2023unmanned}. Small \glspl{abb:uav} typically fly
+          for twenty to thirty minutes, so limited battery capacity restricts the
+          duration of an inspection mission~\cite{mohsan2023unmanned}.
+    \item \textbf{Extended operation}: Multiple \glspl{abb:uav} can distribute
+          the workload~\cite{kumar2025comprehensive}, while some systems use
+          ground charging stations that the drone visits when its battery falls
+          below a threshold~\cite{cristiani2020inventory}.
+\end{itemize}
 
 \subsection{UAVs in Indoor Environments}%
 \label{subsec:bg:uav-indoor}
@@ -175,66 +174,58 @@ Indoor \gls{abb:uav} operation differs from outdoor flight because warehouses ar
 confined, \gls{abb:gps}-denied, and often contain both static and moving
 obstacles.
 
-\medskip
-\noindent\textbf{Characteristics of indoor environments}
-\begin{description}[style=unboxed, leftmargin=0pt, itemsep=0.4em,
-        font=\normalfont\bfseries]
-    \item[\textendash~Structured and confined spaces:] warehouses contain narrow
+\subsubsection*{Characteristics of Indoor Environments}
+
+\begin{itemize}[itemsep=0.5em]
+    \item \textbf{Structured and confined spaces}: Warehouses contain narrow
           aisles and multi-level racks, leaving limited space for
           manoeuvring~\cite{pore2026drone, pore2026uavqr}.
-    \item[\textendash~GPS-denied environments:] indoor conditions make
+    \item \textbf{GPS-denied environments}: Indoor conditions make
           \gls{abb:gnss} unreliable, so \glspl{abb:uav} must rely on alternative
           localisation methods~\cite{pore2026drone, chang2023review}.
-    \item[\textendash~Static and dynamic obstacles:] racks, shelves, workers, and
+    \item \textbf{Static and dynamic obstacles}: Racks, shelves, workers, and
           forklifts can obstruct the \gls{abb:uav}'s path. Real-time obstacle
           detection and avoidance are therefore
           required~\cite{pore2026drone, pore2026uavqr}.
-    \item[\textendash~Limited visual conditions:] illumination changes, motion
-          blur, and occlusions can affect both navigation and visual
+    \item \textbf{Limited visual conditions}: Illumination changes, motion blur,
+          and occlusions can affect both navigation and visual
           inspection~\cite{pore2026uavqr}.
-    \item[\textendash~Communication constraints:] wireless communication must
-          also be considered, especially in multi-\gls{abb:uav} systems where
-          drones need to exchange information during the
-          mission~\cite{acharya2020cornet}.
-\end{description}
+    \item \textbf{Communication constraints}: Wireless communication must also be
+          considered, especially in multi-\gls{abb:uav} systems where drones need
+          to exchange information during the mission~\cite{acharya2020cornet}.
+\end{itemize}
 
-\medskip
-\noindent\textbf{UAV capabilities for indoor operation}
-\begin{description}[style=unboxed, leftmargin=0pt, itemsep=0.4em,
-        font=\normalfont\bfseries]
-    \item[\textendash~Three-dimensional mobility:] multirotor \glspl{abb:uav} can
+\subsubsection*{UAV Capabilities for Indoor Operation}
+
+\begin{itemize}[itemsep=0.5em]
+    \item \textbf{Three-dimensional mobility}: Multirotor \glspl{abb:uav} can
           move in three dimensions and hover, allowing them to approach objects
           from different positions~\cite{mohsan2023unmanned}.
-    \item[\textendash~Access to confined and elevated areas:] \glspl{abb:uav} can
+    \item \textbf{Access to confined and elevated areas}: \Glspl{abb:uav} can
           reach storage locations at different heights without occupying floor
-          space or requiring modifications to the
-          warehouse~\cite{pore2026uavqr}.
-    \item[\textendash~Flexible sensing:] cameras, LiDAR, and other sensors can be
+          space or requiring modifications to the warehouse~\cite{pore2026uavqr}.
+    \item \textbf{Flexible sensing}: Cameras, LiDAR, and other sensors can be
           integrated according to the requirements of navigation and inspection
           tasks~\cite{pore2026uavqr}.
-    \item[\textendash~Autonomous operation:] an indoor \gls{abb:uav} must detect
+    \item \textbf{Autonomous operation}: An indoor \gls{abb:uav} must detect
           obstacles, plan safe trajectories, and adapt its movement when the
           environment changes~\cite{pore2026uavqr}.
-\end{description}
+\end{itemize}
 
-\medskip
-\noindent\textbf{Indoor UAV applications}
-\begin{description}[style=unboxed, leftmargin=0pt, itemsep=0.4em,
-        font=\normalfont\bfseries]
-    \item[\textendash~Inspection:] \glspl{abb:uav} can inspect infrastructure and
+\subsubsection*{Indoor UAV Applications}
+
+\begin{itemize}[itemsep=0.5em]
+    \item \textbf{Inspection}: \Glspl{abb:uav} can inspect infrastructure and
           industrial facilities while reducing human exposure to repetitive or
           risky tasks~\cite{tejeroruiz2024realistic, mohsan2023unmanned}.
-    \item[\textendash~Monitoring:] cameras and other sensors can be used to
-          monitor indoor facilities and environmental
-          conditions~\cite{pore2026drone}.
-    \item[\textendash~Mapping:] LiDAR and other depth sensors can support
-          three-dimensional mapping and obstacle
-          detection~\cite{pore2026drone}.
-    \item[\textendash~Inventory inspection:] \glspl{abb:uav} can scan codes
-          placed on racks and use the collected information to support warehouse
-          inventory
+    \item \textbf{Monitoring}: Cameras and other sensors can be used to monitor
+          indoor facilities and environmental conditions~\cite{pore2026drone}.
+    \item \textbf{Mapping}: LiDAR and other depth sensors can support
+          three-dimensional mapping and obstacle detection~\cite{pore2026drone}.
+    \item \textbf{Inventory inspection}: \Glspl{abb:uav} can scan codes placed on
+          racks and use the collected information to support warehouse inventory
           management~\cite{pore2026drone, kalinov2020warevision, cristiani2020inventory}.
-\end{description}
+\end{itemize}
 
 \subsection{Multi-UAV Systems and Coordination}%
 \label{subsec:bg:uav-multi}
