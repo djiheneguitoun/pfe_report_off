@@ -23,6 +23,56 @@ reduce the need for human involvement~\cite{tejeroruiz2024realistic}.
 \subsection{Main Categories of UAVs}%
 \label{subsec:bg:uav-categories}
 
+The literature generally distinguishes four main types of \glspl{abb:uav}:
+fixed-wing, single-rotor, multirotor, and hybrid
+platforms~\cite{mohsan2023unmanned}.
+
+\begin{description}[style=unboxed, leftmargin=0pt, itemsep=0.8em,
+        font=\normalfont\bfseries]
+    \item[\textbullet\ Fixed-wing UAVs:] These \glspl{abb:uav} use wings to generate lift and
+          are designed for efficient and fast flight. They offer long endurance
+          and are therefore suitable for large-area surveys and structure
+          inspection~\cite{mohsan2023unmanned}. However, they cannot hover and
+          require a conventional take-off and landing
+          procedure~\cite{mohsan2023unmanned}. These constraints make them
+          unsuitable for confined indoor environments.
+
+    \item[\textbullet\ Single-rotor UAVs:] Similar to helicopters, single-rotor
+          \glspl{abb:uav} can hover and carry relatively large
+          payloads~\cite{mohsan2023unmanned}. However, their mechanical
+          structure is more complex, and they are generally more expensive and
+          difficult to operate~\cite{mohsan2023unmanned}.
+
+    \item[\textbullet\ Multirotor UAVs:] Multirotor platforms are widely used for imaging and
+          inspection because of their low cost, compact size, manoeuvrability,
+          and ability to take off, land, and hover
+          vertically~\cite{mohsan2023unmanned}. Quadrotors are the most common
+          configuration. Their main limitations are shorter flight time and
+          lower payload capacity compared with larger
+          platforms~\cite{mohsan2023unmanned}.
+
+    \item[\textbullet\ Hybrid UAVs:] Hybrid platforms combine characteristics of fixed-wing
+          and rotary-wing \glspl{abb:uav}. They can perform vertical take-off
+          and landing and can hover, while also providing better flight
+          efficiency than conventional multirotors~\cite{mohsan2023unmanned}.
+          However, their design and control are more
+          complex~\cite{mohsan2023unmanned}.
+\end{description}
+
+\medskip
+\noindent\textbf{\textbullet\ Suitability for indoor applications:}
+Among these types, multirotor \glspl{abb:uav} are particularly suitable for
+indoor inspection. Their ability to hover and move freely in three dimensions
+allows them to approach objects closely~\cite{mohsan2023unmanned}, and their
+compact size lets them operate in narrow aisles and at different rack
+levels~\cite{pore2026uavqr}. Vertical take-off and landing platforms have
+therefore become widely used in warehousing
+operations~\cite{kalinov2020warevision}, and recent inspection systems rely on
+quadrotors in both simulation and real experiments~\cite{pore2026uavqr}. However,
+autonomous control remains challenging because the drone must plan and execute
+its movements safely in a confined and complex
+environment~\cite{mohsan2023unmanned}.
+
 \subsection{Components of a UAV Platform}%
 \label{subsec:bg:uav-components}
 
