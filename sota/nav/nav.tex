@@ -208,38 +208,121 @@ optimisation.
 \section{Open-Loop Methods: Biologically Inspired Algorithms}%
 \label{sec:nav:metaheuristics}
 
+The previous section ended on a difficulty: the \glsxtrshort{abb:tsp} is NP-hard,
+so exact solutions become impossible to compute as soon as the number of targets
+grows. One of the two answers proposed in the literature is to use evolutionary
+optimisation algorithms, which have proved effective at reducing the total
+distance travelled in real cases~\cite{krayani2023goal}. This is the second
+family of open-loop methods.
+
+These algorithms take their inspiration from the collective behaviour of natural
+systems, where a group of simple agents interacts to solve a problem
+together~\cite{kumar2025comprehensive}. They do not compute the best solution,
+they search for a good one. A population of candidate solutions is generated,
+evaluated, and improved over many iterations, until the result stops getting
+better. They are useful when the optimal solution is hard to define in advance,
+but they give no guarantee of optimality~\cite{kumar2025comprehensive}.
+
 \subsection{Genetic Algorithm}%
 \label{subsec:nav:ga}
 
-\paragraph*{Definition.}
+The genetic algorithm follows the principle of natural selection. A population of
+candidate paths is created, each one is scored, and the best ones are used to
+produce the next generation through selection, crossover, and
+mutation~\cite{kumar2025comprehensive}. Over the generations, the population
+moves towards better routes.
 
-\paragraph*{How does it work?}
-
-\paragraph*{UAV applications.}
-
-\paragraph*{Strengths and limitations.}
+For \glspl{abb:uav}, the genetic algorithm has been used to obtain a suitable
+path, in particular in target-coverage problems~\cite{krayani2023goal}. Its main
+weakness is speed: convergence is slow, which makes it inefficient for path
+planning problems that need a fast answer~\cite{krayani2023goal}, and this
+becomes a real obstacle in real-time scenarios~\cite{kumar2025comprehensive}.
 
 \subsection{Particle Swarm Optimization}%
 \label{subsec:nav:pso}
 
-\paragraph*{Definition.}
+Particle swarm optimisation is inspired by the movement of bird flocks. Each
+particle represents a candidate solution and moves through the search space under
+two influences: the best position it has found itself, and the best position
+found by the whole swarm. Step by step, the swarm concentrates around the
+promising regions.
 
-\paragraph*{How does it work?}
-
-\paragraph*{UAV applications.}
-
-\paragraph*{Strengths and limitations.}
+It is widely used in \gls{abb:uav} path planning~\cite{kumar2025comprehensive}
+and is good at local optimisation, which is why it is often combined with a
+genetic algorithm, the latter handling the global search~\cite{krayani2023goal}.
+Two limits are reported. Standard versions converge too early and explore a
+limited part of the space~\cite{kumar2025comprehensive}, which means the swarm
+can settle on a solution that is not the best one. Variants have been proposed to
+correct this, for example by keeping the population diverse, or by encoding the
+motion of the vehicle directly in the particles in order to follow dynamic
+targets~\cite{kumar2025comprehensive}.
 
 \subsection{Ant Colony Optimization}%
 \label{subsec:nav:aco}
 
-\paragraph*{Definition.}
+Ant colony optimisation copies the way ants find the shortest route between their
+nest and a food source~\cite{kumar2025comprehensive}. Artificial ants build
+candidate paths, and each one leaves a pheromone trail on the route it used.
+Short routes receive more pheromone, so they attract more ants in the next
+iteration, while the pheromone on the other routes slowly evaporates. The colony
+converges on a good tour without any central decision.
 
-\paragraph*{How does it work?}
+The method is effective for \gls{abb:uav} path planning, and it has been applied
+to low-altitude planning, to multi-\gls{abb:uav} missions, and to coverage
+planning~\cite{kumar2025comprehensive}. Its cost is the main drawback: it needs a
+large amount of data to find the optimal solution, its iterations are slow, and it
+requires much more simulation time than the other two~\cite{krayani2023goal}. It
+also struggles with local optima in complex
+scenarios~\cite{kumar2025comprehensive}.
 
-\paragraph*{UAV applications.}
+\subsubsection*{Comparison}
 
-\paragraph*{Strengths and limitations.}
+The three algorithms share the same logic and differ mainly in how they explore
+the search space and in what this exploration costs.
+\Cref{tab:nav:metaheuristics-comparison} uses the same criteria as the previous
+section.
+
+\begin{table}[!htb]
+    \centering
+    \caption{Comparison of the biologically inspired open-loop algorithms.}%
+    \label{tab:nav:metaheuristics-comparison}
+    \small
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{3.4cm}
+            >{\raggedright\arraybackslash}p{3.4cm}
+            >{\raggedright\arraybackslash}p{3.2cm}
+            >{\raggedright\arraybackslash}p{3.4cm}@{}}
+        \toprule
+        \textbf{Method} & \textbf{Solution quality} & \textbf{Computational cost}
+        & \textbf{Environment changes} \\
+        \midrule
+        Genetic algorithm           & Near-optimal, no guarantee      & Slow convergence          & Inefficient in real time    \\
+        \addlinespace
+        Particle swarm optimisation & Near-optimal, early convergence & Faster, good locally      & Variants for dynamic targets \\
+        \addlinespace
+        Ant colony optimisation     & Near-optimal                    & Slow iterations, long runs & Variants for dynamic 3D     \\
+        \bottomrule
+    \end{tabular}
+
+    \vspace{0.6em}
+    {\footnotesize Compiled from~\cite{kumar2025comprehensive, krayani2023goal}.}
+\end{table}
+
+\FloatBarrier
+
+None of the three dominates the other two, and the literature suggests that
+combining them may be necessary to solve \gls{abb:uav} path planning
+effectively~\cite{krayani2023goal}. This is why hybrid schemes are common, the
+most frequent one pairing a genetic algorithm for the global search with particle
+swarm optimisation for local refinement~\cite{krayani2023goal}.
+
+These methods remove the scalability barrier of the exact algorithms, but they do
+not remove the assumption behind them. They are optimisers, not decision loops:
+the candidate solutions, the cost function, and the set of targets must all be
+defined before the search starts. Variants designed for dynamic targets exist,
+yet they still re-optimise a model that is given in advance. The next section
+gathers the limits shared by the two open-loop families and explains why they are
+not sufficient for the mission considered in this work.
 
 \section{Limits of Open-Loop Methods}%
 \label{sec:nav:openloop-limits}
