@@ -1,0 +1,59 @@
+\documentclass[12pt, a4paper]{report}
+
+\input{preambule/preamble}
+
+
+% !TEX root = main.tex
+\begin{document}
+\setcounter{tocdepth}{3}
+\setcounter{secnumdepth}{3}
+\include{titlepage}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\nouppercase{\bfseries\leftmark}}
+\fancyfoot[R]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0pt}
+\fancypagestyle{plain}{%
+  \fancyhf{}%
+  \fancyfoot[R]{\thepage}%
+  \renewcommand{\headrulewidth}{0pt}%
+  \renewcommand{\footrulewidth}{0pt}%
+}
+\pagenumbering{Roman}
+\input{dedication}
+\input{acknowledgement}
+\include{abstract}
+\afterpage{  
+  \newgeometry{bottom=3cm}
+  \tableofcontents
+  \addcontentsline{toc}{chapter}{Contents}
+  \listoffigures
+  \addcontentsline{toc}{chapter}{List of figures}
+  \listoftables
+  \addcontentsline{toc}{chapter}{List of tables}
+  \lstlistoflistings
+  \addcontentsline{toc}{chapter}{List of \lstlistlistingname}
+  \listofalgorithms
+  \addcontentsline{toc}{chapter}{List of Algorithms}
+}
+% \printabbreviations
+\cleardoublepage
+\printabbreviations[  
+  title=Abbreviations,
+  toctitle=Abbreviations,
+  style=long,nonumberlist
+]
+\restoregeometry
+\pagenumbering{arabic}
+\include{introduction}
+\import{sota}{sota}
+% \import{contribution/}{contribution}
+\bookmarksetup{startatroot}
+\include{conclusion}
+\printbibliography[heading=bibintoc]
+
+\begin{appendices}  
+  \import{appendices}{reqs}
+\end{appendices}
+\end{document}

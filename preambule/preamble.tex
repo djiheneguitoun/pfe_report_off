@@ -1,0 +1,124 @@
+\usepackage[utf8]{inputenc}
+\usepackage[french, arabic, main=english]{babel}
+\usepackage{csquotes}
+\usepackage[LAE, T1]{fontenc}
+\usepackage{array}
+\usepackage{amsmath, amssymb, amsfonts, amsthm}
+\usepackage{bbm}
+% Police principale : Latin Modern (texte + maths), pour matcher exactement le
+% rapport de référence (Mezenner & Yekene), qui utilise LMRoman/LMMono/LMMath.
+\usepackage{lmodern}
+% ---------------------------------------------------------------------------------------
+\usepackage[dvipsnames,svgnames]{xcolor}
+\usepackage{fancyhdr}
+\usepackage{graphicx}
+\graphicspath{{assets/images}{assets/pdf}{assets/python}}
+\usepackage[inline]{enumitem}
+
+% Espacement de listes par défaut (enumitem) : reproduit la mise en page classique
+% de la référence (paragraphes à alinéa, sans parskip).
+\setlist[enumerate,1]{label=\arabic*.}
+
+% \paragraph laissé à sa définition par défaut (titre gras en début de ligne,
+% « run-in ») : c'est exactement le style des intertitres de la référence.
+\usepackage{import}
+\usepackage{hyperref}
+\hypersetup{%
+  colorlinks=true,
+  allcolors=black,
+  pdfauthor={Djihene Guitoun},
+  pdftitle={A Global Framework for GenAI-Enabled Multi-Agent Semantic Communication and Network Adaptation},
+  pdfkeywords={GenAI, multi-agent, semantic communication, network adaptation}
+}
+% cleveref est chargé en toute fin de préambule (voir plus bas) : sinon un paquet
+% chargé après lui (glossaries-extra, bookmark, …) re-patche \@chapter/\@part et
+% casse la capture du type des labels, ce qui fait rendre \Cref{part:...} en « ?? ».
+\usepackage[top=2.5cm,bottom=2.5cm,right=2.5cm,left=2.5cm]{geometry}
+\usepackage{appendix}
+\usepackage{wrapfig}
+\usepackage{cprotect}
+\import{preambule}{tikz}
+
+\newlength\figureheight
+\newlength\figurewidth
+
+\usepackage[backend=biber, style=numeric-comp, sorting=none]{biblatex}
+\addbibresource{references.bib}
+
+\usepackage{etoolbox}
+
+\usepackage{caption}
+
+\import{preambule}{codestyle}
+\input{preambule/algo-style.tex}
+
+\usepackage{arabtex}
+\usepackage{utf8}
+\setcode{utf8}
+
+
+\makeatletter
+\def\@fileswithoptions#1{%
+\@ifnextchar[%]
+{\@fileswith@ptions#1}%
+{\@fileswith@ptions#1[]}}
+\makeatother
+
+
+\usepackage{afterpage}
+\usepackage{float}
+\usepackage{placeins}
+\usepackage{subcaption}
+\usepackage{rotating} % sideways (landscape) floats for wide comparison tables
+
+
+
+\usepackage{stmaryrd}
+\usepackage{bookmark}
+\usepackage{booktabs}
+\usepackage{stackengine}
+\usepackage{adjustbox}
+\usepackage{footnote}
+\makesavenoteenv{tabular}
+\makesavenoteenv{table}
+
+
+% Style de paragraphe classique LaTeX : pas d'espace entre paragraphes, alinéa
+% (indentation) en début de paragraphe — identique à la référence.
+\setlength{\parskip}{0pt plus 1pt}
+\import{preambule}{theorems}
+
+\input{preambule/notations}
+
+%citation style
+\let\barecite\cite
+\let\cite\parencite
+
+\import{preambule}{abbreviations}
+
+% cleveref chargé en dernier (après hyperref, biblatex, glossaries-extra, bookmark),
+% conformément à la recommandation du paquet.
+\usepackage{cleveref}
+
+% --- Correctif babel-arabic + \part/\chapter ---------------------------------
+% Avec l'option « arabic » de babel, \@currentlabel ET le label interne de
+% cleveref (\cref@currentlabel) sont vidés juste après \part et \chapter (mais
+% pas après \section). Conséquence : \ref/\Cref{part:...} et {chap:...} rendent
+% « ?? ». On enveloppe \@chapter et \@part (capturés à \AtBeginDocument, donc
+% APRÈS toutes les redéfinitions de babel) pour réinscrire les deux labels.
+\makeatletter
+\AtBeginDocument{%
+  \let\bidifix@chapter\@chapter
+  \def\@chapter[#1]#2{%
+    \bidifix@chapter[#1]{#2}%
+    \protected@edef\@currentlabel{\csname p@chapter\endcsname\thechapter}%
+    \protected@edef\cref@currentlabel{[chapter][\the\value{chapter}][]\thechapter}%
+  }%
+  \let\bidifix@part\@part
+  \def\@part[#1]#2{%
+    \bidifix@part[#1]{#2}%
+    \protected@edef\@currentlabel{\csname p@part\endcsname\thepart}%
+    \protected@edef\cref@currentlabel{[part][\the\value{part}][]\thepart}%
+  }%
+}
+\makeatother

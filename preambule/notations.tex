@@ -1,0 +1,47 @@
+% Fix the problem of \times (caused by babel or arabtex)
+\renewcommand{\times}{\mathbin{\mathsf{x}}}
+
+
+% Number sets
+\newcommand{\complexes}{\mathbb{C}}
+\newcommand{\reals}{\mathbb{R}}
+\newcommand{\rationals}{\mathbb{Q}}
+\newcommand{\integers}{\mathbb{Z}}
+\newcommand{\naturals}{\mathbb{N}}
+\newcommand{\field}{\mathbb{K}}
+
+
+% Problems/ complexity classes
+\newcommand{\TSP}{\textsf{TSP}}
+\newcommand{\classP}{\textsf{P}}
+\newcommand{\classNP}{\textsf{NP}}
+\newcommand{\classNPO}{\textsf{NPO}}
+
+% Math operators
+\newcommand{\argmin}{\operatornamewithlimits{argmin}}
+\newcommand{\argmax}{\operatornamewithlimits{argmax}}
+\newcommand{\diff}[1]{\mathrm{d}#1}
+\newcommand{\pdiff}[1]{\partial#1}
+
+
+% default greeks
+\let\uglyepsioln\epsilon
+\let\epsilon\varepsilon
+
+\let\roundphi\phi
+\let\phi\varphi
+
+% Landau notation
+\newcommand{\bigO}[1]{\mathcal{O}\left(#1\right)}
+
+% Probability
+\newcommand{\prob}{\operatornamewithlimits{\mathbb{P}}}
+\newcommand{\esp}{\operatornamewithlimits{\mathbb{E}}}
+
+% Linear algebra
+\newcommand{\tr}{\operatorname{tr}}
+
+
+% ML
+\newcommand{\softmax}{\operatorname{softmax}}
+\newcommand{\relu}{\operatorname{ReLU}}

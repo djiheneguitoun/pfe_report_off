@@ -1,0 +1,89 @@
+\usepackage[abbreviations, automake]{glossaries-extra}
+
+% Render every abbreviation occurrence in bold (long form and short form, first
+% use and subsequent uses). The style bakes these default fonts into the
+% category at \setabbreviationstyle time, so they must be redefined BEFORE it.
+\renewcommand*{\glsabbrvdefaultfont}[1]{\textbf{#1}}
+\renewcommand*{\glslongdefaultfont}[1]{\textbf{#1}}
+
+\setabbreviationstyle{long-short}
+\GlsXtrEnableInitialTagging{abbreviation}{\itag}
+\newcommand{\taghighlight}[1]{\uppercase{\textbf{#1}}}
+\renewcommand{\glsxtrtagfont}{\taghighlight}
+\makeglossaries
+
+
+% ML terms
+\newabbreviation{abb:ml}{ML}{\itag{m}achine \itag{l}earning}
+
+% UAV / Warehouse terms
+\newabbreviation{abb:uav}{UAV}{\itag{u}nmanned \itag{a}erial \itag{v}ehicle}
+\newabbreviation{abb:gps}{GPS}{\itag{g}lobal \itag{p}ositioning \itag{s}ystem}
+\newabbreviation{abb:qr}{QR}{\itag{q}uick \itag{r}esponse}
+\newabbreviation{abb:slam}{SLAM}{\itag{s}imultaneous \itag{l}ocalization \itag{a}nd \itag{m}apping}
+\newabbreviation{abb:rfid}{RFID}{\itag{r}adio-\itag{f}requency \itag{i}dentification}
+\newabbreviation{abb:agv}{AGV}{\itag{a}utomated \itag{g}uided \itag{v}ehicle}
+\newabbreviation{abb:amr}{AMR}{\itag{a}utonomous \itag{m}obile \itag{r}obot}
+\newabbreviation{abb:iot}{IoT}{\itag{i}nternet \itag{o}f \itag{t}hings}
+\newabbreviation{abb:wms}{WMS}{\itag{w}arehouse \itag{m}anagement \itag{s}ystem}
+\newabbreviation{abb:mav}{MAV}{\itag{m}icro \itag{a}ir \itag{v}ehicle}
+\newabbreviation{abb:imu}{IMU}{\itag{i}nertial \itag{m}easurement \itag{u}nit}
+\newabbreviation{abb:lidar}{LiDAR}{light detection and ranging}
+\newabbreviation{abb:ugv}{UGV}{\itag{u}nmanned \itag{g}round \itag{v}ehicle}
+\newabbreviation{abb:vio}{VIO}{\itag{v}isual-\itag{i}nertial \itag{o}dometry}
+\newabbreviation{abb:gcs}{GCS}{\itag{g}round \itag{c}ontrol \itag{s}tation}
+
+% Deep learning terms
+\newabbreviation{abb:cnn}{CNN}{\itag{c}onvolutional \itag{n}eural \itag{n}etwork}
+\newabbreviation{abb:gan}{GAN}{\itag{g}enerative \itag{a}dversarial \itag{n}etwork}
+
+% Simulation / robotics software terms
+\newabbreviation{abb:ros}{ROS}{\itag{r}obot \itag{o}perating \itag{s}ystem}
+\newabbreviation{abb:sitl}{SITL}{\itag{s}oftware-\itag{i}n-\itag{t}he-\itag{l}oop}
+
+% Decision-making / AI terms
+\newabbreviation{abb:rl}{RL}{\itag{r}einforcement \itag{l}earning}
+\newabbreviation{abb:llm}{LLM}{\itag{l}arge \itag{l}anguage \itag{m}odel}
+\newabbreviation{abb:vlm}{VLM}{\itag{v}ision-\itag{l}anguage \itag{m}odel}
+\newabbreviation{abb:mdp}{MDP}{\itag{M}arkov \itag{d}ecision \itag{p}rocess}
+\newabbreviation{abb:pomdp}{POMDP}{\itag{p}artially \itag{o}bservable \itag{M}arkov \itag{d}ecision \itag{p}rocess}
+\newabbreviation{abb:bt}{BT}{\itag{b}ehavior \itag{t}ree}
+
+% Active Inference terms
+\newabbreviation{abb:aif}{AIF}{\itag{a}ctive \itag{i}nference}
+\newabbreviation{abb:fep}{FEP}{\itag{f}ree \itag{e}nergy \itag{p}rinciple}
+\newabbreviation{abb:vfe}{VFE}{\itag{v}ariational \itag{f}ree \itag{e}nergy}
+\newabbreviation{abb:efe}{EFE}{\itag{e}xpected \itag{f}ree \itag{e}nergy}
+\newabbreviation{abb:gdbn}{GDBN}{\itag{g}eneralized \itag{d}ynamic \itag{B}ayesian \itag{n}etwork}
+\newabbreviation{abb:feef}{FEEF}{\itag{f}ree \itag{e}nergy of \itag{e}xpected \itag{f}uture}
+
+% Wireless / communication terms
+\newabbreviation{abb:sinr}{SINR}{\itag{s}ignal-to-\itag{i}nterference-plus-\itag{n}oise \itag{r}atio}
+
+% Planning / optimization terms
+\newabbreviation{abb:dp}{DP}{\itag{d}ynamic \itag{p}rogramming}
+\newabbreviation{abb:milp}{MILP}{\itag{m}ixed-\itag{i}nteger \itag{l}inear \itag{p}rogramming}
+\newabbreviation{abb:tsp}{TSP}{\itag{t}raveling \itag{s}alesman \itag{p}roblem}
+\newabbreviation{abb:tspwp}{TSPWP}{\itag{t}raveling \itag{s}alesman \itag{p}roblem \itag{w}ith \itag{p}rofits}
+
+% Metaheuristic algorithm terms
+\newabbreviation{abb:ga}{GA}{\itag{g}enetic \itag{a}lgorithm}
+\newabbreviation{abb:pso}{PSO}{\itag{p}article \itag{s}warm \itag{o}ptimization}
+\newabbreviation{abb:aco}{ACO}{\itag{a}nt \itag{c}olony \itag{o}ptimization}
+
+% Reinforcement learning algorithm terms
+\newabbreviation{abb:dqn}{DQN}{\itag{d}eep \itag{Q}-\itag{n}etwork}
+\newabbreviation{abb:ppo}{PPO}{\itag{p}roximal \itag{p}olicy \itag{o}ptimization}
+\newabbreviation{abb:ddpg}{DDPG}{\itag{d}eep \itag{d}eterministic \itag{p}olicy \itag{g}radient}
+\newabbreviation{abb:td3}{TD3}{twin delayed deep deterministic policy gradient}
+\newabbreviation{abb:sac}{SAC}{\itag{s}oft \itag{a}ctor-\itag{c}ritic}
+\newabbreviation{abb:marl}{MARL}{\itag{m}ulti-\itag{a}gent \itag{r}einforcement \itag{l}earning}
+\newabbreviation{abb:hrl}{HRL}{\itag{h}ierarchical \itag{r}einforcement \itag{l}earning}
+\newabbreviation{abb:pomcp}{POMCP}{\itag{p}artially \itag{o}bservable \itag{M}onte \itag{C}arlo \itag{p}lanning}
+\newabbreviation{abb:abt}{ABT}{\itag{a}daptive \itag{b}elief \itag{t}ree}
+\newabbreviation{abb:ctde}{CTDE}{\itag{c}entralized \itag{t}raining, \itag{d}ecentralized \itag{e}xecution}
+\newabbreviation{abb:ma2c}{MA2C}{multi-agent advantage actor-critic}
+\newabbreviation{abb:maddpg}{MADDPG}{\itag{m}ulti-\itag{a}gent \itag{d}eep \itag{d}eterministic \itag{p}olicy \itag{g}radient}
+\newabbreviation{abb:qoe}{QoE}{\itag{q}uality \itag{o}f \itag{e}xperience}
+\newabbreviation{abb:dnn}{DNN}{\itag{d}eep \itag{n}eural \itag{n}etwork}
+

@@ -1,0 +1,12 @@
+%% Algorithm style
+\usepackage[ruled,linesnumbered,nosemicolon]{algorithm2e}
+\SetFuncArgSty{}
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\newcommand{\mycomntsty}[1]{\texttt{\textit{\textcolor{codegray}{#1}}}}
+\newlength{\commentWidth}
+\setlength{\commentWidth}{7cm}
+\SetCommentSty{mycomntsty}
+\newcommand{\atcp}[1]{\tcp*[r]{\makebox[\commentWidth]{#1\hfill}}}
+% no line break version of \atcp
+\newcommand{\atcpl}[1]{\tcp*[f]{\makebox[\commentWidth]{#1\hfill}}}

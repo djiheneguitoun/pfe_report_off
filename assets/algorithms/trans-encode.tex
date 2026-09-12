@@ -1,0 +1,15 @@
+\begin{algorithm}[hbt]
+    \caption{Encode a sequence}%
+    \label{algo:trans-encode}
+    \SetKwFunction{mha}{multi\_headed\_attention}
+    % \DontPrintSemicolon
+    \(x = (x_1, x_2, \cdots, x_n)\in\reals^n\) \atcp{Sequence embedding}
+    \(N\) \atcp{Number of encoder layers}
+    \Begin{
+        \(z \gets x\)
+        \For{\(i = 1\cdots N\)}{
+            \(z \gets \mha{z} + z\)
+        }
+    }
+    \KwOut{\(z\in\reals^{n \times d}\) \atcp{Thought vectors}}
+\end{algorithm}

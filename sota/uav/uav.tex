@@ -1,0 +1,628 @@
+\chapter{UAV-based Warehouse Inventory Inspection and QR Code Detection}%
+\label{chap:uav-warehouse}
+
+\subimport{.}{intro}
+
+% --- Chapter skeleton (stubs referenced by the roadmap in intro.tex) ---------
+% Fill each section below; the \label keys match the \Cref calls in intro.tex.
+\section{The Problem of Warehouse Inventory Inspection}%
+\label{sec:uav:problem}
+
+This section presents the operational problem that motivates the use of
+\glspl{abb:uav}. It first describes the economic and safety stakes of warehouse
+inventory inspection, then reviews the main families of methods currently in
+use, and finally analyzes their limitations to justify the move toward aerial
+platforms.
+
+\subsection{Economic and operational stakes}%
+\label{subsec:uav:stakes}
+
+Inventory accuracy is a key driver of warehouse performance. Inaccurate stock
+records cause stockouts, overstocking, and order errors, all of which directly
+affect customer satisfaction and operating costs~\cite{pore2026drone}. In
+traditional warehouses, stock verification relies on periodic stocktaking
+cycles in which human operators read rack labels with barcode scanners and
+reconcile them against paper logs. This manual process suffers from three
+recurring weaknesses:
+\begin{itemize}
+    \item \textbf{Slow:} a full inventory check in a typical warehouse can take
+          more than three days of regular
+          operation~\cite{kalinov2020warevision}.
+    \item \textbf{Error-prone:} miscounts and misplaced items create
+          discrepancies between the \gls{abb:wms} and the actual stock on the
+          shelves~\cite{pore2026drone}.
+    \item \textbf{Unsafe:} inspecting high racks with forklifts or scissor lifts
+          exposes workers to fall hazards~\cite{pore2026drone}.
+\end{itemize}
+
+These constraints push warehouses toward more automated solutions. The growth of
+e-commerce, the increasing size of storage facilities (both in height and
+width), and the demand for real-time stock visibility have made manual
+stocktaking economically and operationally difficult to
+sustain~\cite{pore2026uavqr}.
+
+\subsection{Traditional and partially automated methods}%
+\label{subsec:uav:traditional}
+
+Current inventory inspection methods fall into four families: manual scanning,
+\gls{abb:rfid}, ground-based mobile robots, and aerial \glspl{abb:uav}. The
+fourth is the focus of this work; the first three---traditional or partially
+automated---are summarized below:
+\begin{enumerate}
+    \item \textbf{Manual scanning:} operators move through the warehouse with
+          handheld or fixed barcode scanners to read rack labels and update the
+          \gls{abb:wms}~\cite{pore2026drone}. Barcodes, and 1D~barcodes in
+          particular, remain the dominant identifier---used in around 87\% of
+          warehouses~\cite{kalinov2020warevision}---but the approach is
+          low-cost yet labor-intensive, slow, and the main source of human
+          errors.
+    \item \textbf{\Gls{abb:rfid}:} tags attached to items or pallets allow batch
+          reading without a direct line of sight~\cite{pore2026drone}. It speeds
+          up operations and removes some manual errors, but performance degrades
+          near metal shelving, and the cost of tags and readers limits adoption
+          at scale~\cite{pore2026drone}.
+    \item \textbf{Ground-based mobile robots (\glspl{abb:agv} and
+          \glspl{abb:amr}):} scanners or cameras mounted on a ground platform
+          follow predefined or computed routes to inspect
+          shelves~\cite{pore2026drone}. They cut labor and improve
+          repeatability, but stay confined to the floor plane---limited vertical
+          reach and dedicated floor space that competes with picking and
+          forklift operations~\cite{pore2026uavqr}.
+\end{enumerate}
+
+\subsection{Limits and motivation for UAVs}%
+\label{subsec:uav:limits}
+
+Across their differences, these three traditional families share three
+structural limitations:
+\begin{enumerate}
+    \item \textbf{Restricted vertical coverage:} manual scanning depends on
+          lifts, and ground robots cannot reach the upper levels of multi-tier
+          racks~\cite{pore2026uavqr}.
+    \item \textbf{Heavy infrastructure or labor:} each family needs either
+          dedicated infrastructure (\gls{abb:rfid} tags and readers,
+          \gls{abb:agv}/\gls{abb:amr} fleets, floor markers, charging stations)
+          or a significant amount of manual work~\cite{pore2026drone}.
+    \item \textbf{Low throughput at scale:} at the scale of a full warehouse
+          they remain slow, with stocktaking cycles measured in days rather than
+          hours~\cite{kalinov2020warevision}.
+\end{enumerate}
+
+\Glspl{abb:uav} are increasingly studied as a complementary technology that
+targets these limits directly:
+\begin{itemize}
+    \item \textbf{Vertical mobility:} they move vertically without lifts, fly
+          along narrow aisles, and reach the highest rack levels.
+    \item \textbf{Minimal infrastructure:} a charging dock and on-board sensors
+          are enough, and missions can run in shifts or at night for
+          high-frequency cycle counting without interfering with regular
+          operations~\cite{pore2026drone}.
+    \item \textbf{Safer operation:} they separate the perception task from the
+          human worker, reducing exposure to falls and other
+          hazards~\cite{pore2026uavqr}.
+    \item \textbf{Lower long-term cost:} initial costs are higher than for
+          handheld scanners, but operating costs are lower thanks to reduced
+          labor and improved coverage~\cite{pore2026drone}.
+\end{itemize}
+
+\subsection{Functional capabilities of a UAV inspection system}%
+\label{subsec:uav:capabilities}
+
+Before reviewing the specific challenges of \gls{abb:qr} code detection, swarm
+coordination, and simulation covered in the rest of this chapter, it is useful
+to clarify what a \gls{abb:uav}-based inspection system actually contains. Such a
+system is not a single algorithm but a stack of functional layers that must
+operate jointly during a mission:
+\begin{itemize}
+    \item \textbf{Perception:} relies on cameras and other onboard sensors to
+          detect items, identification codes, and obstacles.
+    \item \textbf{Localization:} estimates the pose of the \gls{abb:uav} in a
+          \gls{abb:gps}-denied environment, from onboard sensing and the
+          structural features of the warehouse~\cite{chang2023review}.
+    \item \textbf{Planning:} computes the trajectory to follow and, in
+          multi-\gls{abb:uav} settings, allocates the inspection workload across
+          the fleet.
+    \item \textbf{Control:} executes the planned trajectory while keeping the
+          \gls{abb:uav} stable in narrow aisles.
+    \item \textbf{Communication:} establishes the link between the \gls{abb:uav}
+          and a \gls{abb:gcs}, and, when applicable, between cooperating
+          \glspl{abb:uav}.
+    \item \textbf{Mission management:} coordinates the high-level sequence of
+          operations, including takeoff, scanning, docking, and
+          recharging~\cite{pore2026drone}.
+\end{itemize}
+
+\section{Item Detection and QR Code Recognition from UAVs}%
+\label{sec:uav:detection}
+
+Perception is the layer of a \gls{abb:uav}-based inspection system that detects
+and decodes the identification codes attached to items and racks. This section
+reviews how this layer is implemented in the literature. It first discusses the
+choice of \gls{abb:qr} codes among the available identification technologies,
+then describes the technical challenges specific to \gls{abb:uav}-based reading,
+and finally presents the main families of detection methods.
+
+\subsection{Identification technologies and the choice of QR codes}%
+\label{subsec:uav:identification}
+
+Several technologies can be used to identify items in a warehouse. Each presents
+different trade-offs in terms of information density, cost, sensing modality, and
+robustness:
+\begin{itemize}
+    \item \textbf{1D~barcodes:} the most widely deployed identifier in industry,
+          present in around 87\% of warehouses~\cite{kalinov2020warevision}. They
+          are very low cost but encode only a short identifier, are sensitive to
+          print quality, and offer no redundancy against damage.
+    \item \textbf{\gls{abb:qr} codes:} a 2D matrix code that stores significantly
+          more information than a 1D~barcode, includes built-in error correction
+          (Reed--Solomon), is cheap to print, and remains readable when partially
+          occluded or damaged~\cite{pore2026uavqr, cristiani2020inventory}.
+    \item \textbf{\gls{abb:rfid} tags:} allow batch reading without direct line of
+          sight, but suffer from signal attenuation near metal racks and require
+          dedicated readers and infrastructure~\cite{pore2026drone}.
+    \item \textbf{Fiducial markers (ArUco, AprilTag, STag):} provide accurate pose
+          estimation when detected by a camera, but encode only an identifier and
+          require physical placement of the markers in the
+          environment~\cite{do2024experimental}.
+\end{itemize}
+
+For \gls{abb:uav}-based warehouse inspection, the \gls{abb:qr} code has emerged as
+the most common choice, for three main reasons:
+\begin{enumerate}
+    \item \textbf{No specialized hardware.} \gls{abb:qr} codes are read with the
+          standard onboard cameras already mounted on \glspl{abb:uav} for
+          inspection. Some systems reuse the same camera for both navigation and
+          inspection, while others add a dedicated camera oriented toward the racks
+          for a more favorable viewing angle~\cite{martinez2022warehouse}.
+    \item \textbf{Robustness to damage.} The built-in error correction of
+          \gls{abb:qr} codes tolerates the partial occlusions and physical damage
+          that are typical of warehouse conditions~\cite{pore2026uavqr}.
+    \item \textbf{Rich data capacity.} Their large data capacity lets them carry
+          not only an identifier but also auxiliary information such as storage
+          conditions or product attributes, which simplifies integration with
+          \glspl{abb:wms}~\cite{cristiani2020inventory}.
+\end{enumerate}
+Recent contributions therefore build their entire perception pipeline around
+\gls{abb:qr} codes, sometimes complemented by
+1D~barcodes~\cite{kalinov2020warevision, alsulami2026deep}.
+
+\subsection{Challenges of QR code detection from a UAV}%
+\label{subsec:uav:qr-challenges}
+
+Reading \gls{abb:qr} codes from a \gls{abb:uav} is significantly more difficult
+than from a fixed scanner. The literature consistently identifies the following
+challenges:
+\begin{itemize}
+    \item \textbf{Motion blur:} the \gls{abb:uav} is in flight while capturing
+          images, which causes blur that degrades the contrast of \gls{abb:qr}
+          finder patterns and may prevent
+          decoding~\cite{dong2024algorithm, kalinov2020warevision}.
+    \item \textbf{Oblique viewing angles:} the \gls{abb:uav} cannot always face
+          the \gls{abb:qr} code perpendicularly, especially on multi-tier racks,
+          which introduces perspective distortion~\cite{pore2026uavqr}.
+    \item \textbf{Variable distance and scale:} as the \gls{abb:uav} moves along
+          the aisle or changes altitude, the apparent size of the \gls{abb:qr}
+          code changes, requiring scale-robust
+          detectors~\cite{kalinov2020warevision, alsulami2026deep}.
+    \item \textbf{Uneven warehouse lighting:} artificial lighting, shadows, and
+          reflections on metal shelves cause large variations in image contrast
+          and can saturate or darken parts of the
+          code~\cite{pore2026uavqr, alsulami2026deep}.
+    \item \textbf{Limited resolution and small target size:} the \gls{abb:qr} code
+          may occupy only a small portion of the image when the \gls{abb:uav}
+          scans an entire rack, which makes localization harder and limits the
+          available bits for decoding~\cite{kalinov2020warevision}.
+    \item \textbf{Occlusion and dense layouts:} packages, neighboring codes, and
+          dust on the code can hide part of the pattern, which is particularly
+          problematic in densely packed warehouses~\cite{alsulami2026deep}.
+\end{itemize}
+
+These challenges have driven the design of dedicated detection methods, which can
+be grouped into the four families discussed below.
+
+\subsection{Families of QR code detection methods}%
+\label{subsec:uav:qr-families}
+
+Following the taxonomy proposed by Alsulami and
+Jhanjhi~\cite{alsulami2026deep}, \gls{abb:qr} code detection methods used in
+\gls{abb:uav}-based inventory can be organized into four families.
+
+\begin{enumerate}[itemsep=0.7em]
+    \item \textbf{Classical image-processing approaches.} These methods rely on
+          hand-crafted features such as edge detection, gradient analysis, and
+          pattern matching to locate the \gls{abb:qr} finder patterns, followed by
+          standard decoding libraries (ZBar, Pyzbar, OpenCV's \gls{abb:qr}
+          decoder). They are fast, lightweight, and easy to deploy onboard a
+          \gls{abb:uav}, with detection rates around 90\% under controlled flight
+          conditions~\cite{martinez2022warehouse, cristiani2020inventory}.
+          However, their performance degrades sharply under motion blur, low
+          light, or oblique angles, which restricts them to slow, well-lit, and
+          stable flights~\cite{alsulami2026deep}.
+
+    \item \textbf{Deep learning--based detection.} \Glspl{abb:cnn} and one-stage
+          object detectors such as YOLO have become the dominant approach for code
+          localization in \gls{abb:uav} imagery, as they learn directly from data
+          and are more robust to perspective distortion, lighting variations, and
+          small target sizes. A recent benchmark on a simulated \gls{abb:uav}
+          barcode dataset reports an mAP@0.5 of 92.4\% with YOLOv8, at inference
+          times below 4~ms per image---compatible with real-time onboard
+          operation~\cite{alsulami2026deep}. \gls{abb:cnn}-based detectors have
+          also been embedded in production stocktaking systems, where they correct
+          the flight trajectory from detected codes to improve the recognition
+          rate over fixed scanning patterns~\cite{kalinov2020warevision}.
+
+    \item \textbf{Hybrid approaches.} These combine deep-learning localization with
+          classical decoding: the network only locates and crops the \gls{abb:qr}
+          region, while a standard decoder (e.g.\ OpenCV's \gls{abb:qr} module)
+          extracts the data. This keeps localization robust while decoding stays
+          simple and standards-compliant. Reported accuracies are high in good
+          conditions (around 98\% when well-lit) but drop under occlusion (around
+          78\%) or low light (around 85\%)~\cite{alsulami2026deep}.
+
+    \item \textbf{\gls{abb:uav}-specific pipelines.} This last family targets
+          degradations that are specific to \gls{abb:uav} imagery. One approach
+          uses a \gls{abb:gan} with attention mechanisms to deblur \gls{abb:qr}
+          images before decoding, recovering codes that classical methods fail to
+          read~\cite{dong2024algorithm}. Another is \emph{active perception}, where
+          the \gls{abb:uav} adapts its trajectory from the codes already detected
+          to improve subsequent observations; this raises the recognition rate from
+          around 73--96\% with fixed overlapping-grid trajectories to over 99\% in
+          a controlled lab warehouse setup~\cite{kalinov2020warevision}.
+\end{enumerate}
+
+A synthesis of representative \gls{abb:qr} detection works in the \gls{abb:uav}
+inventory context is given in \Cref{tab:uav:qr-detection}.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Representative QR / barcode detection methods for UAV-based
+        inventory.}
+    \label{tab:uav:qr-detection}
+    \small
+    \begin{tabular}{@{}l
+            >{\raggedright\arraybackslash}p{2.5cm}
+            >{\raggedright\arraybackslash}p{3.6cm}
+            >{\raggedright\arraybackslash}p{2.7cm}
+            >{\raggedright\arraybackslash}p{3.3cm}@{}}
+        \toprule
+        \textbf{Ref} & \textbf{Family} & \textbf{Technique} &
+        \textbf{Validation} & \textbf{Result} \\
+        \midrule
+        \cite{martinez2022warehouse} & Classical & OpenCV QR decoder & Mock warehouse & $\sim$90\% detection \\
+        \cite{cristiani2020inventory} & Classical & Standard QR library & Lab testbed & Speed/accuracy trade-off \\
+        \cite{kalinov2020warevision} & DL + active perception & CNN segmentation + trajectory correction & Lab testbed & 99.3\% vs.\ 73--96\% (fixed) \\
+        \cite{alsulami2026deep} & DL (hybrid) & YOLOv8 + OpenCV decoder & Images only & mAP@0.5 = 92.4\% \\
+        \cite{dong2024algorithm} & UAV-specific & GAN + attention (deblurring) & Images only & High under motion blur \\
+        \cite{pore2026uavqr} & DL + safety & Multi-UAV QR scanning & Lab testbed + 3D simulation & 95--96\% sim / 86--90\% real \\
+        \bottomrule
+    \end{tabular}
+
+    \vspace{0.8em}
+    \begin{minipage}{0.95\linewidth}
+        \footnotesize
+        \textbf{Validation levels:}
+        \par\vspace{2pt}
+        \renewcommand{\arraystretch}{1.15}
+        \begin{tabular}{@{}>{\itshape}l @{\hspace{0.8em}} p{0.66\linewidth}@{}}
+            Images only    & static image dataset; no physical drone or simulator.        \\
+            3D simulation  & virtual drone flying in a simulated 3D environment.           \\
+            Lab testbed    & real drone in a small laboratory setup.                       \\
+            Mock warehouse & real drone in a setup that physically reproduces a warehouse. \\
+        \end{tabular}
+    \end{minipage}
+\end{table}
+
+% Garde le tableau ci-dessus dans la section 1.3 : il doit être placé avant
+% que la section 1.4 ne commence (sinon il « coupe » la nouvelle section).
+\FloatBarrier
+\section{From Single-UAV to Multi-UAV and Swarm Coordination}%
+\label{sec:uav:swarm}
+
+Most of the \gls{abb:uav}-based inventory systems presented so far rely on a
+single \gls{abb:uav}. This section first discusses the limits of
+single-\gls{abb:uav} approaches and the motivation for moving toward
+multi-\gls{abb:uav} systems, then reviews the main families of coordination
+architectures reported in the literature, together with their typical
+communication and fault-tolerance properties.
+
+\subsection{Limits of single-UAV approaches and motivations for swarms}%
+\label{subsec:uav:single-limits}
+
+Using a single \gls{abb:uav} for warehouse inventory inspection faces several
+intrinsic limitations:
+\begin{itemize}[itemsep=0.4em]
+    \item \textbf{Limited coverage.} A single \gls{abb:uav} must traverse the whole
+          warehouse one aisle at a time, so the mission duration grows linearly
+          with the size of the facility and the number of
+          racks~\cite{pore2026drone}.
+    \item \textbf{Limited battery autonomy.} Indoor \glspl{abb:uav} typically fly
+          for only 10 to 30 minutes per charge, so a single platform may need
+          several recharging cycles to inspect a large facility, which fragments
+          the mission and limits real-time stock
+          visibility~\cite{pore2026drone, kumar2025comprehensive}.
+    \item \textbf{Single point of failure.} If the only \gls{abb:uav} fails
+          (battery depletion, sensor fault, collision), the mission is interrupted
+          and must be restarted---a critical issue in time-constrained
+          operations~\cite{chandran2024network}.
+    \item \textbf{Lack of redundancy.} With a single \gls{abb:uav}, a missed
+          \gls{abb:qr} code or an undetected obstacle cannot be cross-checked from
+          another viewpoint.
+\end{itemize}
+
+These limits motivate multi-\gls{abb:uav} systems, in which several drones
+cooperate during the same mission. The benefits commonly cited in the literature
+are:
+\begin{itemize}[itemsep=0.4em]
+    \item \textbf{Parallelization} of the workload, which reduces the total mission
+          time by distributing aisles or racks across
+          \glspl{abb:uav}~\cite{pore2026uavqr, chandran2024network}.
+    \item \textbf{Redundancy}, since several \glspl{abb:uav} can observe the same
+          item from different viewpoints, improving detection robustness.
+    \item \textbf{Scalability}, as inspection capacity grows by adding
+          \glspl{abb:uav} rather than upgrading a single
+          platform~\cite{kumar2025comprehensive}.
+    \item \textbf{Fault tolerance}, since the failure of one \gls{abb:uav} can be
+          absorbed by reassigning its tasks to others without interrupting the
+          mission~\cite{chandran2024network}.
+\end{itemize}
+
+\subsection{Families of coordination architectures}%
+\label{subsec:uav:architectures}
+
+Coordinating several \glspl{abb:uav} raises the question of how they share
+information and make decisions. The literature distinguishes three main families
+of architectures:
+\begin{enumerate}[itemsep=0.7em]
+    \item \textbf{Centralized architectures.} All \glspl{abb:uav} communicate with
+          a central \gls{abb:gcs} that performs global path planning, task
+          allocation, and conflict resolution. This is the most common
+          architecture in practice, as it is simple to implement and minimizes
+          onboard computation; its star-shaped topology, however, adds
+          communication overhead and creates a single point of failure at the
+          \gls{abb:gcs}~\cite{kumar2025comprehensive}. A representative example is
+          the multi-\gls{abb:uav} system of Pore et~al.~\cite{pore2026uavqr}, where
+          two \glspl{abb:uav} receive sector assignments from a \gls{abb:gcs} that
+          runs the safety-aware trajectory planner and aggregates the \gls{abb:qr}
+          scanning results.
+    \item \textbf{Distributed architectures.} Each \gls{abb:uav} performs part of
+          the decision-making locally, from information exchanged with its
+          neighbors, while the \gls{abb:gcs}---when present---only handles
+          initialization or high-level supervision. This relieves the central node
+          and improves resilience to communication failures, at the cost of more
+          complex onboard algorithms and increased peer-to-peer
+          communication~\cite{kumar2025comprehensive}. A typical scheme is
+          \emph{leader--follower}, where one \gls{abb:uav} coordinates while the
+          others follow~\cite{chandran2024network}.
+    \item \textbf{Decentralized architectures.} This family removes central control
+          entirely: each \gls{abb:uav} independently gathers and shares information
+          about its location and environment, and collaborative decisions emerge
+          from local interactions~\cite{kumar2025comprehensive}. It is especially
+          advantageous when central control is impractical or when high autonomy is
+          required. Chandran and Vipin~\cite{chandran2024network} propose such a
+          strategy, in which \glspl{abb:uav} self-organize into a linear formation,
+          optimize their coverage paths, and adapt to agent failures, letting a
+          swarm of up to ten \glspl{abb:uav} keep its formation despite node
+          failures.
+\end{enumerate}
+
+Across these three families, two cross-cutting concerns strongly affect
+performance. The first is the \emph{communication model}: in real warehouses the
+wireless channel is noisy, bandwidth is limited, and packet losses are frequent.
+Recent work evaluates coordination strategies under realistic network conditions
+with the NS-3 network simulator, measuring metrics such as packet-delivery ratio,
+throughput, and delay~\cite{chandran2024network}. The second is \emph{fault
+tolerance}: the ability of the swarm to keep going when one or several
+\glspl{abb:uav} fail. Chandran and Vipin~\cite{chandran2024network}, for instance,
+re-elect a leader \gls{abb:uav} when the current one becomes unavailable, so the
+swarm completes its coverage path despite node failures.
+
+
+\section{Simulators and Co-Simulation Frameworks}%
+\label{sec:uav:evaluation}
+
+Validating a \gls{abb:uav}-based inspection system before any field deployment
+relies on simulation environments that reproduce both the physical behavior of
+the drone and the communication network between drones. This section reviews the
+main \gls{abb:uav} simulators reported in the literature, then the co-simulation
+frameworks that couple them with network simulators to make multi-\gls{abb:uav}
+validation realistic.
+
+\subsection{Simulators for UAV systems}%
+\label{subsec:uav:simulators}
+
+A \gls{abb:uav} simulator is a software environment that reproduces the behavior
+of a drone and the data produced by its onboard sensors, so that the same
+control, perception, and navigation algorithms that would run on a real
+\gls{abb:uav} can be developed and tested entirely in a computer. Around this
+central role, a few layers have become standard across the research community:
+\begin{itemize}[itemsep=0.4em]
+    \item Most simulators expose interfaces compatible with the \gls{abb:ros}, a
+          middleware that connects the software modules of a robotic system.
+    \item They run the autopilot---typically the open-source PX4 or
+          ArduPilot---in \gls{abb:sitl} mode, where the real autopilot code is
+          executed against the simulated drone rather than on physical flight
+          hardware, the two communicating through the MAVLink protocol.
+    \item The \emph{photo-realism} of the rendered scene (the visual fidelity of
+          camera images, lighting, and materials) has become a key differentiator
+          between modern frameworks, since any perception algorithm that processes
+          visual data depends on the realism of these images.
+\end{itemize}
+
+Within this landscape, the Pegasus Simulator paper provides a recent and
+well-known comparison of the main frameworks used in \gls{abb:uav}
+research~\cite{jacinto2024pegasus}. The most widely used ones are:
+\begin{itemize}[itemsep=0.4em]
+    \item \textbf{Gazebo} is the most established simulator in the robotics
+          community. Tightly integrated with \gls{abb:ros}, it offers a rigid-body
+          physics engine and a PX4-\gls{abb:sitl} extension for autopilot
+          integration; its main limitation is its OpenGL-based rendering, which
+          lacks the visual fidelity of modern game
+          engines~\cite{jacinto2024pegasus, acharya2020cornet}.
+    \item \textbf{AirSim}, developed by Microsoft, is built on Unreal Engine (or
+          Unity), producing photo-realistic graphics. It provides rich sensor
+          models, PX4 integration, and a wrapper for OpenAI~Gym (a standard
+          interface for training reinforcement-learning agents), and underpins
+          several recent warehouse-oriented
+          pipelines~\cite{jacinto2024pegasus, tejero2024realistic}.
+    \item \textbf{Flightmare}, developed at UZH, uses a custom physics engine and
+          Unity for rendering. It offers fast simulation and OpenAI~Gym
+          integration, but no out-of-the-box PX4
+          support~\cite{jacinto2024pegasus}.
+    \item \textbf{jMAVSim and MuJoCo} are lighter alternatives: jMAVSim is a
+          Java-based PX4 community simulator without photo-realistic rendering,
+          used mainly to test basic autopilot functions, while MuJoCo is a
+          general-purpose physics engine widely used in control and
+          reinforcement-learning research, with limited integration with flight
+          stacks~\cite{jacinto2024pegasus}.
+    \item \textbf{Pegasus Simulator} is a recent extension built on NVIDIA Isaac
+          Sim, combining a high-quality photo-realistic renderer (RTX) with a
+          modern physics engine (PhysX). Pegasus adds the PX4 and ROS\,2
+          integration that was previously missing, and exposes a Python API for
+          fast prototyping of guidance, navigation, and control algorithms on
+          multiple aerial vehicles~\cite{jacinto2024pegasus}.
+\end{itemize}
+
+Beyond these generic frameworks, several recent works build dedicated simulation
+pipelines for indoor warehouse inspection. Tejero-Ruiz et~al.\ propose a
+comprehensive architecture combining AirSim, Unreal Engine, and \gls{abb:ros},
+with Docker-based deployment (which packages software and its dependencies into
+isolated containers so that the same simulation is reproducible on different
+machines), ArduPilot/PX4 \gls{abb:sitl}, realistic \gls{abb:lidar} noise models,
+and configurable static and dynamic objects~\cite{tejero2024realistic}. The
+\gls{abb:qr} scanning system of Pore et~al.\ instead uses a custom co-simulation
+between MATLAB--Simulink (an engineering tool for modeling dynamical systems) and
+Unreal Engine, with photo-realistic warehouse scenes populated with
+\gls{abb:qr}-labeled boxes and multi-tier racks~\cite{pore2026uavqr}. These
+tailored pipelines indicate that, despite the maturity of generic simulators, the
+warehouse scenario is not natively covered by mainstream frameworks and still
+requires domain-specific extensions.
+
+A comparison of the main \gls{abb:uav} simulators along their core features is
+given in \Cref{tab:uav:simulators}.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Comparison of the main UAV simulators, adapted from Table~I
+        in~\cite{jacinto2024pegasus}.}
+    \label{tab:uav:simulators}
+    \small
+    \begin{tabular}{@{}l >{\raggedright\arraybackslash}p{2.6cm} c c c c c@{}}
+        \toprule
+        \textbf{Platform} & \textbf{Base engine} & \textbf{Photo} & \textbf{Sensors} & \textbf{Vision} & \textbf{MAVLink} & \textbf{API} \\
+        \midrule
+        jMAVSim    & Java                     &            & \checkmark &            & \checkmark & $\bigstar$ \\
+        RotorS     & Gazebo                   &            & \checkmark & \checkmark & \checkmark & $\bigstar\bigstar$ \\
+        PX4-SITL   & Gazebo                   &            & \checkmark & \checkmark & \checkmark & $\bigstar\bigstar$ \\
+        AirSim     & Unreal Engine (or Unity) & \checkmark & \checkmark & \checkmark & \checkmark & $\bigstar\bigstar\bigstar$ \\
+        Flightmare & Unity                    & \checkmark & \checkmark & \checkmark &            & $\bigstar\bigstar\bigstar$ \\
+        MuJoCo     & OpenGL (or Unity)        &            &            &            &            & $\bigstar\bigstar$ \\
+        Pegasus    & NVIDIA Isaac Sim         & \checkmark & \checkmark & \checkmark & \checkmark & $\bigstar\bigstar$ \\
+        \bottomrule
+    \end{tabular}
+
+    \vspace{1em}
+    \begin{minipage}{0.95\linewidth}
+        \footnotesize
+        \textbf{Legend.}\quad \checkmark{} = feature present;\quad empty cell = feature absent.
+        \par\vspace{5pt}
+        \renewcommand{\arraystretch}{1.3}
+        \begin{tabular}{@{}>{\bfseries}l @{\hspace{1.2em}} >{\raggedright\arraybackslash}p{0.7\linewidth}@{}}
+            Photo   & photo-realistic rendering                                            \\
+            Sensors & simulated onboard IMU\,/\,GPS                                         \\
+            Vision  & camera (vision) sensors                                              \\
+            MAVLink & MAVLink\,/\,PX4 interface                                             \\
+            API     & API complexity, from $\bigstar$ (simplest) to $\bigstar\bigstar\bigstar$ (most complex) \\
+        \end{tabular}
+    \end{minipage}
+\end{table}
+
+\FloatBarrier
+\subsection{Network simulation and co-simulation for swarm validation}%
+\label{subsec:uav:cosim}
+
+A network simulator is a software environment that reproduces the behavior of a
+communication network---packet transmissions, delays, losses, and routing
+protocols---for technologies such as Wi-Fi, LTE, or 5G. When an inspection task
+involves several drones, the wireless links between them, and between them and
+the \gls{abb:gcs}, become a critical part of the system, since communication
+delays and packet losses directly affect coordination and safety. Realistic
+validation of multi-\gls{abb:uav} systems therefore requires not only a physics
+simulator but also a network simulator. Two open-source network simulators
+dominate the literature: NS-3 and OMNeT++~\cite{acharya2020cornet}. NS-3 in
+particular is widely used in \gls{abb:uav} swarm research, thanks to its support
+for both wired and wireless networks and its modular library, which eases
+integration with external tools such as physics
+simulators~\cite{chandran2024network}.
+
+The combination of a \gls{abb:uav} physics simulator with a network simulator is
+called a \emph{co-simulation framework}. The two simulators run in parallel and
+exchange information at each time step: the physics simulator provides the
+position and motion of each \gls{abb:uav}, while the network simulator computes
+the resulting communication delays and packet losses, which then feed back into
+the control loop. Such setups are essential for testing swarm coordination under
+realistic communication conditions. Several have been proposed:
+\begin{itemize}[itemsep=0.4em]
+    \item \textbf{CUSCUS} integrates the FL-AIR flight simulator with NS-3 through
+          tap-bridge containers; its main limitation is the difficulty of
+          extending it to LTE or 5G~\cite{acharya2020cornet}.
+    \item \textbf{AVENS} combines OMNeT++ with the X-Plane flight simulator, but
+          the two only exchange \gls{abb:uav} positions through an XML file, with
+          no path for control or telemetry~\cite{acharya2020cornet}.
+    \item \textbf{FlyNetSim} is built on NS-3 and ArduPilot \gls{abb:sitl}, with
+          timestamped packets for synchronization~\cite{acharya2020cornet}.
+    \item \textbf{CORNET} connects Gazebo (\gls{abb:uav} physics) with NS-3
+          (network) through a \gls{abb:ros}-based middleware. It provides time
+          synchronization between the two simulators, treats late packets as
+          losses, and is open source~\cite{acharya2020cornet}.
+\end{itemize}
+
+The decentralized swarm coordination work of Chandran and
+Vipin~\cite{chandran2024network} is a representative use case: their strategy is
+validated in two phases---mission efficiency and fault tolerance on \gls{abb:ros}
+and Gazebo, and inter-\gls{abb:uav} communication on NS-3. This kind of two-phase,
+co-simulated validation is increasingly seen as a prerequisite for credible swarm
+research.
+
+\section{Chapter Conclusion}%
+\label{sec:uav:conclusion}
+
+The state of the art reviewed in this chapter reveals a clear contrast between
+layers. The \emph{perception} and \emph{platform} layers of \gls{abb:uav}-based
+warehouse inspection are mature: \gls{abb:qr} code detectors reach high
+accuracy~\cite{dong2024algorithm, alsulami2026deep}, onboard sensing enables
+flight in \gls{abb:gps}-denied environments~\cite{chang2023review}, and several
+\gls{abb:uav}-based inspection systems have been demonstrated in laboratory and
+mock-warehouse setups~\cite{kalinov2020warevision, pore2026uavqr, cristiani2020inventory, martinez2022warehouse}.
+The \emph{coordination}, \emph{decision-making}, and \emph{validation} layers, by
+contrast, are still developing, and four main gaps stand out across the
+literature:
+\begin{enumerate}[itemsep=0.7em]
+    \item \textbf{Scale of inspection.} Around 83\% of warehouse-drone studies
+          still rely on a single \gls{abb:uav}~\cite{pore2026drone}, and
+          multi-\gls{abb:uav} coordination in narrow indoor aisles is reported in
+          only a small fraction of works.
+    \item \textbf{Simulation environments.} Despite the maturity of
+          general-purpose \gls{abb:uav} simulators, the indoor warehouse scenario
+          is not natively supported by mainstream tools and typically requires
+          custom extensions on top of frameworks such as AirSim or
+          Simulink--Unreal~\cite{pore2026uavqr, tejero2024realistic}, which makes
+          results difficult to compare across studies.
+    \item \textbf{Communication realism.} Although the wireless links between
+          \glspl{abb:uav} strongly affect coordination, only a minority of works
+          integrate a network simulator into their validation
+          pipeline~\cite{chandran2024network, acharya2020cornet}, so many reported
+          multi-\gls{abb:uav} results implicitly assume idealized communication.
+    \item \textbf{Dynamic conditions.} Most studies still operate in static
+          environments, while dynamic warehouse conditions---human operators,
+          forklifts, evolving stock---remain comparatively
+          under-explored~\cite{pore2026drone}, which limits the transferability of
+          reported results to industrial deployments.
+\end{enumerate}
+
+The contribution of this thesis is positioned at the intersection of these four
+gaps. It proposes a multi-\gls{abb:uav} decision-making approach (gap~1),
+validated in a dynamic warehouse environment built on a modern simulator
+(gaps~2 and~4), with explicit modeling of the wireless communication through
+robot--network co-simulation (gap~3). The next chapter introduces the
+methodological foundations of the proposed approach and details how each of these
+gaps is addressed.
