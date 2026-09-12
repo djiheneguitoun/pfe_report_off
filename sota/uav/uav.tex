@@ -298,6 +298,96 @@ computation and communication each drone has to carry.
 \subsection{UAV Simulation Environments}%
 \label{subsec:bg:uav-simulation}
 
+Simulation is an important step in \gls{abb:uav} research because real flight
+experiments can be expensive, time-consuming, impractical, and sometimes
+unsafe~\cite{jacinto2024pegasus}. A simulator allows researchers to develop and
+test control, perception, and navigation algorithms in a virtual environment
+while providing repeatable scenarios and access to the exact state of the
+simulated vehicle, which can be used as a reference for
+evaluation~\cite{jacinto2024pegasus, tejeroruiz2024realistic}. Simulation is also
+widely used to generate data for learning-based methods and to train
+reinforcement learning agents~\cite{jacinto2024pegasus}.
+
+A \gls{abb:uav} simulator aims to reproduce the main elements involved in a real
+flight:
+
+\begin{itemize}[itemsep=0.5em]
+    \item \textbf{Physics and vehicle dynamics}: The physics engine calculates
+          the \gls{abb:uav}'s movement based on its structure and inertial
+          properties~\cite{acharya2020cornet}. Accurately reproducing real flight
+          dynamics remains one of the main challenges of aerial
+          simulation~\cite{tejeroruiz2024realistic}.
+    \item \textbf{Autopilot in the loop}: The simulator can be connected to
+          flight-control software or hardware through \glsxtrfull{abb:sitl} and
+          \glsxtrfull{abb:hitl} simulation~\cite{jacinto2024pegasus}. In
+          \gls{abb:sitl}, the autopilot receives simulated sensor measurements and
+          sends control commands back to the
+          simulator~\cite{acharya2020cornet}.
+    \item \textbf{Sensor models}: Simulation frameworks can reproduce sensors
+          commonly used on \glspl{abb:uav}, such as \glspl{abb:imu}, barometers,
+          magnetometers, \gls{abb:gps}, cameras, and
+          \gls{abb:lidar}~\cite{jacinto2024pegasus, tejeroruiz2024realistic}.
+          These models can include measurement characteristics and noise to make
+          the simulated data closer to real sensor
+          outputs~\cite{jacinto2024pegasus, tejeroruiz2024realistic}.
+    \item \textbf{Rendering and visual fidelity}: Realistic rendering is
+          important for vision-based navigation and perception algorithms because
+          their performance depends directly on the generated
+          images~\cite{jacinto2024pegasus}. Modern frameworks therefore use game
+          engines to provide realistic environments and visual
+          assets~\cite{tejeroruiz2024realistic}.
+\end{itemize}
+
+Several platforms are available for \gls{abb:uav} simulation, with differences in
+their physics engines, rendering capabilities, sensor support, and integration
+with flight-control software. \Cref{tab:bg:simulators} compares the main
+platforms considered in \gls{abb:uav} research.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Comparison of the main UAV simulation platforms, adapted
+        from~\cite{jacinto2024pegasus}. \checkmark{} indicates that the feature
+        is available, while -- indicates that it is not.}%
+    \label{tab:bg:simulators}
+    \small
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{@{}l
+            >{\raggedright\arraybackslash}p{2.3cm}
+            >{\centering\arraybackslash}p{1.7cm}
+            >{\centering\arraybackslash}p{1.8cm}
+            >{\centering\arraybackslash}p{1.4cm}
+            >{\centering\arraybackslash}p{1.6cm}
+            >{\centering\arraybackslash}p{1.5cm}@{}}
+        \toprule
+        \textbf{Platform} & \textbf{Base engine} & \textbf{Photo-realistic
+        rendering} & \textbf{Onboard sensors} & \textbf{Vision sensors} &
+        \textbf{MAVLink interface} & \textbf{API complexity} \\
+        \midrule
+        jMAVSim    & Java                  & --         & \checkmark & --         & \checkmark & Low    \\
+        RotorS     & Gazebo                & --         & \checkmark & \checkmark & \checkmark & Medium \\
+        PX4-SITL   & Gazebo                & --         & \checkmark & \checkmark & \checkmark & Medium \\
+        AirSim     & Unreal Engine / Unity & \checkmark & \checkmark & \checkmark & \checkmark & High   \\
+        Flightmare & Unity                 & \checkmark & \checkmark & \checkmark & --         & High   \\
+        MuJoCo     & OpenGL / Unity        & --         & --         & --         & --         & Medium \\
+        Isaac Sim  & NVIDIA Omniverse      & \checkmark & --         & \checkmark & --         & --     \\
+        Pegasus    & NVIDIA Isaac Sim      & \checkmark & \checkmark & \checkmark & \checkmark & Medium \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\FloatBarrier
+
+Despite its advantages, simulation cannot reproduce all the conditions of a real
+flight. The main limitation is the simulation-to-reality gap, particularly for
+visual perception, where lighting, occlusion, and sensor imperfections are
+difficult to reproduce
+accurately~\cite{pore2026uavqr, jacinto2024pegasus, tejeroruiz2024realistic}. For
+example, one warehouse system achieved about 95 to 96\% \gls{abb:qr} detection
+accuracy in simulation but only 86 to 90.5\% in real
+experiments~\cite{pore2026uavqr}. Photorealistic simulation also requires
+significant computational resources, while complex simulation frameworks can
+increase the development effort~\cite{jacinto2024pegasus, acharya2020cornet}.
+
 \section{Warehouse Inventory Inspection and the Case for UAVs}%
 \label{sec:bg:inspection}
 
