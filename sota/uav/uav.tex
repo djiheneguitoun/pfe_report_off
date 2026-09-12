@@ -76,6 +76,11 @@ information exchanged between them.
 
 \subsubsection*{Airframe and Propulsion System}
 
+The airframe and the propulsion chain form the physical layer of the platform.
+The airframe carries every other subsystem and fixes the geometry of the vehicle,
+while the propulsion chain converts stored electrical energy into the thrust that
+lifts it and moves it along the aisles.
+
 \begin{itemize}[itemsep=0.5em]
     \item \textbf{Frame}: Provides the mechanical structure of the \gls{abb:uav}
           and supports its main components~\cite{mohsan2023unmanned}.
@@ -88,6 +93,11 @@ information exchanged between them.
 \end{itemize}
 
 \subsubsection*{Flight Control System}
+
+The flight control system is what keeps the vehicle in the air. It closes the
+loop between what the sensors measure and what the motors do, and it operates at
+three levels: stabilising the attitude, following a requested trajectory, and
+planning the mission from which those trajectories are derived.
 
 \begin{itemize}[itemsep=0.5em]
     \item \textbf{Flight controller}: Processes sensor measurements and generates
@@ -104,6 +114,11 @@ information exchanged between them.
 \end{itemize}
 
 \subsubsection*{Onboard Sensors}
+
+Sensing serves two distinct purposes on an inspection platform. One group of
+sensors estimates the state of the vehicle itself, its attitude, altitude,
+heading and position, while a second group observes the environment in order to
+detect obstacles and to read the codes attached to the racks.
 
 \begin{itemize}[itemsep=0.5em]
     \item \textbf{IMU}: Combines an accelerometer and a gyroscope to measure
@@ -127,6 +142,11 @@ information exchanged between them.
 
 \subsubsection*{Onboard Computing and Communication}
 
+Beyond flight control, an inspection mission needs computing power for perception
+and decision, and links to carry the results out of the vehicle. These functions
+are kept apart from the flight control unit, so that a heavy processing task
+cannot interfere with the stability of the platform.
+
 \begin{itemize}[itemsep=0.5em]
     \item \textbf{Companion computer}: Runs the high-level logic of the mission,
           separately from the flight control unit~\cite{acharya2020cornet}.
@@ -140,6 +160,11 @@ information exchanged between them.
 \end{itemize}
 
 \subsubsection*{Power Supply}
+
+All the subsystems above draw on a single onboard energy source, and that source
+sets the horizon of the mission. Battery capacity determines how long the vehicle
+can fly, and therefore how much of a warehouse one flight can cover before the
+drone has to return and recharge.
 
 \begin{itemize}[itemsep=0.5em]
     \item \textbf{Battery}: Supplies energy to all \gls{abb:uav} subsystems and
@@ -167,6 +192,10 @@ information exchanged between them.
     \label{fig:bg:uav-architecture}
 \end{figure}
 
+% Retient la figure dans 1.2.3 : sans cette barrière elle peut flotter jusque
+% dans 1.2.4, loin du texte qui la commente.
+\FloatBarrier
+
 \subsection{UAVs in Indoor Environments}%
 \label{subsec:bg:uav-indoor}
 
@@ -174,96 +203,69 @@ Indoor \gls{abb:uav} operation differs from outdoor flight because warehouses ar
 confined, \gls{abb:gps}-denied, and often contain both static and moving
 obstacles.
 
-\subsubsection*{Characteristics of Indoor Environments}
+Several characteristics of the indoor setting shape the way a platform must
+operate. Warehouses are structured and confined spaces, built around narrow
+aisles and multi-level racks that leave limited room for
+manoeuvring~\cite{pore2026drone, pore2026uavqr}. Indoor conditions also make
+\gls{abb:gnss} unreliable, so \glspl{abb:uav} must rely on alternative
+localisation methods~\cite{pore2026drone, chang2023review}. Racks, shelves,
+workers and forklifts can obstruct the path of the vehicle, which makes real-time
+obstacle detection and avoidance necessary~\cite{pore2026drone, pore2026uavqr}.
+Illumination changes, motion blur and occlusions further degrade both navigation
+and visual inspection~\cite{pore2026uavqr}. Wireless communication must finally
+be considered, especially in multi-\gls{abb:uav} systems where drones need to
+exchange information during the mission~\cite{acharya2020cornet}.
 
-\begin{itemize}[itemsep=0.5em]
-    \item \textbf{Structured and confined spaces}: Warehouses contain narrow
-          aisles and multi-level racks, leaving limited space for
-          manoeuvring~\cite{pore2026drone, pore2026uavqr}.
-    \item \textbf{GPS-denied environments}: Indoor conditions make
-          \gls{abb:gnss} unreliable, so \glspl{abb:uav} must rely on alternative
-          localisation methods~\cite{pore2026drone, chang2023review}.
-    \item \textbf{Static and dynamic obstacles}: Racks, shelves, workers, and
-          forklifts can obstruct the \gls{abb:uav}'s path. Real-time obstacle
-          detection and avoidance are therefore
-          required~\cite{pore2026drone, pore2026uavqr}.
-    \item \textbf{Limited visual conditions}: Illumination changes, motion blur,
-          and occlusions can affect both navigation and visual
-          inspection~\cite{pore2026uavqr}.
-    \item \textbf{Communication constraints}: Wireless communication must also be
-          considered, especially in multi-\gls{abb:uav} systems where drones need
-          to exchange information during the mission~\cite{acharya2020cornet}.
-\end{itemize}
+Against these constraints, the platform brings a set of capabilities that suit
+the indoor setting. Multirotor \glspl{abb:uav} move in three dimensions and
+hover, which lets them approach objects from different
+positions~\cite{mohsan2023unmanned} and reach storage locations at different
+heights without occupying floor space or requiring modifications to the
+warehouse~\cite{pore2026uavqr}. Their sensing is equally flexible, since cameras,
+LiDAR and other sensors can be integrated according to the requirements of the
+navigation and inspection tasks~\cite{pore2026uavqr}. Operating autonomously,
+however, requires the vehicle to detect obstacles, plan safe trajectories and
+adapt its movement when the environment changes~\cite{pore2026uavqr}.
 
-\subsubsection*{UAV Capabilities for Indoor Operation}
-
-\begin{itemize}[itemsep=0.5em]
-    \item \textbf{Three-dimensional mobility}: Multirotor \glspl{abb:uav} can
-          move in three dimensions and hover, allowing them to approach objects
-          from different positions~\cite{mohsan2023unmanned}.
-    \item \textbf{Access to confined and elevated areas}: \Glspl{abb:uav} can
-          reach storage locations at different heights without occupying floor
-          space or requiring modifications to the warehouse~\cite{pore2026uavqr}.
-    \item \textbf{Flexible sensing}: Cameras, LiDAR, and other sensors can be
-          integrated according to the requirements of navigation and inspection
-          tasks~\cite{pore2026uavqr}.
-    \item \textbf{Autonomous operation}: An indoor \gls{abb:uav} must detect
-          obstacles, plan safe trajectories, and adapt its movement when the
-          environment changes~\cite{pore2026uavqr}.
-\end{itemize}
-
-\subsubsection*{Indoor UAV Applications}
-
-\begin{itemize}[itemsep=0.5em]
-    \item \textbf{Inspection}: \Glspl{abb:uav} can inspect infrastructure and
-          industrial facilities while reducing human exposure to repetitive or
-          risky tasks~\cite{tejeroruiz2024realistic, mohsan2023unmanned}.
-    \item \textbf{Monitoring}: Cameras and other sensors can be used to monitor
-          indoor facilities and environmental conditions~\cite{pore2026drone}.
-    \item \textbf{Mapping}: LiDAR and other depth sensors can support
-          three-dimensional mapping and obstacle detection~\cite{pore2026drone}.
-    \item \textbf{Inventory inspection}: \Glspl{abb:uav} can scan codes placed on
-          racks and use the collected information to support warehouse inventory
-          management~\cite{pore2026drone, kalinov2020warevision, cristiani2020inventory}.
-\end{itemize}
+These capabilities are exploited in several indoor applications.
+\Glspl{abb:uav} inspect infrastructure and industrial facilities while reducing
+human exposure to repetitive or risky
+tasks~\cite{tejeroruiz2024realistic, mohsan2023unmanned}, and monitor indoor
+facilities and environmental conditions with cameras and other onboard
+sensors~\cite{pore2026drone}. LiDAR and other depth sensors additionally support
+three-dimensional mapping and obstacle detection~\cite{pore2026drone}. In
+inventory inspection, the vehicle scans the codes placed on racks and feeds the
+collected information into warehouse inventory
+management~\cite{pore2026drone, kalinov2020warevision, cristiani2020inventory}.
 
 \subsection{Multi-UAV Systems and Coordination}%
 \label{subsec:bg:uav-multi}
 
-\subsubsection*{Limits of a Single UAV}
+Working with a single platform imposes three limits on an inspection mission.
+Energy comes first, since battery life directly limits how long a mission can
+last~\cite{kumar2025comprehensive}, and small \glspl{abb:uav} typically stay in
+the air for only twenty to thirty minutes~\cite{mohsan2023unmanned}. Coverage
+follows from that endurance, because a single platform can inspect only one area
+at a time, so the space it covers in one flight remains bounded. The mission is
+finally vulnerable to failure: if the drone stops flying during the inspection,
+the task ends there, since no other agent can take over from
+it~\cite{chandran2024network}.
 
-\begin{itemize}[itemsep=0.5em]
-    \item \textbf{Energy}: Battery life directly limits how long a mission can
-          last~\cite{kumar2025comprehensive}, and small \glspl{abb:uav} typically
-          stay in the air for only twenty to thirty
-          minutes~\cite{mohsan2023unmanned}.
-    \item \textbf{Coverage}: A single platform can inspect only one area at a
-          time, so the space it covers in one flight is bounded by its endurance.
-    \item \textbf{Vulnerability}: If the drone fails during the mission, the
-          inspection stops, since no other agent can take over its
-          task~\cite{chandran2024network}.
-\end{itemize}
+Deploying several platforms addresses these limits. The workload is divided
+between the drones, and mission time decreases as the number of agents
+grows~\cite{chandran2024network}; in a warehouse experiment, two \glspl{abb:uav}
+halved the inspection time compared with a single drone~\cite{pore2026uavqr}.
+Robustness and efficiency both improve, especially on complex
+tasks~\cite{kumar2025comprehensive}, and the redundancy brings fault tolerance,
+since a drone that is lost can be detected by the others, which then replan their
+paths so that the uncovered area is still inspected~\cite{chandran2024network}.
+That redundancy stays under control, as coordination keeps the overlap low and
+duplicate readings remained negligible in the same two-drone warehouse
+experiment~\cite{pore2026uavqr}.
 
-\subsubsection*{Motivations for Swarms}
-
-\begin{itemize}[itemsep=0.5em]
-    \item \textbf{Parallel coverage}: The workload is divided between the drones,
-          and mission time decreases as the number of agents
-          grows~\cite{chandran2024network}. In a warehouse experiment, two
-          \glspl{abb:uav} halved the inspection time compared with a single
-          drone~\cite{pore2026uavqr}.
-    \item \textbf{Robustness and efficiency}: Deploying several \glspl{abb:uav}
-          improves both, especially on complex
-          tasks~\cite{kumar2025comprehensive}.
-    \item \textbf{Fault tolerance}: When a drone is lost, the others can detect
-          the failure and replan their paths so that the uncovered area is still
-          inspected~\cite{chandran2024network}.
-    \item \textbf{Controlled redundancy}: Coordination keeps the overlap low, and
-          duplicate readings remained negligible in a two-drone warehouse
-          experiment~\cite{pore2026uavqr}.
-\end{itemize}
-
-\subsubsection*{Families of Coordination Architectures}
+The literature distinguishes three families of coordination architecture, which
+differ in where the decisions are taken and, as a consequence, in how much
+computation and communication each drone has to carry.
 
 \begin{itemize}[itemsep=0.5em]
     \item \textbf{Centralized}: All \glspl{abb:uav} communicate directly with a
