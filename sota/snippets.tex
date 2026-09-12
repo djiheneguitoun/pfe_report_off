@@ -1,0 +1,142 @@
+% Reference file — not included in the build. Formatting patterns to copy.
+
+% Table with legend
+\begin{table}[htbp]
+    \centering
+    \caption{Table caption.}
+    \label{tab:example:comparison}
+    \small
+    \begin{tabular}{@{}l
+            >{\raggedright\arraybackslash}p{2.5cm}
+            >{\raggedright\arraybackslash}p{3.6cm}
+            >{\raggedright\arraybackslash}p{2.7cm}
+            >{\raggedright\arraybackslash}p{3.3cm}@{}}
+        \toprule
+        \textbf{Ref} & \textbf{Family} & \textbf{Technique} &
+        \textbf{Validation} & \textbf{Result} \\
+        \midrule
+        \cite{pore2026drone} & Family & Technique & Validation & Result \\
+        \cite{pore2026uavqr} & Family & Technique & Validation & Result \\
+        \bottomrule
+    \end{tabular}
+
+    \vspace{0.8em}
+    \begin{minipage}{0.95\linewidth}
+        \footnotesize
+        \textbf{Validation levels:}
+        \par\vspace{2pt}
+        \renewcommand{\arraystretch}{1.15}
+        \begin{tabular}{@{}>{\itshape}l @{\hspace{0.8em}} p{0.66\linewidth}@{}}
+            Term 1 & definition. \\
+            Term 2 & definition. \\
+        \end{tabular}
+    \end{minipage}
+\end{table}
+
+% Pins floats inside the current section
+\FloatBarrier
+
+% Feature matrix
+\begin{table}[htbp]
+    \centering
+    \caption{Table caption.}
+    \label{tab:example:features}
+    \small
+    \begin{tabular}{@{}l >{\raggedright\arraybackslash}p{2.6cm} c c c c c@{}}
+        \toprule
+        \textbf{Platform} & \textbf{Base engine} & \textbf{Photo} & \textbf{Sensors} & \textbf{Vision} & \textbf{MAVLink} & \textbf{API} \\
+        \midrule
+        Name & Engine & \checkmark &            & \checkmark & \checkmark & $\bigstar$                 \\
+        Name & Engine & \checkmark & \checkmark & \checkmark &            & $\bigstar\bigstar\bigstar$ \\
+        \bottomrule
+    \end{tabular}
+
+    \vspace{1em}
+    \begin{minipage}{0.95\linewidth}
+        \footnotesize
+        \textbf{Legend.}\quad \checkmark{} = feature present;\quad empty cell = feature absent.
+        \par\vspace{5pt}
+        \renewcommand{\arraystretch}{1.3}
+        \begin{tabular}{@{}>{\bfseries}l @{\hspace{1.2em}} >{\raggedright\arraybackslash}p{0.7\linewidth}@{}}
+            Photo & photo-realistic rendering                                                           \\
+            API   & complexity, from $\bigstar$ (simplest) to $\bigstar\bigstar\bigstar$ (most complex) \\
+        \end{tabular}
+    \end{minipage}
+\end{table}
+
+% Wide landscape table
+\begin{sidewaystable}
+    \centering
+    \caption{Table caption.}%
+    \label{tab:example:wide}
+    \scriptsize
+    \setlength{\tabcolsep}{3pt}
+    \renewcommand{\arraystretch}{1.2}
+    \begin{tabular}{@{}
+            >{\raggedright\arraybackslash}p{1.7cm}
+            >{\raggedright\arraybackslash}p{2.9cm}
+            >{\raggedright\arraybackslash}p{2.5cm}
+            >{\raggedright\arraybackslash}p{1.5cm}
+            >{\raggedright\arraybackslash}p{2.0cm}
+            >{\raggedright\arraybackslash}p{3.5cm}
+            >{\raggedright\arraybackslash}p{2.6cm}
+            >{\raggedright\arraybackslash}p{1.9cm}
+            >{\raggedright\arraybackslash}p{2.7cm}@{}}
+        \toprule
+        \textbf{Ref} & \textbf{Main objective} & \textbf{Simulator} &
+        \textbf{Single / swarm} & \textbf{Autonomy} & \textbf{Key structure} &
+        \textbf{Strategy} & \textbf{Baselines} & \textbf{Metrics} \\
+        \midrule
+        Cell & Cell & Cell & Cell & Cell & Cell & Cell & Cell & Cell \\
+        \addlinespace
+        Cell & Cell & Cell & Cell & Cell & Cell & Cell & Cell & Cell \\
+        \bottomrule
+    \end{tabular}
+
+    \vspace{0.6em}
+    \begin{minipage}{0.95\linewidth}
+        \footnotesize
+        \textbf{Abbreviations.} AIF: active inference; \dots
+    \end{minipage}
+\end{sidewaystable}
+
+% Figure — short caption goes to the list of figures
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\textwidth]{aif_discret_recette_uav.png}
+    \caption[Short caption]{Long caption printed under the
+        figure~\cite{krayani2023goaldirected}.}%
+    \label{fig:example:diagram}
+\end{figure}
+
+% Equation
+\begin{equation}
+    \min \quad \alpha \sum_{(v_i, v_j) \in E} c_{ij}\, x_{ij}
+    \;-\; \beta \sum_{v_j \in V} r_j\, y_j ,
+    \label{eq:example:objective}
+\end{equation}
+
+% Lists
+\begin{enumerate}[itemsep=0.7em]
+    \item \textbf{Bold lead-in.} Item text.
+    \item \textbf{Bold lead-in.} Item text.
+\end{enumerate}
+
+\begin{itemize}[itemsep=0.4em]
+    \item Item text wrapping an equation:
+          \begin{equation}
+              v_i^{t+1} = \omega\, v_i^{t} + c_1 r_1 \bigl(p_i - x_i^{t}\bigr),
+              \label{eq:example:inline}
+          \end{equation}
+          followed by more text.
+    \item Item text.
+\end{itemize}
+
+% Code listing
+\lstinputlisting[language=Python,caption={Caption},label={code:example:bpe}]%
+{assets/code/bpe.py}
+
+% Algorithm
+\input{assets/algorithms/trans-encode.tex}
+
+% \Cref{sec:bg:uav}  \nameref{fig:example:diagram}  \cite{key}  \gls{abb:uav}  \glspl{abb:uav}

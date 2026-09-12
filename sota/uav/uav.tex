@@ -1,158 +1,55 @@
-\chapter{Chapter title}%
-\label{chap:uav-warehouse}
+\chapter{Background and Fundamental Concepts}%
+\label{chap:background}
 
 \subimport{.}{intro}
 
-% --- Chapter skeleton (stubs referenced by the roadmap in intro.tex) ---------
-% Fill each section below; the \label keys match the \Cref calls in intro.tex.
-\section{Section 1}%
-\label{sec:uav:problem}
+\section{Unmanned Aerial Vehicles}%
+\label{sec:bg:uav}
 
-% Content here.
+\subsection{Definition of a UAV}%
+\label{subsec:bg:uav-definition}
 
-\subsection{Subsection 1.1}%
-\label{subsec:uav:stakes}
+\subsection{Main Categories of UAVs}%
+\label{subsec:bg:uav-categories}
 
-% Content here.
+\subsection{Components of a UAV Platform}%
+\label{subsec:bg:uav-components}
 
-\subsection{Subsection 1.2}%
-\label{subsec:uav:traditional}
+\subsection{UAVs in Indoor Environments}%
+\label{subsec:bg:uav-indoor}
 
-% Content here.
+\subsection{Multi-UAV Systems and Coordination}%
+\label{subsec:bg:uav-multi}
 
-\subsection{Subsection 1.3}%
-\label{subsec:uav:limits}
+\subsection{UAV Simulation Environments}%
+\label{subsec:bg:uav-simulation}
 
-% Content here.
+\section{Warehouse Inventory Inspection and the Case for UAVs}%
+\label{sec:bg:inspection}
 
-\subsection{Subsection 1.4}%
-\label{subsec:uav:capabilities}
+\subsection{Warehouse Inventory Inspection}%
+\label{subsec:bg:inspection-definition}
 
-% Content here.
+\subsection{Traditional and Automated Inspection Methods}%
+\label{subsec:bg:inspection-methods}
 
-\section{Section 2}%
-\label{sec:uav:detection}
+\subsection{UAV-Based Inventory Inspection}%
+\label{subsec:bg:inspection-uav}
 
-% Content here.
+\section{QR Codes and Their Reading from a UAV}%
+\label{sec:bg:qr}
 
-\subsection{Subsection 2.1}%
-\label{subsec:uav:identification}
+\subsection{Identification Technologies and the Choice of QR Codes}%
+\label{subsec:bg:qr-technologies}
 
-% Content here.
+\subsection{QR Code Structure and Data Encoding}%
+\label{subsec:bg:qr-structure}
 
-\subsection{Subsection 2.2}%
-\label{subsec:uav:qr-challenges}
+\subsection{QR Code Detection and Recognition Methods}%
+\label{subsec:bg:qr-detection}
 
-% Content here.
-
-\subsection{Subsection 2.3}%
-\label{subsec:uav:qr-families}
-
-% Content here.
-
-% --- Example: table with booktabs rules + an explanatory legend underneath ---
-\begin{table}[htbp]
-    \centering
-    \caption{Table caption.}
-    \label{tab:uav:qr-detection}
-    \small
-    \begin{tabular}{@{}l
-            >{\raggedright\arraybackslash}p{2.5cm}
-            >{\raggedright\arraybackslash}p{3.6cm}
-            >{\raggedright\arraybackslash}p{2.7cm}
-            >{\raggedright\arraybackslash}p{3.3cm}@{}}
-        \toprule
-        \textbf{Header 1} & \textbf{Header 2} & \textbf{Header 3} &
-        \textbf{Header 4} & \textbf{Header 5} \\
-        \midrule
-         &  &  &  &  \\
-         &  &  &  &  \\
-         &  &  &  &  \\
-        \bottomrule
-    \end{tabular}
-
-    \vspace{0.8em}
-    \begin{minipage}{0.95\linewidth}
-        \footnotesize
-        \textbf{Legend:}
-        \par\vspace{2pt}
-        \renewcommand{\arraystretch}{1.15}
-        \begin{tabular}{@{}>{\itshape}l @{\hspace{0.8em}} p{0.66\linewidth}@{}}
-            Term 1 & definition. \\
-            Term 2 & definition. \\
-        \end{tabular}
-    \end{minipage}
-\end{table}
-
-% \FloatBarrier keeps the float above inside the current section.
-\FloatBarrier
-\section{Section 3}%
-\label{sec:uav:swarm}
-
-% Content here.
-
-\subsection{Subsection 3.1}%
-\label{subsec:uav:single-limits}
-
-% Content here.
-
-\subsection{Subsection 3.2}%
-\label{subsec:uav:architectures}
-
-% Content here.
-
-\section{Section 4}%
-\label{sec:uav:evaluation}
-
-% Content here.
-
-\subsection{Subsection 4.1}%
-\label{subsec:uav:simulators}
-
-% Content here.
-
-% --- Example: comparison table with checkmarks and a legend ------------------
-\begin{table}[htbp]
-    \centering
-    \caption{Table caption.}
-    \label{tab:uav:simulators}
-    \small
-    \begin{tabular}{@{}l >{\raggedright\arraybackslash}p{2.6cm} c c c c c@{}}
-        \toprule
-        \textbf{Header 1} & \textbf{Header 2} & \textbf{H3} & \textbf{H4} & \textbf{H5} & \textbf{H6} & \textbf{H7} \\
-        \midrule
-         &  &  &  &  &  &  \\
-         &  &  &  &  &  &  \\
-         &  &  &  &  &  &  \\
-        \bottomrule
-    \end{tabular}
-
-    \vspace{1em}
-    \begin{minipage}{0.95\linewidth}
-        \footnotesize
-        \textbf{Legend.}\quad \checkmark{} = feature present;\quad empty cell = feature absent.
-        \par\vspace{5pt}
-        \renewcommand{\arraystretch}{1.3}
-        \begin{tabular}{@{}>{\bfseries}l @{\hspace{1.2em}} >{\raggedright\arraybackslash}p{0.7\linewidth}@{}}
-            Term 1 & definition                                                             \\
-            Term 2 & definition                                                             \\
-            Rating & from $\bigstar$ (simplest) to $\bigstar\bigstar\bigstar$ (most complex) \\
-        \end{tabular}
-    \end{minipage}
-\end{table}
-
-\FloatBarrier
-\subsection{Subsection 4.2}%
-\label{subsec:uav:cosim}
-
-% Content here.
+\subsection{Challenges of QR Code Reading from a UAV}%
+\label{subsec:bg:qr-challenges}
 
 \section{Chapter Conclusion}%
-\label{sec:uav:conclusion}
-
-% Content here.
-
-% --- Example: numbered list with custom item spacing (enumitem) --------------
-% \begin{enumerate}[itemsep=0.7em]
-%     \item \textbf{Point.} Content here.
-% \end{enumerate}
+\label{sec:bg:conclusion}

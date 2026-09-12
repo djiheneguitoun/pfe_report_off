@@ -1,512 +1,245 @@
-\chapter{Chapter title}%
+\chapter{Comparative Analysis of Autonomous Navigation Approaches}%
 \label{chap:nav}
 
 \subimport{.}{intro}
 
-% --- Chapter skeleton (sections referenced by the roadmap in intro.tex) ------
-% Fill each section below; the \label keys match the \Cref calls in intro.tex.
-\section{Section 1}%
-\label{sec:nav:planning}
+\section{Open-Loop and Closed-Loop Navigation}%
+\label{sec:nav:principles}
 
-\subsection{Subsection 1.1}%
-\label{subsec:nav:foundations}
+\subsection{Principle of Open-Loop Navigation}%
+\label{subsec:nav:openloop-principle}
 
-% Content here.
+\subsection{Principle of Closed-Loop Navigation}%
+\label{subsec:nav:closedloop-principle}
 
-\paragraph{Rubric 1.}
-% Content here.
+\subsection{Criteria Used for the Comparison}%
+\label{subsec:nav:criteria}
 
-\paragraph{Rubric 2.}
-% Content here.
+\section{Open-Loop Methods: Classical Algorithms}%
+\label{sec:nav:classical}
 
-\paragraph{Rubric 3.}
-% Content here.
-
-\subsection{Subsection 1.2}%
-\label{subsec:nav:classical}
-
-% Content here.
-
-\subsubsection{Subsubsection 1.2.1}
+\subsection{Dynamic Programming}%
+\label{subsec:nav:dp}
 
 \paragraph*{Definition.}
-% Content here.
 
 \paragraph*{How does it work?}
-% Content here.
 
-\paragraph*{Applications.}
-% Content here.
+\paragraph*{UAV applications.}
 
 \paragraph*{Strengths and limitations.}
-% Content here.
 
-\subsubsection{Subsubsection 1.2.2}
+\subsection{Dijkstra's Algorithm}%
+\label{subsec:nav:dijkstra}
 
 \paragraph*{Definition.}
-% Content here.
 
 \paragraph*{How does it work?}
-% Content here.
 
-\paragraph*{Applications.}
-% Content here.
+\paragraph*{UAV applications.}
 
 \paragraph*{Strengths and limitations.}
-% Content here.
 
-\subsubsection{Subsubsection 1.2.3}
+\subsection{A* Algorithm}%
+\label{subsec:nav:astar}
 
 \paragraph*{Definition.}
-% Content here.
 
 \paragraph*{How does it work?}
-% Content here.
 
-\paragraph*{Applications.}
-% Content here.
+\paragraph*{UAV applications.}
 
 \paragraph*{Strengths and limitations.}
-% Content here.
 
-\subsubsection{Subsubsection 1.2.4}
+\subsection{D* and Its Variants}%
+\label{subsec:nav:dstar}
 
 \paragraph*{Definition.}
-% Content here.
 
 \paragraph*{How does it work?}
-% Content here.
 
-\paragraph*{Applications.}
-% Content here.
+\paragraph*{UAV applications.}
 
 \paragraph*{Strengths and limitations.}
-% Content here.
 
-\subsubsection{Subsubsection 1.2.5}
+\subsection{Mixed-Integer Linear Programming}%
+\label{subsec:nav:milp}
 
 \paragraph*{Definition.}
-% Content here.
 
 \paragraph*{How does it work?}
-% Content here.
 
-\paragraph*{Applications.}
-% Content here.
+\paragraph*{UAV applications.}
 
 \paragraph*{Strengths and limitations.}
-% Content here.
 
-\subsubsection{Subsubsection 1.2.6}
+\subsection{Traveling Salesman Problem and Its Profit Variant}%
+\label{subsec:nav:tsp}
 
 \paragraph*{Definition.}
-% Content here.
 
 \paragraph*{How does it work?}
-% --- Example: numbered steps followed by a displayed, labelled equation -----
-\begin{enumerate}
-    \item Step.
-    \item Step.
-    \item Step.
-\end{enumerate}
-\begin{equation}
-    % Formula here.
-    \label{eq:nav:tspwp}
-\end{equation}
-% Content here.
 
-\paragraph*{Applications.}
-% Content here.
+\paragraph*{UAV applications.}
 
 \paragraph*{Strengths and limitations.}
-% Content here.
 
-\subsection{Subsection 1.3}%
-\label{subsec:nav:metaheuristics}
+\section{Open-Loop Methods: Biologically Inspired Algorithms}%
+\label{sec:nav:metaheuristics}
 
-% Content here.
-
-\subsubsection{Subsubsection 1.3.1}
+\subsection{Genetic Algorithm}%
+\label{subsec:nav:ga}
 
 \paragraph*{Definition.}
-% Content here.
 
 \paragraph*{How does it work?}
-% Content here.
 
-\paragraph*{Applications.}
-% Content here.
+\paragraph*{UAV applications.}
 
 \paragraph*{Strengths and limitations.}
-% Content here.
 
-\subsubsection{Subsubsection 1.3.2}
+\subsection{Particle Swarm Optimization}%
+\label{subsec:nav:pso}
 
 \paragraph*{Definition.}
-% Content here.
 
 \paragraph*{How does it work?}
-\begin{equation}
-    % Formula here.
-    \label{eq:nav:pso}
-\end{equation}
-% Content here.
 
-\paragraph*{Applications.}
-% Content here.
+\paragraph*{UAV applications.}
 
 \paragraph*{Strengths and limitations.}
-% Content here.
 
-\subsubsection{Subsubsection 1.3.3}
+\subsection{Ant Colony Optimization}%
+\label{subsec:nav:aco}
 
 \paragraph*{Definition.}
-% Content here.
 
 \paragraph*{How does it work?}
-\begin{equation}
-    % Formula here.
-    \label{eq:nav:aco}
-\end{equation}
-% Content here.
 
-\paragraph*{Applications.}
-% Content here.
+\paragraph*{UAV applications.}
 
 \paragraph*{Strengths and limitations.}
-% Content here.
 
-\subsection{Subsection 1.4}%
-\label{subsec:nav:learning}
+\section{Limits of Open-Loop Methods}%
+\label{sec:nav:openloop-limits}
 
-% Content here.
+\section{Closed-Loop Methods: Learning-Based Approaches}%
+\label{sec:nav:learning}
 
-\subsubsection{Subsubsection 1.4.1}
-
-\paragraph*{Definition.}
-% Content here.
-
-\paragraph*{Formal definition.}
-\begin{equation}
-    % Formula here.
-    \label{eq:nav:mdp-return}
-\end{equation}
-% Content here.
-
-\paragraph*{How does it work?}
-% Content here.
-
-\subsubsection{Subsubsection 1.4.2}
+\subsection{Q-Learning}%
+\label{subsec:nav:qlearning}
 
 \paragraph*{Definition.}
-% Content here.
-
-\paragraph*{Formal definition.}
-% Content here.
 
 \paragraph*{How does it work?}
-% Content here.
 
-\paragraph*{Applications.}
-% Content here.
-
-\subsubsection{Subsubsection 1.4.3}
-
-\paragraph*{Definition.}
-% Content here.
-
-\paragraph*{How does it work?}
-\begin{equation}
-    % Formula here.
-    \label{eq:nav:qlearning}
-\end{equation}
-% Content here.
-
-\paragraph*{Applications.}
-% Content here.
+\paragraph*{UAV applications.}
 
 \paragraph*{Strengths and limitations.}
-% Content here.
 
-\subsubsection{Subsubsection 1.4.4}
+\subsection{Deep Q-Networks and Their Variants}%
+\label{subsec:nav:dqn}
 
 \paragraph*{Definition.}
-% Content here.
 
 \paragraph*{How does it work?}
-\begin{equation}
-    % Formula here.
-    \label{eq:nav:dqn}
-\end{equation}
-% Content here.
 
 \paragraph*{Variants.}
-% Content here.
 
-\paragraph*{Applications.}
-% Content here.
+\paragraph*{UAV applications.}
 
 \paragraph*{Strengths and limitations.}
-% Content here.
 
-\subsubsection{Subsubsection 1.4.5}
+\subsection{Policy-Gradient and Actor-Critic Methods}%
+\label{subsec:nav:policygradient}
 
 \paragraph*{Definition.}
-% Content here.
 
 \paragraph*{How does it work?}
-% Content here.
 
-\paragraph*{Main variants.}
-% --- Example: bullet list embedding a displayed, labelled equation ----------
-\begin{itemize}[itemsep=0.4em]
-    \item Item text.
-          \begin{equation}
-              % Formula here.
-              \label{eq:nav:ppo}
-          \end{equation}
-          Item text.
-    \item Item text.
-    \item Item text.
-\end{itemize}
+\paragraph*{Main variants used in the UAV literature.}
 
-\paragraph*{Applications.}
-% Content here.
+\paragraph*{UAV applications.}
 
 \paragraph*{Strengths and limitations.}
-% Content here.
 
-\subsubsection{Subsubsection 1.4.6}
+\subsection{Multi-Agent Reinforcement Learning}%
+\label{subsec:nav:marl}
 
 \paragraph*{Definition.}
-% Content here.
 
 \paragraph*{How does it work?}
-% Content here.
 
-\paragraph*{Applications.}
-% Content here.
+\paragraph*{UAV applications.}
 
 \paragraph*{Strengths and limitations.}
-% Content here.
 
-\subsubsection{Subsubsection 1.4.7}
+\subsection{Hierarchical Reinforcement Learning}%
+\label{subsec:nav:hrl}
 
 \paragraph*{Definition.}
-% Content here.
 
 \paragraph*{How does it work?}
-% Content here.
 
-\paragraph*{Applications.}
-% Content here.
+\paragraph*{UAV applications.}
 
 \paragraph*{Strengths and limitations.}
-% Content here.
 
-\subsubsection{Subsubsection 1.4.8}
+\subsection{Online POMDP Solvers}%
+\label{subsec:nav:pomdp-solvers}
 
 \paragraph*{Definition.}
-% Content here.
 
 \paragraph*{How does it work?}
-% Content here.
 
-\paragraph*{Applications.}
-% Content here.
+\paragraph*{UAV applications.}
 
 \paragraph*{Strengths and limitations.}
-% Content here.
 
-\section{Section 2}%
+\subsection{Limits of Learning-Based Approaches}%
+\label{subsec:nav:learning-limits}
+
+\section{Closed-Loop Methods: Active Inference}%
 \label{sec:nav:activeinf}
 
-% Content here.
+\subsection{The Free Energy Principle}%
+\label{subsec:nav:fep}
 
-\subsection{Subsection 2.1}%
-\label{subsec:nav:aif-foundations}
+\subsection{Variational Free Energy}%
+\label{subsec:nav:vfe}
 
-% Content here.
+\subsection{Expected Free Energy}%
+\label{subsec:nav:efe}
 
-\subsubsection{Subsubsection 2.1.1}
+\subsection{Continuous and Discrete Active Inference}%
+\label{subsec:nav:aif-continuous-discrete}
 
-% Content here.
+\subsection{Limits of Active Inference}%
+\label{subsec:nav:aif-limits}
 
-\subsubsection{Subsubsection 2.1.2}
-
-\begin{equation}
-    % Formula here.
-    \label{eq:nav:vfe}
-\end{equation}
-% Content here.
-
-\subsubsection{Subsubsection 2.1.3}
-
-% Content here.
-
-\subsubsection{Subsubsection 2.1.4}
-
-% Content here.
-
-\subsection{Subsection 2.2}%
-\label{subsec:nav:aif-discrete}
-
-% Content here.
-
-% --- Example: figure with a short (list-of-figures) and a long caption ------
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.95\textwidth]{aif_discret_recette_uav.png}
-    \caption[Short caption for the list of figures]{Long caption displayed under
-        the figure.}%
-    \label{fig:nav:aif-discrete-recipe}
-\end{figure}
-
-\subsubsection{Subsubsection 2.2.1}
-
-% Content here.
-
-\subsubsection{Subsubsection 2.2.2}
-
-% Content here.
-
-\subsubsection{Subsubsection 2.2.3}
-
-% Content here.
-
-\subsection{Subsection 2.3}%
-\label{subsec:nav:aif-multiagent}
-
-% Content here.
-
-\subsubsection{Subsubsection 2.3.1}
-
-% Content here.
-
-\subsubsection{Subsubsection 2.3.2}
-
-% Content here.
-
-\subsubsection{Subsubsection 2.3.3}
-
-% Content here.
-
-\subsection{Subsection 2.4}%
-\label{subsec:nav:aif-synthesis}
-
-% Content here.
-
-% --- Example: wide landscape table (sidewaystable) with a legend ------------
-\begin{sidewaystable}
-    \centering
-    \caption{Table caption.}%
-    \label{tab:nav:aif-overview}
-    \scriptsize
-    \setlength{\tabcolsep}{3pt}
-    \renewcommand{\arraystretch}{1.2}
-    \begin{tabular}{@{}
-            >{\raggedright\arraybackslash}p{1.7cm}
-            >{\raggedright\arraybackslash}p{2.9cm}
-            >{\raggedright\arraybackslash}p{2.5cm}
-            >{\raggedright\arraybackslash}p{1.5cm}
-            >{\raggedright\arraybackslash}p{2.0cm}
-            >{\raggedright\arraybackslash}p{3.5cm}
-            >{\raggedright\arraybackslash}p{2.6cm}
-            >{\raggedright\arraybackslash}p{1.9cm}
-            >{\raggedright\arraybackslash}p{2.7cm}@{}}
-        \toprule
-        \textbf{Header 1} & \textbf{Header 2} & \textbf{Header 3} &
-        \textbf{Header 4} & \textbf{Header 5} &
-        \textbf{Header 6} & \textbf{Header 7} & \textbf{Header 8} &
-        \textbf{Header 9} \\
-        \midrule
-         &  &  &  &  &  &  &  &  \\
-        \addlinespace
-         &  &  &  &  &  &  &  &  \\
-        \addlinespace
-         &  &  &  &  &  &  &  &  \\
-        \bottomrule
-    \end{tabular}
-
-    \vspace{0.6em}
-    \begin{minipage}{0.95\linewidth}
-        \footnotesize
-        \textbf{Abbreviations.} % Content here.
-    \end{minipage}
-\end{sidewaystable}
-
-\section{Section 3}%
+\section{Closed-Loop Methods: Language and Vision-Language Models}%
 \label{sec:nav:genai}
 
-% Content here.
+\subsection{Language as a High-Level Control Interface}%
+\label{subsec:nav:genai-interface}
 
-\subsection{Subsection 3.1}%
-\label{subsec:nav:genai-language}
-
-% Content here.
-
-\paragraph*{Pipeline.}
-% Content here.
-
-\subsection{Subsection 3.2}%
+\subsection{Grounding Language in Executable Actions}%
 \label{subsec:nav:genai-grounding}
 
-% Content here.
+\subsection{Vision-Language Models as Semantic Sensors}%
+\label{subsec:nav:genai-vlm}
 
-\paragraph*{Pipeline.}
-% Content here.
+\subsection{Image--Text Encoders for Lightweight Semantics}%
+\label{subsec:nav:genai-encoders}
 
-\subsection{Subsection 3.3}%
-\label{subsec:nav:genai-perception}
+\subsection{Lightweight Detectors as a Perception Front-End}%
+\label{subsec:nav:genai-detectors}
 
-% Content here.
+\subsection{LLM- and VLM-Guided Navigation in Unknown Environments}%
+\label{subsec:nav:genai-navigation}
 
-\paragraph*{Pipeline --- variant A.}
-% Content here.
-
-\paragraph*{Pipeline --- variant B.}
-% Content here.
-
-\subsection{Subsection 3.4}%
+\subsection{Growing Skill Libraries}%
 \label{subsec:nav:genai-skills}
-
-% Content here.
-
-\paragraph*{Pipeline.}
-% Content here.
-
-\subsection{Subsection 3.5}%
-\label{subsec:nav:genai-deepaif}
-
-% Content here.
-
-\paragraph*{Pipeline.}
-\begin{itemize}[itemsep=0.3em]
-    \item \textbf{Input:} content here.
-    \item \textbf{Step 1:} content here.
-          \begin{equation}
-              % Formula here.
-              \label{eq:nav:feef}
-          \end{equation}
-          Content here.
-    \item \textbf{Output:} content here.
-\end{itemize}
-
-% Content here.
-
-\subsection{Subsection 3.6}%
-\label{subsec:nav:genai-transposable}
-
-% Content here.
-
-\section{Section 4}%
-\label{sec:nav:synthesis}
-% TODO
-
-\section{Section 5}%
-\label{sec:nav:gaps}
-% TODO
 
 \section{Chapter Conclusion}%
 \label{sec:nav:conclusion}
-% TODO
