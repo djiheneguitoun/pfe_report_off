@@ -627,3 +627,34 @@ detection~\cite{pore2026uavqr}.
 
 \section{Chapter Conclusion}%
 \label{sec:bg:conclusion}
+
+This chapter has introduced the elements needed to understand the rest of this
+work. It first presented \glspl{abb:uav}, their categories, their components, the
+specific conditions of indoor flight, the organisation of multi-\gls{abb:uav}
+systems, and the simulation environments used to develop and test them. It then
+described warehouse inventory inspection as an operational problem, reviewed the
+methods used today, and examined the \gls{abb:uav}-based systems proposed in the
+literature. It finally focused on \gls{abb:qr} codes and on the reasons why
+reading them from a flying platform is difficult.
+
+Several gaps appear from this review. Most existing inspection systems use a
+single drone, and cooperation between several aerial agents remains
+rare~\cite{pore2026drone}. The environment is almost always assumed to be
+static, whereas a working warehouse contains moving operators and
+vehicles~\cite{pore2026drone}. Above all, most systems follow a coverage path
+that is planned in advance, in a layout that is already known. This assumption
+is convenient, but it does not hold when the drone has to discover the
+environment during the mission.
+
+These gaps all point to the same layer of the system: the way the drone decides
+where to go and when. Perception, identification, and platform design are
+comparatively mature, but the navigation and decision layer is what determines
+whether a drone can operate in an unknown and changing warehouse, and whether
+several drones can share the work without repeating it. The next chapter
+therefore examines this layer in detail. It compares the main families of
+autonomous navigation approaches, separating those that plan a complete path
+before the flight from those that revise their decisions as new observations
+arrive, and it discusses what each family can and cannot offer for the mission
+considered in this work.
+
+\label{sec:bg:conclusion}
