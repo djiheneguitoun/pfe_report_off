@@ -394,11 +394,154 @@ increase the development effort~\cite{jacinto2024pegasus, acharya2020cornet}.
 \subsection{Warehouse Inventory Inspection}%
 \label{subsec:bg:inspection-definition}
 
+Inventory inspection is the operation that checks what is actually stored on the
+shelves and compares it with the records kept by the \gls{abb:wms}. Its purpose
+is to keep these two views consistent, because miscounts and misplaced items
+directly affect order accuracy and raise operating costs~\cite{pore2026drone}.
+The task is shaped by the environment in which it takes place. A typical
+warehouse is a large building with many racks that can exceed ten metres in
+height, where every pallet and every pallet position carries a unique identifier,
+most often a barcode and more rarely an \gls{abb:rfid} or \gls{abb:qr}
+marker~\cite{kalinov2020warevision}. Most facilities today are high-density,
+large-scale storage sites, and as they keep growing in height and width,
+obtaining timely inventory visibility without compromising operational safety has
+become a real difficulty~\cite{pore2026uavqr}. In practice, the process is still
+largely manual: a worker takes each pallet down, scans it, and puts it back,
+which makes the operation repetitive and slow~\cite{kalinov2020warevision}. A
+complete inventory check can consume more than three days of normal warehouse
+activity~\cite{kalinov2020warevision}, so counting is usually performed
+periodically rather than continuously, and managers have little visibility of
+stock levels in real time~\cite{pore2026drone}.
+
 \subsection{Traditional and Automated Inspection Methods}%
 \label{subsec:bg:inspection-methods}
 
+Four families of methods are used today to carry out this operation.
+
+\begin{itemize}[itemsep=0.5em]
+    \item \textbf{Manual inspection}: Operators walk through the aisles, read the
+          labels, and update the records, sometimes still on
+          paper~\cite{pore2026drone}. The method requires no special
+          infrastructure, but it is time-consuming, labour-intensive, and exposed
+          to human error~\cite{pore2026uavqr}.
+    \item \textbf{Barcode and QR code scanning}: Optical identifiers are the
+          dominant technology, and 1D barcodes alone are used in around 87\% of
+          warehouses~\cite{kalinov2020warevision}. They are cheap to print, but
+          reading them with a camera in real warehouse conditions is difficult,
+          because of insufficient lighting, image artefacts produced by
+          rolling-shutter cameras, and the small physical size of the
+          codes~\cite{kalinov2020warevision}.
+    \item \textbf{RFID systems}: Radio tags are the main alternative to optical
+          codes. They require dedicated readers and infrastructure, whereas
+          \gls{abb:qr} codes can be deployed without any~\cite{pore2026uavqr},
+          and their performance degrades near metal racks because of multipath
+          and signal attenuation~\cite{pore2026drone}.
+    \item \textbf{Ground mobile robots (AGVs and AMRs)}: Scanners or cameras are
+          mounted on a ground platform that moves along the aisles. These robots
+          reduce manual work, but they stay on the floor plane, which limits
+          their vertical reach, and they occupy floor space that competes with
+          picking and forklift operations~\cite{pore2026uavqr}.
+\end{itemize}
+
+These four families differ in cost and in the degree of automation they offer,
+but they share the same structural limits. None of them reaches the upper levels
+of a high rack without either a lift or a human operator, each one requires
+either a significant amount of manual work or dedicated infrastructure, and at
+the scale of a full warehouse the inspection cycle is still measured in days
+rather than hours~\cite{kalinov2020warevision, pore2026uavqr}.
+
 \subsection{UAV-Based Inventory Inspection}%
 \label{subsec:bg:inspection-uav}
+
+\Glspl{abb:uav} address these limits directly. Because a drone moves freely in
+three dimensions, it can reach storage locations that are otherwise inaccessible,
+and it does so without requiring any structural change to the
+building~\cite{pore2026uavqr}. Compared with ground robots, it offers a better
+vertical reach and interferes less with floor operations, which makes it
+particularly suitable for dense warehouse layouts~\cite{pore2026uavqr}. Turning
+aisle traversal into an automated coverage problem also shortens the audit cycle
+and allows high-frequency counting during shifts or at night, without scaling the
+workforce in proportion~\cite{pore2026drone}. Two further benefits are reported:
+sensing elevated rack levels no longer requires forklifts or scissor lifts, which
+removes a fall hazard for the operator, and standardising flight speed, distance,
+and scan geometry produces more repeatable observations than manual
+scanning~\cite{pore2026drone}.
+
+Several systems have been proposed to put this idea into practice. They differ in
+the identification technology they use, in the way the drone locates itself, in
+the number of vehicles involved, and in how they are validated.
+\Cref{tab:bg:inspection-systems} summarises six representative systems published
+between 2020 and 2026.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Representative UAV-based inventory inspection systems.}%
+    \label{tab:bg:inspection-systems}
+    \small
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{2.9cm}
+            >{\raggedright\arraybackslash}p{3.2cm}
+            >{\raggedright\arraybackslash}p{3.4cm}
+            >{\raggedright\arraybackslash}p{1.9cm}
+            >{\raggedright\arraybackslash}p{2.9cm}@{}}
+        \toprule
+        \textbf{Ref.} & \textbf{Identification} & \textbf{Localisation} &
+        \textbf{Vehicles} & \textbf{Validation} \\
+        \midrule
+        \textcite{kalinov2020warevision}  & 1D barcode, \glsxtrshort{abb:cnn}, laser scanner & Infrared markers                                           & \glsxtrshort{abb:uav} + \glsxtrshort{abb:ugv}   & Laboratory                \\
+        \addlinespace
+        \textcite{kwon2020robust}         & Not addressed                                   & \glsxtrshort{abb:ekf} fusion, visual \glsxtrshort{abb:slam} & Single \glsxtrshort{abb:uav}                    & Warehouse                 \\
+        \addlinespace
+        \textcite{cristiani2020inventory} & \glsxtrshort{abb:qr} code                       & Ground camera, floor markers                               & Single \glsxtrshort{abb:uav}                    & Laboratory                \\
+        \addlinespace
+        \textcite{guinand2021uavugv}      & 1D barcode                                      & \glsxtrshort{abb:uwb} beacons                              & \glsxtrshort{abb:uav}s + \glsxtrshort{abb:ugv}s & Optimisation model        \\
+        \addlinespace
+        \textcite{alsulami2026deep}       & 1D/2D barcode, YOLOv8                           & Not addressed                                              & Single \glsxtrshort{abb:uav}                    & Simulated imagery         \\
+        \addlinespace
+        \textcite{pore2026uavqr}          & \glsxtrshort{abb:qr} code                       & Pre-planned path, 3D \glsxtrshort{abb:lidar}               & One and two \glsxtrshort{abb:uav}s              & Simulation + real testbed \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\FloatBarrier
+
+Three observations follow from this table, and a review of more than a hundred
+warehouse-drone studies confirms them at a larger scale~\cite{pore2026drone}.
+First, most systems use a single drone, and only one of those listed above
+evaluates a second aerial vehicle~\cite{pore2026uavqr}. When several vehicles do
+appear, they are heterogeneous rather than cooperating aerial agents: the ground
+robot acts as a carrier or as a beacon deployer instead of a second
+scanner~\cite{kalinov2020warevision, guinand2021uavugv}. Single-\gls{abb:uav}
+systems remain clearly dominant in the literature, which makes scalability an
+open research question~\cite{pore2026drone}. Second, validation is uneven. Only
+one of these systems reports results in a real warehouse
+testbed~\cite{pore2026uavqr}, while the others stay in the
+laboratory~\cite{kalinov2020warevision, cristiani2020inventory} or in
+simulation~\cite{alsulami2026deep}. At the scale of the whole field, about 45\%
+of inventory-management studies are simulation-based against roughly 7\% that
+report real experiments~\cite{pore2026drone}. Third, the environment is almost
+always assumed static: only about 3\% of inventory studies consider a dynamic
+warehouse with moving workers and vehicles~\cite{pore2026drone}. It is also worth
+noting that most of these systems follow a pre-planned coverage path through
+known aisles, rather than discovering the layout during the mission.
+
+The inspection mission itself concentrates several difficulties that are still
+not fully solved. Perception is the first one: vision-based reading of barcodes
+and \gls{abb:qr} codes is sensitive to glare, low illumination, occlusion, motion
+blur, and label orientation, and a code that cannot be decoded is an item that is
+not counted~\cite{pore2026drone}. Navigation is the second: the warehouse is
+\gls{abb:gps}-denied, so localisation must rely on onboard sensing or on
+additional infrastructure, and the tight spacing between racks combined with
+moving obstacles such as workers and forklifts forces conservative speed
+planning~\cite{pore2026drone}. Energy is the third: the limited battery capacity
+of a small platform caps the coverage achievable in one flight, which makes
+docking and mission partitioning necessary in large
+facilities~\cite{pore2026drone}. These constraints interact rather than adding
+up, because on-board computation, memory, and endurance all limit how much
+processing can be done during a long scanning mission~\cite{pore2026uavqr}. A
+complete system must therefore guarantee reliable obstacle avoidance, sustain a
+high decoding rate under variable illumination and partial occlusion, and keep
+the inventory database synchronised, all at the same time~\cite{pore2026uavqr}.
 
 \section{QR Codes and Their Reading from a UAV}%
 \label{sec:bg:qr}
