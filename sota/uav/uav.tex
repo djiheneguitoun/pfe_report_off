@@ -73,18 +73,6 @@ provide flight, sensing, computation, and communication.
 \Cref{fig:bg:uav-architecture} gives an overview of these subsystems and of the
 information exchanged between them.
 
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=\textwidth]{uav_architecture}
-    \caption[Architecture of a UAV platform]{Architecture of a \gls{abb:uav}
-        platform. Onboard sensors feed measurements to the flight control
-        system, which turns them into actuator commands for the airframe and
-        propulsion subsystem, while the companion computer issues the high-level
-        mission commands and maintains the links to the ground station. The
-        power supply constrains the duration of the mission and is replenished at
-        a ground charging station.}%
-    \label{fig:bg:uav-architecture}
-\end{figure}
 
 \subsubsection*{Airframe and Propulsion System}
 
@@ -166,6 +154,18 @@ information exchanged between them.
           ground charging stations that the drone visits when its battery falls
           below a threshold~\cite{cristiani2020inventory}.
 \end{itemize}
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{uav_architecture}
+    \caption[Architecture of a UAV platform]{Architecture of a \gls{abb:uav}
+        platform. Onboard sensors feed measurements to the flight control
+        system, which turns them into actuator commands for the airframe and
+        propulsion subsystem, while the companion computer issues the high-level
+        mission commands and maintains the links to the ground station. The
+        power supply constrains the duration of the mission and is replenished at
+        a ground charging station.}%
+    \label{fig:bg:uav-architecture}
+\end{figure}
 
 \subsection{UAVs in Indoor Environments}%
 \label{subsec:bg:uav-indoor}
@@ -229,6 +229,69 @@ obstacles.
 
 \subsection{Multi-UAV Systems and Coordination}%
 \label{subsec:bg:uav-multi}
+
+\subsubsection*{Limits of a Single UAV}
+
+\begin{itemize}[itemsep=0.5em]
+    \item \textbf{Energy}: Battery life directly limits how long a mission can
+          last~\cite{kumar2025comprehensive}, and small \glspl{abb:uav} typically
+          stay in the air for only twenty to thirty
+          minutes~\cite{mohsan2023unmanned}.
+    \item \textbf{Coverage}: A single platform can inspect only one area at a
+          time, so the space it covers in one flight is bounded by its endurance.
+    \item \textbf{Vulnerability}: If the drone fails during the mission, the
+          inspection stops, since no other agent can take over its
+          task~\cite{chandran2024network}.
+\end{itemize}
+
+\subsubsection*{Motivations for Swarms}
+
+\begin{itemize}[itemsep=0.5em]
+    \item \textbf{Parallel coverage}: The workload is divided between the drones,
+          and mission time decreases as the number of agents
+          grows~\cite{chandran2024network}. In a warehouse experiment, two
+          \glspl{abb:uav} halved the inspection time compared with a single
+          drone~\cite{pore2026uavqr}.
+    \item \textbf{Robustness and efficiency}: Deploying several \glspl{abb:uav}
+          improves both, especially on complex
+          tasks~\cite{kumar2025comprehensive}.
+    \item \textbf{Fault tolerance}: When a drone is lost, the others can detect
+          the failure and replan their paths so that the uncovered area is still
+          inspected~\cite{chandran2024network}.
+    \item \textbf{Controlled redundancy}: Coordination keeps the overlap low, and
+          duplicate readings remained negligible in a two-drone warehouse
+          experiment~\cite{pore2026uavqr}.
+\end{itemize}
+
+\subsubsection*{Families of Coordination Architectures}
+
+\begin{itemize}[itemsep=0.5em]
+    \item \textbf{Centralized}: All \glspl{abb:uav} communicate directly with a
+          central control station, which handles map generation and path
+          planning~\cite{kumar2025comprehensive}. This star topology minimises
+          onboard computation but adds communication overhead, so a trade-off
+          exists between network time and station computation
+          time~\cite{kumar2025comprehensive}. The mission also depends on a
+          single node, which becomes a point of
+          failure~\cite{chandran2024network}.
+    \item \textbf{Distributed}: The drones receive initial information from a
+          central node, then decide on board~\cite{kumar2025comprehensive}. Each
+          \gls{abb:uav} processes its own sensor data, builds a local map, plans
+          its path, and keeps information about the others to allocate tasks
+          efficiently~\cite{kumar2025comprehensive}. The cost is a higher
+          computational and communication load, which makes energy efficiency
+          critical~\cite{kumar2025comprehensive}, and the network can split if a
+          drone in the formation fails~\cite{chandran2024network}.
+    \item \textbf{Decentralized}: Control is shared among the \glspl{abb:uav},
+          which exchange information about their position and environment and
+          decide collaboratively without a central control
+          centre~\cite{kumar2025comprehensive}. This removes the single point of
+          failure and lets the drones reconfigure their links when the topology
+          changes~\cite{chandran2024network}. In exchange, it requires more
+          sophisticated algorithms and communication
+          protocols~\cite{kumar2025comprehensive}, and local exchanges introduce
+          latency that reduces responsiveness~\cite{chandran2024network}.
+\end{itemize}
 
 \subsection{UAV Simulation Environments}%
 \label{subsec:bg:uav-simulation}
