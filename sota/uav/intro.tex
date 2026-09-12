@@ -1,2 +1,39 @@
 \section{Chapter Introduction}%
 \label{sec:bg:intro}
+
+Warehouses are an important part of modern supply chains, and accurate inventory
+tracking is essential for their operation. Traditionally, inventory was managed
+manually using paper records and later barcode scanners. Although barcode
+scanners improved the process, inventory inspection still requires significant
+manual work and remains prone to errors~\cite{pore2026drone, pore2026uavqr}.
+
+The rapid growth of e-commerce has increased the need for faster and more
+accurate inventory information~\cite{kalinov2020warevision}. \Glspl{abb:uav} have
+therefore been proposed as an alternative for warehouse inspection. Their small
+size and mobility allow them to move through narrow aisles and reach different
+levels of storage racks while reducing manual effort~\cite{pore2026uavqr}. They
+also remove some of the repetitive and dangerous tasks previously performed by
+warehouse operators~\cite{kalinov2020warevision}. \Glspl{abb:qr} codes are often
+used to identify items during these inspections.
+
+However, using \glspl{abb:uav} for inventory inspection introduces new
+challenges. Indoor warehouses generally do not provide reliable \gls{abb:gps}
+signals, so the drone must estimate its position using onboard
+sensors~\cite{pore2026uavqr}. \Gls{abb:qr} code reading is also more difficult
+during flight because motion blur, lighting conditions, and occlusion can reduce
+recognition accuracy~\cite{dong2024motionblurred, alsulami2026deep}. In addition,
+the gap between simulation and real-world conditions can affect the performance
+of vision-based systems~\cite{pore2026uavqr}.
+
+Using multiple \glspl{abb:uav} can further improve mission efficiency by allowing
+different areas to be inspected in parallel. However, this requires coordination
+and information sharing between the drones to avoid redundant
+inspections~\cite{pore2026uavqr}.
+
+This chapter presents the main concepts and technologies related to this work.
+\Cref{sec:bg:uav} introduces \glspl{abb:uav}, including their main components,
+indoor flight, multi-\gls{abb:uav} systems, and simulation environments.
+\Cref{sec:bg:inspection} presents warehouse inventory inspection and existing
+automated approaches. \Cref{sec:bg:qr} focuses on \gls{abb:qr} codes, their
+detection, and the challenges of reading them from \glspl{abb:uav}. Finally,
+\Cref{sec:bg:conclusion} summarises the main points of the chapter.
