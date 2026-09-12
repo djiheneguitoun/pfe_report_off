@@ -30,10 +30,7 @@
   pdftitle={A Global Framework for GenAI-Enabled Multi-Agent Semantic Communication and Network Adaptation},
   pdfkeywords={GenAI, multi-agent, semantic communication, network adaptation}
 }
-% cleveref est chargé en toute fin de préambule (voir plus bas) : sinon un paquet
-% chargé après lui (glossaries-extra, bookmark, …) re-patche \@chapter/\@part et
-% casse la capture du type des labels, ce qui fait rendre \Cref{part:...} en « ?? ».
-\usepackage[top=2.5cm,bottom=2.5cm,right=2.5cm,left=2.5cm]{geometry}
+\usepackage[top=2.5cm,bottom=2.5cm,right=2.5cm,left=2.5cm,includefoot]{geometry}
 \usepackage{appendix}
 \usepackage{wrapfig}
 \usepackage{cprotect}
@@ -42,12 +39,14 @@
 \newlength\figureheight
 \newlength\figurewidth
 
-\usepackage[backend=biber, style=numeric-comp, sorting=none]{biblatex}
+\usepackage[backend=biber, style=apa, sorting=nyt]{biblatex}
+\DeclareLanguageMapping{english}{english-apa}
 \addbibresource{references.bib}
 
 \usepackage{etoolbox}
 
 \usepackage{caption}
+\captionsetup{labelfont=it}
 
 \import{preambule}{codestyle}
 \input{preambule/algo-style.tex}
@@ -83,9 +82,27 @@
 \makesavenoteenv{table}
 
 
-% Style de paragraphe classique LaTeX : pas d'espace entre paragraphes, alinéa
-% (indentation) en début de paragraphe — identique à la référence.
-\setlength{\parskip}{0pt plus 1pt}
+% Charte 1.4 : « une interligne simple ou interligne et demi pour les
+% paragraphes avec espacement de 6 pt après chaque paragraphe ». On retient
+% l'interligne et demi. Charte 2.5 : « Il faut bien détacher les paragraphes.
+% Il faut faire un retrait en début de paragraphe » — d'où les 6 pt ET l'alinéa.
+\usepackage{setspace}
+\onehalfspacing
+\setlength{\parskip}{6pt plus 2pt minus 1pt}
+
+% Charte 1.4 : « un espacement de 12 pt avant et après un titre ou un
+% sous-titre ». \titlespacing non étoilé conserve l'alinéa du paragraphe qui
+% suit le titre, comme l'exige la charte 2.5.
+\usepackage{titlesec}
+\titlespacing{\section}{0pt}{12pt}{12pt}
+\titlespacing{\subsection}{0pt}{12pt}{12pt}
+\titlespacing{\subsubsection}{0pt}{12pt}{12pt}
+
+% Charte 2.6 / 2.7 : numérotation continue en chiffres arabes sur tout le
+% mémoire (« Figure 1, Figure 2 »), et non par chapitre comme le fait la classe
+% report par défaut.
+\counterwithout{figure}{chapter}
+\counterwithout{table}{chapter}
 \import{preambule}{theorems}
 
 \input{preambule/notations}
