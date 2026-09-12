@@ -29,7 +29,7 @@ platforms~\cite{mohsan2023unmanned}.
 
 \begin{description}[style=unboxed, leftmargin=0pt, itemsep=0.8em,
         font=\normalfont\bfseries]
-    \item[\textbullet\ Fixed-wing UAVs:] These \glspl{abb:uav} use wings to generate lift and
+    \item[\textendash~Fixed-wing UAVs:] These \glspl{abb:uav} use wings to generate lift and
           are designed for efficient and fast flight. They offer long endurance
           and are therefore suitable for large-area surveys and structure
           inspection~\cite{mohsan2023unmanned}. However, they cannot hover and
@@ -37,13 +37,13 @@ platforms~\cite{mohsan2023unmanned}.
           procedure~\cite{mohsan2023unmanned}. These constraints make them
           unsuitable for confined indoor environments.
 
-    \item[\textbullet\ Single-rotor UAVs:] Similar to helicopters, single-rotor
+    \item[\textendash~Single-rotor UAVs:] Similar to helicopters, single-rotor
           \glspl{abb:uav} can hover and carry relatively large
           payloads~\cite{mohsan2023unmanned}. However, their mechanical
           structure is more complex, and they are generally more expensive and
           difficult to operate~\cite{mohsan2023unmanned}.
 
-    \item[\textbullet\ Multirotor UAVs:] Multirotor platforms are widely used for imaging and
+    \item[\textendash~Multirotor UAVs:] Multirotor platforms are widely used for imaging and
           inspection because of their low cost, compact size, manoeuvrability,
           and ability to take off, land, and hover
           vertically~\cite{mohsan2023unmanned}. Quadrotors are the most common
@@ -51,7 +51,7 @@ platforms~\cite{mohsan2023unmanned}.
           lower payload capacity compared with larger
           platforms~\cite{mohsan2023unmanned}.
 
-    \item[\textbullet\ Hybrid UAVs:] Hybrid platforms combine characteristics of fixed-wing
+    \item[\textendash~Hybrid UAVs:] Hybrid platforms combine characteristics of fixed-wing
           and rotary-wing \glspl{abb:uav}. They can perform vertical take-off
           and landing and can hover, while also providing better flight
           efficiency than conventional multirotors~\cite{mohsan2023unmanned}.
@@ -60,7 +60,7 @@ platforms~\cite{mohsan2023unmanned}.
 \end{description}
 
 \medskip
-\noindent\textbf{\textbullet\ Suitability for indoor applications:}
+\noindent\textbf{\textendash~Suitability for indoor applications:}
 Among these types, multirotor \glspl{abb:uav} are particularly suitable for
 indoor inspection. Their ability to hover and move freely in three dimensions
 allows them to approach objects closely~\cite{mohsan2023unmanned}, and their
@@ -83,11 +83,11 @@ provide flight, sensing, computation, and communication.
 \noindent\textbf{Airframe and propulsion system}
 \begin{description}[style=unboxed, leftmargin=0pt, itemsep=0.4em,
         font=\normalfont\bfseries]
-    \item[\textbullet\ Frame:] provides the mechanical structure of the
+    \item[\textendash~Frame:] provides the mechanical structure of the
           \gls{abb:uav} and supports its main components~\cite{mohsan2023unmanned}.
-    \item[\textbullet\ Motors:] convert electrical energy into mechanical
+    \item[\textendash~Motors:] convert electrical energy into mechanical
           rotation to drive the propellers~\cite{mohsan2023unmanned}.
-    \item[\textbullet\ Propellers:] generate the thrust required for flight and
+    \item[\textendash~Propellers:] generate the thrust required for flight and
           movement. Their number and arrangement define the multirotor
           configuration, with quadrotors being the most
           common~\cite{mohsan2023unmanned}.
@@ -97,15 +97,15 @@ provide flight, sensing, computation, and communication.
 \noindent\textbf{Flight control system}
 \begin{description}[style=unboxed, leftmargin=0pt, itemsep=0.4em,
         font=\normalfont\bfseries]
-    \item[\textbullet\ Flight controller:] processes sensor measurements and
+    \item[\textendash~Flight controller:] processes sensor measurements and
           generates the commands required to maintain the \gls{abb:uav}'s
           stability and control its
           movement~\cite{pore2026drone, mohsan2023unmanned}.
-    \item[\textbullet\ Autopilot:] provides higher-level functions such as
+    \item[\textendash~Autopilot:] provides higher-level functions such as
           mission planning and waypoint generation~\cite{mohsan2023unmanned}.
           PX4 and ArduPilot are widely used open-source autopilot
           stacks~\cite{acharya2020cornet}.
-    \item[\textbullet\ Low-level control:] regulates the \gls{abb:uav}'s
+    \item[\textendash~Low-level control:] regulates the \gls{abb:uav}'s
           altitude, velocity, and orientation so that it follows the requested
           trajectory. \Gls{abb:pid} controllers are widely used because they are
           simple to implement~\cite{mohsan2023unmanned}.
@@ -115,20 +115,20 @@ provide flight, sensing, computation, and communication.
 \noindent\textbf{Onboard sensors}
 \begin{description}[style=unboxed, leftmargin=0pt, itemsep=0.4em,
         font=\normalfont\bfseries]
-    \item[\textbullet\ IMU:] combines an accelerometer and a gyroscope to measure
+    \item[\textendash~IMU:] combines an accelerometer and a gyroscope to measure
           linear acceleration and angular motion~\cite{jacinto2024pegasus}.
-    \item[\textbullet\ Barometer and magnetometer:] provide altitude and heading
+    \item[\textendash~Barometer and magnetometer:] provide altitude and heading
           information, respectively~\cite{chandran2024network, jacinto2024pegasus}.
-    \item[\textbullet\ RGB camera:] provides visual information and is commonly
+    \item[\textendash~RGB camera:] provides visual information and is commonly
           used for barcode and \gls{abb:qr} code detection in warehouse
           applications~\cite{pore2026drone}.
-    \item[\textbullet\ Depth camera and LiDAR:] provide distance information for
+    \item[\textendash~Depth camera and LiDAR:] provide distance information for
           mapping and obstacle detection~\cite{pore2026drone, chang2023review}.
-    \item[\textbullet\ ToF sensors:] measure distance from the travel time of a
+    \item[\textendash~ToF sensors:] measure distance from the travel time of a
           signal, with accuracy decreasing as the distance
           grows~\cite{tejeroruiz2024realistic}. They are therefore suited to
           short-range proximity detection~\cite{pore2026drone}.
-    \item[\textbullet\ GNSS/GPS:] provides global positioning for outdoor
+    \item[\textendash~GNSS/GPS:] provides global positioning for outdoor
           flight~\cite{jacinto2024pegasus}. Since \gls{abb:gps} is unreliable
           indoors, other positioning methods are required in warehouse
           environments~\cite{pore2026uavqr}.
@@ -138,14 +138,14 @@ provide flight, sensing, computation, and communication.
 \noindent\textbf{Onboard computing and communication}
 \begin{description}[style=unboxed, leftmargin=0pt, itemsep=0.4em,
         font=\normalfont\bfseries]
-    \item[\textbullet\ Companion computer:] runs the high-level logic of the
+    \item[\textendash~Companion computer:] runs the high-level logic of the
           mission, separately from the flight control
           unit~\cite{acharya2020cornet}.
-    \item[\textbullet\ Communication interfaces:] allow the \gls{abb:uav} to
+    \item[\textendash~Communication interfaces:] allow the \gls{abb:uav} to
           exchange information with a ground station and, in
           multi-\gls{abb:uav} systems, with other
           drones~\cite{chandran2024network, acharya2020cornet}.
-    \item[\textbullet\ Wi-Fi and telemetry radio:] Wi-Fi links are commonly used
+    \item[\textendash~Wi-Fi and telemetry radio:] Wi-Fi links are commonly used
           for data exchange in warehouse prototypes~\cite{cristiani2020inventory},
           while the flight control unit uses a radio modem for telemetry and
           flight control~\cite{acharya2020cornet}.
@@ -155,14 +155,14 @@ provide flight, sensing, computation, and communication.
 \noindent\textbf{Power supply}
 \begin{description}[style=unboxed, leftmargin=0pt, itemsep=0.4em,
         font=\normalfont\bfseries]
-    \item[\textbullet\ Battery:] supplies energy to all \gls{abb:uav} subsystems
+    \item[\textendash~Battery:] supplies energy to all \gls{abb:uav} subsystems
           and directly affects flight
           endurance~\cite{kumar2025comprehensive, mohsan2023unmanned}.
-    \item[\textbullet\ Flight endurance:] depends mainly on vehicle weight, size,
+    \item[\textendash~Flight endurance:] depends mainly on vehicle weight, size,
           and payload~\cite{mohsan2023unmanned}. Small \glspl{abb:uav} typically
           fly for twenty to thirty minutes, so limited battery capacity restricts
           the duration of an inspection mission~\cite{mohsan2023unmanned}.
-    \item[\textbullet\ Extended operation:] multiple \glspl{abb:uav} can
+    \item[\textendash~Extended operation:] multiple \glspl{abb:uav} can
           distribute the workload~\cite{kumar2025comprehensive}, while some
           systems use ground charging stations that the drone visits when its
           battery falls below a threshold~\cite{cristiani2020inventory}.
