@@ -327,6 +327,55 @@ not sufficient for the mission considered in this work.
 \section{Limits of Open-Loop Methods}%
 \label{sec:nav:openloop-limits}
 
+The two families presented above differ in the way they search for a solution.
+Classical algorithms explore a graph or solve an exact optimisation problem,
+while biologically inspired algorithms replace this exact search with a
+population that improves over iterations. They do not differ, however, in what
+they assume before the search starts. Four limits follow from that shared
+assumption.
+
+\begin{itemize}[itemsep=0.5em]
+    \item \textbf{The environment must be known in advance.} Path planning begins
+          with a model of the environment, in which the obstacles are already
+          identified, and with a start point and a target that are already
+          fixed~\cite{kumar2025comprehensive}. Whatever form this model takes, a
+          graph, a grid, or a list of targets with their costs, it has to exist
+          before the flight.
+    \item \textbf{The plan does not adapt during the mission.} Offline planning
+          assumes a static environment~\cite{kumar2025comprehensive}, so a route
+          computed on the ground stays valid only as long as nothing changes.
+          Fixed waypoints and pre-computed paths are poorly suited to conditions
+          that evolve and to obstacles that were not known in advance, and this
+          increases the risk of collision~\cite{pore2026uavqr}.
+    \item \textbf{Replanning is expensive.} When something does change, most of
+          these methods have to start again. With the \glsxtrshort{abb:tsp}, the
+          appearance of a single new target forces the whole tour to be
+          recomputed from the beginning~\cite{krayani2023goal}. D* is the
+          exception, since it repairs only the affected part of the
+          path~\cite{krayani2023goal}, but even D* needs a complete initial path
+          to repair.
+    \item \textbf{Coordination between drones is decided before take-off.} In a
+          multi-\gls{abb:uav} mission, the targets have to be assigned and the
+          workload balanced~\cite{kumar2025comprehensive}. With an open-loop
+          scheme, this assignment is part of the plan computed on the ground.
+          Allocation systems able to learn and adapt to environmental changes in
+          real time are presented in the literature as a future direction, not as
+          current practice~\cite{kumar2025comprehensive}.
+\end{itemize}
+
+These four limits matter directly for the mission studied in this work. The
+warehouse layout is not known before the flight, since the drone discovers it
+while inspecting. Obstacles are not all static, because operators and forklifts
+move during the mission. New targets appear as the inspection progresses, in the
+form of unread codes and unexplored areas. And the work must be shared between
+several drones from what they observe, not from a plan fixed in advance. None of
+these four conditions is compatible with a route computed once before take-off.
+
+The next sections therefore turn to the closed-loop methods, which recompute the
+decision as new observations arrive. \Cref{sec:nav:learning} presents the
+learning-based approaches, \Cref{sec:nav:activeinf} active inference, and
+\Cref{sec:nav:genai} the recent use of language and vision-language models.
+
 \section{Closed-Loop Methods: Learning-Based Approaches}%
 \label{sec:nav:learning}
 
