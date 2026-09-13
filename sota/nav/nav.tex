@@ -840,5 +840,147 @@ Six limits emerge from these works.
           platforms~\cite{yokoyama2024vlfm, yu2023l3mvn}.
 \end{itemize}
 
+\section{Comparative Synthesis and Identified Gaps}%
+\label{sec:nav:synthesis}
+
+This chapter has presented five families of navigation methods, one after the
+other. To compare the individual works on a common basis,
+\Cref{tab:nav:synthesis} brings them together. The columns cover what the method
+needs to know before the mission, when it chooses its target, what criterion
+guides that choice, how several agents share the work, whether the method was
+tested on a robot, and how it was evaluated.
+
+\begin{sidewaystable}
+    \centering
+    \caption{Comparative analysis of decision-making approaches.}%
+    \label{tab:nav:synthesis}
+    \footnotesize
+    \setlength{\tabcolsep}{2pt}
+    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{2.3cm}
+            >{\raggedright\arraybackslash}p{2.7cm}
+            >{\raggedright\arraybackslash}p{2.1cm}
+            >{\raggedright\arraybackslash}p{1.4cm}
+            >{\raggedright\arraybackslash}p{2.5cm}
+            >{\raggedright\arraybackslash}p{1.8cm}
+            >{\raggedright\arraybackslash}p{2.3cm}
+            >{\raggedright\arraybackslash}p{2.1cm}
+            >{\raggedright\arraybackslash}p{2.9cm}
+            >{\raggedright\arraybackslash}p{2.1cm}@{}}
+        \toprule
+        \textbf{Work} & \textbf{Decision family} & \textbf{Known before the
+        mission} & \textbf{Target chosen} & \textbf{What drives the choice} &
+        \textbf{Multi-agent} & \textbf{Work sharing} & \textbf{Robotic
+        platform} & \textbf{Metrics used} & \textbf{Validation} \\
+        \midrule
+        \textcite{kalinov2020warevision} & Classical                                    & Rack layout           & Before flight & Detection density                               & No                                                  & ---                          & Yes, drone + \glsxtrshort{abb:ugv} & Inspection time, recognition rate       & Laboratory                \\
+        \addlinespace
+        \textcite{guinand2021uavugv}     & Classical, offline optimisation              & Full layout           & Before flight & Makespan                                        & Yes, \glsxtrshort{abb:uav}s + \glsxtrshort{abb:ugv}s & Central schedule             & Yes, drones                        & Makespan                                & Model only                \\
+        \addlinespace
+        \textcite{pore2026uavqr}         & Classical + short replanning                 & Aisle layout          & Before flight & Path length, safety                             & Yes, 2 \glsxtrshort{abb:uav}s                       & Fixed split, cloud filtering & Yes, drones                        & Decoding rate, mission time, duplicates & Simulation + real testbed \\
+        \addlinespace
+        \textcite{chandran2024network}   & Coverage, decentralised                      & Area to cover         & Before flight & Coverage time                                   & Yes, swarm                                          & Leader broadcasts waypoints  & Yes, drones                        & Mission time, packet delivery, delay    & Simulation                \\
+        \addlinespace
+        \textcite{sandino2020autonomous} & Online \glsxtrshort{abb:pomdp}               & Nothing               & Online        & Discounted reward                               & No                                                  & ---                          & Yes, drone                         & Success rate, flight time               & Simulation                \\
+        \addlinespace
+        \textcite{krayani2023goal}       & Active inference                             & Generative model      & Online        & Expected free energy                            & No                                                  & ---                          & No, wireless network               & Convergence speed, collected profit     & Simulation                \\
+        \addlinespace
+        \textcite{ding2024external}      & Deep \glsxtrshort{abb:rl} + active inference & Nothing               & Online        & Reward, then free energy                        & Yes                                                 & Global reward                & No, wireless network               & Sum-rate, convergence                   & Simulation                \\
+        \addlinespace
+        \textcite{wang2026bridging}      & Active inference + behaviour trees           & Behaviour tree, model & Online        & Expected free energy                            & Yes                                                 & Node-level inference         & Yes, drones                        & Tree complexity, task success           & Simulation                \\
+        \addlinespace
+        \textcite{ahn2022saycan}         & \glsxtrshort{abb:llm} + affordances          & Skill library         & Online        & \glsxtrshort{abb:llm} score $\times$ feasibility & No                                                  & ---                          & Yes, ground robot                  & Plan success, execution success         & Real robot                \\
+        \addlinespace
+        \textcite{chen2024typefly}       & \glsxtrshort{abb:llm} + detector             & Command set           & Online        & \glsxtrshort{abb:llm} plan over object list      & No                                                  & ---                          & Yes, drone                         & Task success, latency                   & Real drone                \\
+        \addlinespace
+        \textcite{yu2023l3mvn}           & \glsxtrshort{abb:llm} + frontiers            & Nothing               & Online        & \glsxtrshort{abb:llm} score over frontier text   & No                                                  & ---                          & Yes, ground robot                  & Success rate, SPL                       & Simulation + real         \\
+        \addlinespace
+        \textcite{yokoyama2024vlfm}      & \glsxtrshort{abb:vlm} + frontiers            & Nothing               & Online        & Image--text similarity                          & No                                                  & ---                          & Yes, ground robot                  & Success rate, SPL                       & Simulation + real         \\
+        \bottomrule
+    \end{tabular}
+
+    \vspace{0.6em}
+    {\footnotesize SPL: success weighted by normalised inverse path length.}
+\end{sidewaystable}
+
+\FloatBarrier
+
+The table shows a clear split. The works that need nothing before the mission are
+also the works that choose their target during the flight. Among them, only four
+use the meaning of what they see to decide where to go. All the others decide
+from a distance, a time, or a numerical reward. Four gaps follow from this.
+
+The first gap concerns the way several agents share the work. In every
+multi-agent work of the table, this sharing is decided before take-off. It can be
+a central schedule~\cite{guinand2021uavugv}, a fixed split between two
+drones~\cite{pore2026uavqr}, or a leader that sends the waypoints to the
+group~\cite{chandran2024network}. In none of these cases can the drones
+redistribute the targets from what they find during the flight. The literature
+says the same thing more generally: allocation systems that adapt in real time
+are described as a future direction, not as something that exists
+today~\cite{kumar2025comprehensive}.
+
+The second gap appears when we cross two columns of the table: the criterion of
+choice and the number of agents. The four works that decide from the meaning of
+the scene all use a single agent. The four multi-agent works all decide from a
+coverage time, a path length, a reward, or a free energy, never from what they
+actually see. No line of the table has both. This matches what the literature
+reports, since cooperative inference is still rarely applied to several drones,
+and the existing frameworks are usually centralised, which makes them hard to
+place inside a modular architecture~\cite{wang2026bridging}.
+
+The third gap concerns the platform. Only two works start from nothing and decide
+where to go during the mission by reasoning about what they
+see~\cite{yokoyama2024vlfm, yu2023l3mvn}. Both were tested on ground robots, in
+houses and in an office building. A drone is not the same case. It moves in three
+dimensions, it flies for only twenty to thirty
+minutes~\cite{mohsan2023unmanned}, and running a decision algorithm and a
+perception module together on its small onboard computer is still an open
+problem~\cite{sandino2020autonomous}. There is no guarantee that results obtained
+on the ground also work in the air.
+
+The fourth gap concerns the task. These two works solve Object Goal Navigation:
+the robot is given the name of one object, and the mission ends as soon as it
+reaches one example of it~\cite{yokoyama2024vlfm}. An inspection mission is
+different. It must cover the whole space instead of stopping at the first
+success, and it must handle several kinds of target at the same time. The authors
+of VLFM say this themselves: their value map only holds the information that
+concerns the current target, so it cannot be reused for another
+one~\cite{yokoyama2024vlfm}.
+
+These four gaps describe the same missing system. Methods that explore an unknown
+space by reasoning about what they see do exist, but they run on one ground robot
+and look for one object. Methods that coordinate several drones also exist, but
+they share the work using a plan made before take-off, and they ignore what the
+scene contains. No work joins the two sides. There is no system where several
+drones explore an unknown warehouse, build several kinds of target from what they
+observe, and share these targets between them while the mission is running.
+
 \section{Chapter Conclusion}%
 \label{sec:nav:conclusion}
+
+This chapter studied the layer that the previous one identified as the real
+difficulty: how a drone decides where to go next. The comparison used one
+criterion, the moment when the path is decided, which separates the methods that
+compute the whole route before take-off from those that choose the next move
+during the flight.
+
+The open-loop methods came first, in their classical form and in their
+biologically inspired form. They search in different ways, but they need the same
+thing: a description of the workspace before the flight. When something changes,
+they have to replan, often from the beginning. The closed-loop methods came next,
+in three families. Learning-based methods handle the unknown, but they generalise
+poorly outside their training conditions. Active inference removes the external
+reward, but it needs a model of the world that must be built first. Language and
+vision-language models are the only family that explores an unknown space without
+a map and without specific training, by choosing where to go from the meaning of
+what the camera sees.
+
+Comparing the individual works then revealed four gaps. The work is always shared
+before the mission starts. Semantic reasoning and cooperation never appear
+together. The methods that reason about an unknown space have only been tested on
+ground robots. And they solve a task, finding one object and stopping, that is
+not the task an inspection mission needs.
+
+These gaps define the space in which the rest of this work is placed. The next
+part presents the system built to fill it, its architecture, and the choices made
+during its implementation.
