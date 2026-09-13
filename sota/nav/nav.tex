@@ -331,26 +331,26 @@ they assume before the search starts. Four limits follow from that shared
 assumption.
 
 \begin{itemize}[itemsep=0.5em]
-    \item \textbf{The environment must be known in advance.} Path planning begins
+    \item \textbf{The environment must be known in advance}: Path planning begins
           with a model of the environment, in which the obstacles are already
           identified, and with a start point and a target that are already
           fixed~\cite{kumar2025comprehensive}. Whatever form this model takes, a
           graph, a grid, or a list of targets with their costs, it has to exist
           before the flight.
-    \item \textbf{The plan does not adapt during the mission.} Offline planning
+    \item \textbf{The plan does not adapt during the mission}: Offline planning
           assumes a static environment~\cite{kumar2025comprehensive}, so a route
           computed on the ground stays valid only as long as nothing changes.
           Fixed waypoints and pre-computed paths are poorly suited to conditions
           that evolve and to obstacles that were not known in advance, and this
           increases the risk of collision~\cite{pore2026uavqr}.
-    \item \textbf{Replanning is expensive.} When something does change, most of
+    \item \textbf{Replanning is expensive}: When something does change, most of
           these methods have to start again. With the \glsxtrshort{abb:tsp}, the
           appearance of a single new target forces the whole tour to be
           recomputed from the beginning~\cite{krayani2023goal}. D* is the
           exception, since it repairs only the affected part of the
           path~\cite{krayani2023goal}, but even D* needs a complete initial path
           to repair.
-    \item \textbf{Coordination between drones is decided before take-off.} In a
+    \item \textbf{Coordination between drones is decided before take-off}: In a
           multi-\gls{abb:uav} mission, the targets have to be assigned and the
           workload balanced~\cite{kumar2025comprehensive}. With an open-loop
           scheme, this assignment is part of the plan computed on the ground.
@@ -505,19 +505,19 @@ challenge~\cite{sandino2020autonomous}.
 Four limits are reported across this family.
 
 \begin{itemize}[itemsep=0.5em]
-    \item \textbf{Training cost.} Once the network is trained, a solution is
+    \item \textbf{Training cost}: Once the network is trained, a solution is
           produced quickly, but training itself requires a large number of
           samples and several epochs, which takes considerable
           time~\cite{krayani2026bayesian}.
-    \item \textbf{Poor generalisation.} Most machine learning and reinforcement
+    \item \textbf{Poor generalisation}: Most machine learning and reinforcement
           learning methods cannot adapt to situations that were not part of their
           training set. Adapting them requires extensive retraining, which is a
           problem for real-time
           decision-making~\cite{krayani2023goal, krayani2026bayesian}.
-    \item \textbf{Onboard computation.} Decision-making and perception must run
+    \item \textbf{Onboard computation}: Decision-making and perception must run
           together on hardware with limited resources, and this remains an open
           difficulty~\cite{sandino2020autonomous}.
-    \item \textbf{Reward design.} The behaviour of the agent depends entirely on
+    \item \textbf{Reward design}: The behaviour of the agent depends entirely on
           the reward function, which has to be designed by hand. A typical
           formulation combines several weighted objectives with penalty
           terms~\cite{ding2024external}, and these weights must be tuned for each
@@ -638,13 +638,13 @@ reward. Here, it comes out of the same equation as the goal.
 Several \gls{abb:uav} applications of this framework have been reported.
 
 \begin{itemize}[itemsep=0.5em]
-    \item \textbf{Resource allocation and anti-jamming.} Active inference has
+    \item \textbf{Resource allocation and anti-jamming}: Active inference has
           been applied to spectrum allocation for a drone facing a jammer. The
           reported advantage is speed of learning: the agent makes several
           updates at each step and can identify why an action was wrong, whereas
           Q-learning makes a single update without that
           information~\cite{krayani2022novel}.
-    \item \textbf{Goal-directed trajectory design.} A model of the world is built
+    \item \textbf{Goal-directed trajectory design}: A model of the world is built
           before the mission from solved instances of the travelling salesman
           problem with profits. The drone then uses this model to infer its route
           when it meets a new situation. The method is reported as faster, more
@@ -652,15 +652,15 @@ Several \gls{abb:uav} applications of this framework have been reported.
           Q-learning~\cite{krayani2023goal}. The same principle has been used for
           anti-jamming trajectories, with an expert optimiser producing the
           training examples~\cite{krayani2026bayesian}.
-    \item \textbf{Deep active inference.} For more complex tasks, neural networks
+    \item \textbf{Deep active inference}: For more complex tasks, neural networks
           are used to approximate the probabilities involved in free energy,
           which extends the framework beyond small
           problems~\cite{ding2024external}.
-    \item \textbf{Low-level control.} Active inference has also been used to make
+    \item \textbf{Low-level control}: Active inference has also been used to make
           a quadrotor follow a trajectory, acting as a state estimator combined
           with a controller. A variant handles the delay between a command and
           its effect, which improves accuracy~\cite{ji2024integration}.
-    \item \textbf{Multi-UAV coordination.} Recent work places free-energy-based
+    \item \textbf{Multi-UAV coordination}: Recent work places free-energy-based
           inference inside the decision nodes of behaviour trees, so that several
           drones can update their policies during the mission and adapt to each
           other~\cite{wang2026bridging}. Active inference has also been proposed
@@ -674,21 +674,21 @@ Several \gls{abb:uav} applications of this framework have been reported.
 Four limits appear in this literature.
 
 \begin{itemize}[itemsep=0.5em]
-    \item \textbf{The model of the world must be built first.} The agent cannot
+    \item \textbf{The model of the world must be built first}: The agent cannot
           infer anything without an internal model of its environment. In the
           trajectory design work, this model is learned before the mission from
           examples produced by an expert
           optimiser~\cite{krayani2023goal, krayani2026bayesian}. The difficulty
           is therefore moved, not removed.
-    \item \textbf{The exact computation is impossible.} The true state of the
+    \item \textbf{The exact computation is impossible}: The true state of the
           world cannot be computed directly, so the framework always works with
           approximations, and in practice assumes that the distributions are
           Gaussian~\cite{ji2024integration}.
-    \item \textbf{Scaling up requires neural networks.} Applying the framework to
+    \item \textbf{Scaling up requires neural networks}: Applying the framework to
           complex tasks means approximating free energy with neural
           networks~\cite{ding2024external}, which brings back part of the
           training cost that active inference was supposed to avoid.
-    \item \textbf{Multi-agent use is still rare.} The framework works well for a
+    \item \textbf{Multi-agent use is still rare}: The framework works well for a
           single agent, but its use for coordinating several drones remains
           limited, and existing frameworks are often centralised, which makes
           them hard to integrate into modular
@@ -702,26 +702,143 @@ vision-language model.
 \section{Closed-Loop Methods: Language and Vision-Language Models}%
 \label{sec:nav:genai}
 
-\subsection{Language as a High-Level Control Interface}%
+The two previous families both need a model of the world, and both have to obtain
+it. Reinforcement learning builds it implicitly, through a large number of
+trials. Active inference receives it from the engineer, or learns it offline from
+examples produced by an expert. The family presented here takes a different
+route: the model already exists. It is a network trained on very large amounts of
+image and text data, and it carries a general knowledge of the world that can be
+reused without any training specific to the task. This property is what the
+literature calls zero-shot: the system is applied directly to a new problem,
+without fine-tuning~\cite{radford2021learning, yokoyama2024vlfm}.
+
+What changes from one method to another is the role this pre-trained model plays
+inside the decision loop. Three roles can be distinguished, and each one gives
+the robot more autonomy than the previous one.
+
+\subsection{The Model as an Instruction Interpreter}%
 \label{subsec:nav:genai-interface}
 
-\subsection{Grounding Language in Executable Actions}%
-\label{subsec:nav:genai-grounding}
+In the first role, the model translates what a human asked for. The user
+describes the task in ordinary language, and the model produces a plan written in
+a command set defined for the robot. The method relies on the prompt: it contains
+the list of available functions, a few worked examples, and the rules the model
+must follow when it writes its answer~\cite{vemprala2023chatgpt}. TypeFly applies
+this to a drone. Its prompt gathers the user request, the current state of the
+scene, the syntax of the command language, and several examples showing how to
+build an executable solution~\cite{chen2024typefly}.
 
-\subsection{Vision-Language Models as Semantic Sensors}%
+A difficulty appears immediately. The language model knows a great deal about the
+world, but it knows nothing about the machine it controls. It can therefore
+propose an action that is sensible in principle and impossible in practice,
+because the robot cannot perform it or because the situation does not allow
+it~\cite{ahn2022saycan}.
+
+SayCan answers this problem by combining two scores. The language model estimates
+how useful each candidate action is for the requested task, and a value function,
+learned beforehand, estimates how likely that action is to succeed from the
+current state. The product of the two selects the action to execute. The
+important point is that the language model itself is never retrained: it is
+grounded through value functions that already exist, which keeps the approach
+zero-shot~\cite{ahn2022saycan}.
+
+In this role, the robot executes rather than decides. Something still has to tell
+it what to do.
+
+\subsection{The Model as a Semantic Sensor}%
 \label{subsec:nav:genai-vlm}
 
-\subsection{Image--Text Encoders for Lightweight Semantics}%
-\label{subsec:nav:genai-encoders}
+In the second role, the model interprets what the camera sees. This raises a
+practical problem: a language model does not see. For it to reason about a scene,
+that scene must first be described to it.
 
-\subsection{Lightweight Detectors as a Perception Front-End}%
-\label{subsec:nav:genai-detectors}
+The first way of doing this is a discrete description. A light detector produces
+the list of objects visible in the image, with their bounding boxes, and this
+list is inserted into the prompt. TypeFly uses YOLOv8 for this purpose: the
+object type is used by the language model to reason about the task, while the
+bounding box is used to locate the target and approach
+it~\cite{chen2024typefly}. The approach is simple and runs on board, but it has
+two costs. The vocabulary is closed, so the robot can only reason about
+categories the detector was trained on. More importantly, converting the image
+into text creates a bottleneck: every visual cue must pass through the detector
+before it can be used at all~\cite{yokoyama2024vlfm}.
 
-\subsection{LLM- and VLM-Guided Navigation in Unknown Environments}%
+The second way avoids this conversion. CLIP trains an image encoder and a text
+encoder together, with a single objective: given a batch of images and a batch of
+texts, predict which pairs actually go together~\cite{radford2021learning}. After
+training, both modalities live in the same space, and the only operation needed
+to compare an image with a description is a dot product between their two
+vectors~\cite{radford2021learning}. This has a direct consequence for robotics. A
+class no longer has to be a label seen during training; it can be any sentence.
+The text encoder turns the names or the descriptions of the target classes into a
+classifier, which is how zero-shot recognition becomes
+possible~\cite{radford2021learning}.
+
+\subsection{The Model as an Exploration Guide}%
 \label{subsec:nav:genai-navigation}
 
-\subsection{Growing Skill Libraries}%
-\label{subsec:nav:genai-skills}
+In the third role, the model orients the decision itself. There is no human
+instruction and no map. The robot is given the name of a target and must explore
+an environment it has never seen in order to find it~\cite{yokoyama2024vlfm}.
+
+The geometric basis of this behaviour is frontier-based exploration. A frontier
+is a boundary between the explored region of the map and the region still
+unknown, on a map the agent builds progressively as it moves. Exploring means
+going to these boundaries. Many rules have been proposed to decide which frontier
+to visit next, and classical methods select the one expected to bring the largest
+amount of new information~\cite{yokoyama2024vlfm}.
+
+Semantic guidance replaces this criterion. Instead of asking which frontier
+reveals the most, the robot asks which frontier most likely leads to the target.
+Two realisations illustrate this shift. L3MVN describes in text the objects
+located around each frontier, then asks a language model which of these
+descriptions best matches the target, using the common-sense knowledge the model
+acquired during pre-training~\cite{yu2023l3mvn}. VLFM removes the text step
+entirely. A vision-language model computes a cosine similarity directly between
+the current RGB image and a prompt containing the target, and this score is
+projected onto a top-down value map, where every explored pixel carries a
+semantic value. The frontier with the highest value becomes the next
+waypoint~\cite{yokoyama2024vlfm}.
+
+Both approaches report strong results. VLFM reaches state-of-the-art performance
+on three photorealistic datasets, without task-specific training and without a
+pre-built map, and it was deployed on a Boston Dynamics Spot robot in an office
+building, with all its models running in real time on a single
+laptop~\cite{yokoyama2024vlfm}. L3MVN outperforms map-based methods in success
+rate and in generalisation, and was also validated on a real
+robot~\cite{yu2023l3mvn}.
+
+In this role, the pre-trained model neither executes nor describes. It selects
+where the robot goes.
+
+\subsection{Limits of Language-Based Approaches}%
+\label{subsec:nav:genai-limits}
+
+Six limits emerge from these works.
+
+\begin{itemize}[itemsep=0.5em]
+    \item \textbf{Computation and latency}: Relying on a language model requires
+          a large amount of computing power, which often means connecting the
+          robot to a remote server~\cite{yokoyama2024vlfm}. TypeFly runs its
+          model on an edge server reached over Wi-Fi~\cite{chen2024typefly}.
+    \item \textbf{Cost of the prompt}: Detailed prompts, with examples and
+          explanations, are more expensive than short ones, and this cost is a
+          direct consequence of the method itself~\cite{chen2024typefly}.
+    \item \textbf{Reliability of the output}: Nothing guarantees that the action
+          proposed by the model can actually be executed, which is why a
+          grounding mechanism is required~\cite{ahn2022saycan}.
+    \item \textbf{Representation tied to a single target}: The value map built by
+          VLFM contains only the semantic information relevant to the current
+          target, so it cannot be reused for another object or for a different
+          navigation task~\cite{yokoyama2024vlfm}.
+    \item \textbf{Assumptions about the scene}: VLFM assumes that the target is
+          visible from the default height of the robot camera, and it does not
+          handle changes of floor, which causes a measurable share of its
+          failures~\cite{yokoyama2024vlfm}.
+    \item \textbf{Validation}: Results are obtained mainly on indoor household
+          benchmarks, and real deployments remain limited to a few
+          platforms~\cite{yokoyama2024vlfm, yu2023l3mvn}.
+\end{itemize}
 
 \section{Chapter Conclusion}%
 \label{sec:nav:conclusion}
