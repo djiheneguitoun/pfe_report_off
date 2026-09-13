@@ -38,7 +38,24 @@ The benefit is robustness. Fixed waypoints and pre-computed paths adapt poorly t
 conditions that evolve and to obstacles that were not anticipated, which raises
 the risk of collision~\cite{pore2026uavqr}.
 
+\Cref{fig:nav:taxonomy} summarises the two principles and the families of methods
+attached to each of them, together with the section where each family is
+examined.
 
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{planning_taxonomy}
+    \caption[Taxonomy of the navigation methods compared in this
+        chapter]{Taxonomy of the navigation methods compared in this chapter.
+        On the left, open-loop methods resolve the complete route from a known
+        map before take-off. On the right, closed-loop methods commit only to
+        the next action, then re-evaluate it from what the vehicle has just
+        observed. Each family is examined in the section indicated below
+        it.}%
+    \label{fig:nav:taxonomy}
+\end{figure}
+
+\FloatBarrier
 
 \section{Open-Loop Methods: Classical Algorithms}%
 \label{sec:nav:classical}
