@@ -144,8 +144,194 @@ limitations are established almost entirely on simulated missions, since about
 45\% of inventory studies are simulation-based against roughly 7\% that report
 real experiments~\cite{pore2026drone}.
 
-\section{System Overview}%
+\section{Overview of the Proposed Approach}%
 \label{sec:sys:overview}
+
+The system produces the inventory of a warehouse whose layout is not known in
+advance. Three vehicles take off inside the building. They have no map, only the
+boundaries of the space they may occupy. From their sensors, they build a
+description of the warehouse while they fly, and every decision they take is
+derived from that description at the moment it is taken.
+
+The mission runs as a loop. The vehicles observe, the observations update the
+description, the description produces a list of things worth doing, each vehicle
+picks one and flies there, and what it finds updates the description again. The
+loop stops when the inventory stops growing.
+
+Because the description is rewritten continuously instead of being fixed before
+take-off, the same loop handles three situations that a pre-computed plan cannot.
+When an obstacle appears in an aisle, it is added to the description and the
+paths that crossed it are recomputed. When the contents of the warehouse change,
+the old information is replaced rather than kept. And when a vehicle stops
+flying, the work it was doing returns to the others automatically, as explained
+below.
+
+Three properties hold together in this design, and no published work combines
+them. Several vehicles cooperate, and the work is redistributed during the flight
+rather than fixed before take-off. They operate in a warehouse they do not know,
+building their own representation of it as they go. And a pre-trained
+vision-language model takes part in the decision itself.
+
+The system has seven elements, described below and shown in
+\Cref{fig:sys:architecture}.
+
+\textbf{Perception}: Each vehicle perceives in two stages, because finding a
+label and reading it are two different operations.
+
+A \gls{abb:qr} code can only be decoded from close range and within a narrow band
+of viewing angles. A vehicle equipped only with a decoder would therefore be
+stuck: it would have to be already in front of a label in order to learn that
+this position was worth reaching. A second, coarser stage is needed.
+
+That stage is a learned detector. It finds cartons and \gls{abb:qr} codes in the
+camera image from several metres away, without trying to read them, and a range
+sensor measures the distance in that direction, which places the detection in
+space. The decoder then performs the actual reading once the vehicle is close and
+correctly oriented.
+
+A label therefore passes through three states: unknown, spotted but not yet read,
+and read. The middle state is the useful one, because it is what gives a vehicle
+a reason to move towards a specific place.
+
+\textbf{The shared map}: The team holds one map, and only one. Every vehicle
+writes into it what its sensors establish, and reads from it before every
+decision. No vehicle keeps a private copy.
+
+The map records four things:
+
+\begin{itemize}[itemsep=0.4em]
+    \item which parts of the volume are solid, which are free, and which are
+          still unknown, so that paths can be computed through space known to be
+          clear;
+    \item which surfaces have been observed, and from which direction, because a
+          rack face seen from one side says nothing about a label mounted on the
+          other;
+    \item the labels found so far, with their position and their state;
+    \item where the other vehicles are, and which target each of them has
+          announced.
+\end{itemize}
+
+Two consequences follow. A rack mapped by one vehicle becomes immediately usable
+by the other two, so adding vehicles reduces the cost of the mission instead of
+increasing it. And an observation that contradicts an earlier one replaces it,
+which is what allows the system to work in a warehouse that changes while the
+mission runs.
+
+\textbf{Candidate actions}: The map is never used to compute a route. It is used
+to produce a list of \emph{candidate actions}, meaning the things that are worth
+doing at this instant. Three kinds are extracted from the map.
+
+\begin{itemize}[itemsep=0.4em]
+    \item \textbf{Reading} takes a label that has been spotted but not yet
+          decoded. It requires occupying a precise position in front of that
+          label.
+    \item \textbf{Covering} takes a surface that is known to exist but has never
+          been observed from an angle allowing a label on it to be read. This is
+          the only way to find labels that have not been spotted yet.
+    \item \textbf{Exploring} takes a point on the boundary between the known and
+          the unknown parts of the map. Such a boundary is called a
+          \emph{frontier}, and going to frontiers is the classical way of
+          exploring an unknown space~\cite{yokoyama2024vlfm}.
+\end{itemize}
+
+These three activities are different in nature, and a system that ranks them by a
+fixed priority fails as soon as two of them are worth doing at the same time. To
+avoid this, each candidate action is written in the same way, whatever its kind:
+\textbf{a position to occupy and a direction to look in}. Once written in this
+form, a reading, a covering and an exploration are indistinguishable, and can
+therefore be compared.
+
+\textbf{A single scale}: Because all candidate actions are written in the same
+form, they can be placed on one common scale. Each one receives a numerical
+value, built from three terms.
+
+The first term is what the action is expected to return. Reading a label counts
+far more than extending the known region by one cell, which keeps the team
+focused on producing inventory entries.
+
+The second term is what the action costs. It is measured as the length of a path
+through space known to be free, not as a straight-line distance, so that a target
+on the far side of a rack is priced at what it really takes to reach.
+
+The third term is a penalty. It is applied when another vehicle has already
+announced that action, or is currently flying close to it.
+
+The vehicle then selects the candidate with the highest value among those it can
+actually reach, which is checked by computing the path before committing to it.
+
+The important consequence is that reading and exploring compete against each
+other directly, on the same scale. The balance between them is not fixed by a
+rule written in advance: while labels are waiting to be read, reading wins on its
+own, and when there are none left, exploration takes over, without any mode being
+switched.
+
+\textbf{Claiming and releasing}: No component of the system assigns work to a
+vehicle. Coordination works the other way round.
+
+When a vehicle selects an action, it writes that choice into the shared map. This
+is called a \emph{claim}. The other vehicles read the map before their own next
+decision, see the claim, and lower the value of every candidate close to it, so
+they naturally go elsewhere.
+
+A claim is granted by nobody and negotiated with nobody. It simply expires if the
+vehicle does not renew it periodically.
+
+This one rule does two jobs. It prevents two vehicles from travelling to the same
+target, which is what makes a team worth having in the first place. And it
+absorbs the loss of a vehicle: one that stops flying also stops renewing its
+claims, those claims expire after a short delay, and the actions it was holding
+return to the common list, where the others pick them up at their next ordinary
+decision. No component watches for failures, and none is written to react to one.
+Fault tolerance is a side effect of the expiry rule, not a feature added on top of
+it.
+
+\textbf{Semantic guidance}: One further element takes part in the choice.
+
+At regular intervals, a vehicle sends a short textual description of the current
+map to a pre-trained vision-language model, and asks which area of the warehouse
+deserves attention next, and from which side it should be approached. The answer
+raises the value of every candidate located in that area. This follows the
+principle used in semantic frontier selection, where a pre-trained model
+estimates which frontier is most likely to lead somewhere
+useful~\cite{yokoyama2024vlfm, yu2023l3mvn}.
+
+The reason for adding this element is that geometry alone knows where the team
+has \emph{not} looked, but it has no way of knowing that a corner full of cartons
+is more promising than an empty aisle. That kind of judgement is precisely what a
+model trained on very large quantities of images and text can provide, without
+any training specific to this task.
+
+Two choices keep the system independent of the model. The contribution is
+multiplied by a weight, and setting that weight to zero removes the model
+entirely, leaving a purely geometric system. And the request is sent
+asynchronously, so if the answer has not arrived when a decision is due, the
+decision is taken without it.
+
+\textbf{Execution}: Once an action has been selected, a controller brings the
+vehicle to the required position in three phases. It transits quickly along the
+path computed through the known free space. It then slows down for the final
+approach, so as to arrive without overshooting. Finally it holds position in
+front of the surface, long enough for several images to be captured, since a
+single frame is rarely enough to decode a label.
+
+The controller also knows when to give up. If the path is cut by something
+discovered on the way, or if the vehicle stops making progress towards its
+target, the action is released immediately and returns to the common list, where
+another vehicle may take it. When a reading succeeds, the label changes state in
+the map and the corresponding action disappears from the list.
+
+\Cref{fig:sys:architecture} shows the seven elements and the information that
+passes between them. The vehicles observe and write into the map; the map
+produces candidate actions; each vehicle prices them, claims one and executes it;
+and what the execution establishes returns to the map.
+
+These stages do not run at the same rate. Flight control runs several times per
+second, decisions about once per second, and the semantic advice every few
+seconds. The loop stops when the inventory stops growing, a condition the team
+evaluates for itself.
+
+The sections that follow open each element in turn, beginning with perception and
+the map, from which everything else is derived.
 
 \section{The Shared Map}%
 \label{sec:sys:map}
