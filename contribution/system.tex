@@ -232,17 +232,17 @@ flight, while a missed uncertain detection costs nothing because the area will b
 observed again later. The perception component therefore favours rejection over
 guessing: when an observation is uncertain, it remains silent.
 
-% Figure « Inside the perception component » : le fichier
-% assets/images/fig_perception_chaine.png est absent. Décommenter à sa livraison.
-% \begin{figure}[!htb]
-%     \centering
-%     \includegraphics[width=\textwidth]{fig_perception_chaine}
-%     \caption[Inside the perception component.]{Inside the perception component.
-%         The image provides direction and identity, while the \gls{abb:lidar}
-%         provides range; the resulting information is written into the shared
-%         map.}%
-%     \label{fig:sys:perception-chain}
-% \end{figure}
+\begin{figure}[!htb]
+    \centering
+    \includegraphics[width=\textwidth]{fig_perception_chaine}
+    \caption[Inside the perception component.]{Inside the perception component.
+        The image provides direction and identity, while the \gls{abb:lidar}
+        provides range; the resulting information is written into the shared
+        map.}%
+    \label{fig:sys:perception-chain}
+\end{figure}
+
+\FloatBarrier
 
 \subsubsection*{The Reading Envelope}
 
@@ -658,22 +658,290 @@ Each rule converts a potentially harmful false observation into a missed
 observation. This is intentional: in this system, missing an uncertain
 observation is preferable to writing incorrect information into the shared map.
 
-\subsection{Shared Map}
+\subsection{The Shared Map}%
 \label{subsec:sys:map}
 
-All three UAVs operate on a single shared map. Each UAV writes new observations
-to this map and consults the same representation before making its next decision,
-so there is no separate private map that must later be synchronized with the rest
-of the team. The map maintains four types of information:
+The shared map is the common memory of the team. It is maintained as a single
+instance: the vehicles do not keep separate maps that must later be merged, but
+directly read from and write to the same structure. It is also the only
+communication channel between the vehicles; no direct messages are exchanged.
 
-\begin{itemize}[itemsep=0.35em]
-\item \textbf{Traversability}: which parts of the volume are known to be free, occupied, or still unknown, allowing paths to be computed through known free space;
-\item \textbf{Observed surfaces}: which surfaces have been observed and from which viewing directions, since observing one side of a rack does not guarantee visibility of labels on the opposite side;
-\item \textbf{Inventory information}: the detected labels, their positions, and their current states;
-\item \textbf{Team state}: the positions of the other UAVs and the actions they have currently claimed.
-\end{itemize}
+The map answers four questions required by the mission: which parts of the space
+are occupied or free, which surfaces have already been observed from a readable
+direction, which labels exist and which of them have been decoded, and where the
+teammates and their current claims are located.
 
-The shared representation has two important consequences. An observation made by one UAV immediately becomes available to the other two, allowing the team to reuse information instead of repeating the same observation. At the same time, new observations can replace previous information when the environment changes. The map therefore represents the current state of the warehouse rather than a fixed model created before the mission.
+The complete structure occupies about 1.5\,MB for 258,048 cells. It is therefore
+updated several times per second and read by every vehicle at each decision
+without becoming a computational constraint.
+
+\begin{figure}[!htb]
+    \centering
+    \includegraphics[width=\textwidth]{fig_carte_couches}
+    \caption{Layers of the shared map.}%
+    \label{fig:sys:map-layers}
+\end{figure}
+
+\FloatBarrier
+
+\subsubsection*{Two Structures Rather Than One}
+
+The spatial information is stored in a cubic grid with a resolution of 0.25\,m. A
+cell is accessed directly from its spatial coordinates, without any search, which
+makes the grid suitable for repeated spatial queries and for \gls{abb:lidar}
+integration.
+
+Labels are stored separately in a table. Their positions are maintained with
+about 1\,cm precision, which a 0.25\,m cell would discard, and several labels may
+occupy the same cell. Each entry stores the decoded code, its position, its
+facing direction, and the number of readings used to estimate it.
+
+\begin{table}[!htb]
+    \centering
+    \caption{Layers of the shared map and their main users.}%
+    \label{tab:sys:map-layers}
+    \small
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{2.7cm}
+            >{\raggedright\arraybackslash}p{4.6cm}
+            >{\raggedright\arraybackslash}p{2.8cm}
+            >{\raggedright\arraybackslash}p{4.3cm}@{}}
+        \toprule
+        \textbf{Layer}        & \textbf{Content}                                                       & \textbf{Written by}            & \textbf{Read by}                          \\
+        \midrule
+        Occupancy             & occupied, free, or not yet observed                                    & \gls{abb:lidar} integration    & route planning and candidate generation   \\
+        \addlinespace
+        Oriented coverage     & which cells were observed, and from which of the four horizontal sides & reading cameras                & candidate generation                      \\
+        \addlinespace
+        Label table           & decoded panels and undecoded tracks                                    & perception                     & candidate generation and mission supervision \\
+        \addlinespace
+        Teammates and claims  & vehicle positions and claimed targets                                  & each vehicle                   & target selection                          \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\FloatBarrier
+
+\subsubsection*{Occupancy by Accumulated Evidence}
+
+For each \gls{abb:lidar} ray, the space crossed by the ray is considered free,
+while the cell where the ray stops is considered occupied when an obstacle is
+detected. Instead of storing only the most recent measurement, the map
+accumulates evidence over time.
+
+For each cell $c$, $L(c)$ is an accumulated occupancy value. A free measurement
+adds $\ell_{\mathrm{free}}$, which is negative, and an occupied measurement adds
+$\ell_{\mathrm{solid}}$, which is positive. The value is bounded by
+$\operatorname{clip}$ to prevent unlimited accumulation. The cell state is then
+determined by two thresholds, $\tau_{+}$ and $\tau_{-}$:
+
+\begin{equation}
+    L(c) \leftarrow \operatorname{clip}\bigl(L(c)+\ell\bigr),
+    \qquad
+    \operatorname{state}(c)=
+    \begin{cases}
+        \mathrm{occupied}, & L(c)>\tau_{+},   \\[2pt]
+        \mathrm{free},     & L(c)<\tau_{-},   \\[2pt]
+        \mathrm{unknown},  & \text{otherwise}.
+    \end{cases}
+    \label{eq:sys:occupancy}
+\end{equation}
+
+Here, $\ell$ is either $\ell_{\mathrm{solid}}$ or $\ell_{\mathrm{free}}$,
+depending on the \gls{abb:lidar} measurement, and $\operatorname{clip}$ limits
+$L(c)$ to the allowed range so that new observations can still revise the state
+of a cell.
+
+This accumulation makes the map less sensitive to isolated measurements. For
+example, a cell crossed as free ten times and then measured as occupied once
+remains free. A single reflection, grazing measurement, or temporary vehicle
+therefore does not turn a free aisle into an obstacle.
+
+Free evidence is deposited at several points along each crossed cell, because a
+ray that only grazes a cell corner could otherwise leave that cell marked as
+unknown even though the surrounding space is free. The sampling stops one cell
+before the impact point so that the obstacle cell itself is not marked as free.
+
+\begin{algorithm}[!htb]
+    \caption{IntegrateRevolution}%
+    \label{algo:sys:integrate}
+    \KwRequire{origin $\mathbf{o}$, unit directions $\mathbf{d}_i$, ranges $r_i$, grid $L$}
+    \KwEnsure{$L$ updated}
+    \For{each ray $i$}{
+        $r \gets \min(r_i,\, r_{\max})$ \tcp*[r]{only the trusted part is used}
+        \For{each sampled point along $\mathbf{d}_i$ up to $r$ minus one cell}{
+            add $\ell_{\mathrm{free}}$ to the corresponding cell\;
+        }
+        \If{$r_i$ is finite and $r_i \le r_{\max}$}{
+            add $\ell_{\mathrm{solid}}$ to the impact cell\;
+        }
+    }
+\end{algorithm}
+
+\FloatBarrier
+
+\subsubsection*{Oriented Coverage}
+
+Seeing a rack does not necessarily mean that a \glsxtrshort{abb:qr} code placed
+on it could be read. A panel is readable only from the side it faces, so a cell
+observed from the far end of an aisle or from behind a rack cannot be considered
+covered. The map therefore records whether a code located in a cell and facing a
+given direction would have been readable from the observed side.
+
+Each cell stores four bits corresponding to the four horizontal sides. A bit is
+set when that side has been observed with an apparent distance inside the reading
+envelope $\mathcal{E}$ of \Cref{eq:sys:envelope}, and when no known obstacle
+blocks the observation.
+
+Let $C(c)$ denote the four coverage bits of cell $c$, and let
+$\kappa(\mathbf{v}) \in \{0,1,2,3\}$ return the index of the horizontal side
+closest to the direction $\mathbf{v}$. For a panel with normal vector
+$\mathbf{n}$, the corresponding side is considered covered when
+
+\begin{equation}
+    \operatorname{covered}(c,\mathbf{n})
+    =
+    \bigl(C(c)\ \&\ 2^{\kappa(-\mathbf{n})}\bigr)\neq 0 .
+    \label{eq:sys:coverage}
+\end{equation}
+
+Here, $\&$ denotes the bitwise conjunction. The direction $-\mathbf{n}$ is used
+because the panel must be observed from the side towards which it faces.
+
+This distinction prevents a rack from being considered complete simply because a
+vehicle has passed near it. Candidate generation can instead determine which
+surfaces still require a visit, without knowing whether a label is actually
+present there.
+
+\begin{figure}[!htb]
+    \centering
+    \includegraphics[width=0.9\textwidth]{fig_couverture_orientee}
+    \caption{Oriented coverage stored in the shared map.}%
+    \label{fig:sys:oriented-coverage}
+\end{figure}
+
+\FloatBarrier
+
+\subsubsection*{Label Table}
+
+The label table contains two types of entries: a \emph{panel} for a decoded
+label, and a \emph{track} for a detected label that has not yet been decoded.
+
+A panel stores the decoded code, its position, its facing direction, and the
+number of readings. When the same panel is read several times, the individual
+position estimates are combined to obtain a more stable stored position.
+
+A track stores an estimated position and an observation direction. Repeated
+detections are merged when they are sufficiently close, and their position and
+direction estimates are averaged. As a vehicle moves along an aisle, the same
+label may first be detected from a sharp angle and later from a more frontal
+view, so the averaged direction approaches the actual panel normal.
+
+Each carton carries the same code on two opposite faces. Two readings with the
+same identifier but sufficiently distant positions may therefore correspond to
+two different faces of the same carton, and at most two faces are stored for one
+identifier.
+
+Let $\varepsilon$ be the distance threshold below which two readings are
+considered to belong to the same face, $p$ the position of a new reading, and
+$\operatorname{faces}(\ell)$ the set of faces already stored for identifier
+$\ell$. The nearest existing face is updated when it lies within $\varepsilon$;
+otherwise a second face is created if fewer than two faces exist; otherwise the
+reading is rejected as a decoding error:
+
+\begin{equation}
+    \begin{cases}
+        \text{update the nearest face}, &
+        \min\limits_{f\in\operatorname{faces}(\ell)} d(p,f)\leq\varepsilon,                \\[6pt]
+        \text{create a second face},    &
+        \min\limits_{f\in\operatorname{faces}(\ell)} d(p,f)>\varepsilon
+        \ \land\ \lvert\operatorname{faces}(\ell)\rvert<2,                                 \\[4pt]
+        \text{reject},                  & \text{otherwise}.
+    \end{cases}
+    \label{eq:sys:faces}
+\end{equation}
+
+Here, $d(p,f)$ is the distance from the new reading to an existing face. In the
+implementation, $\varepsilon = 0.45$\,m, slightly above the carton thickness.
+
+When a label is successfully decoded, nearby uncertain tracks are no longer
+needed. Any track located within $\varepsilon$ of the new panel is therefore
+removed, which prevents the number of tracks from growing indefinitely during a
+long mission.
+
+\subsubsection*{Routes and the Cost of the Unknown}
+
+The map provides the current knowledge of the warehouse structure, and route
+planning is performed directly on this representation. A horizontal slice around
+the vehicle altitude is used, and each cell receives a traversal cost:
+
+\begin{equation}
+    \operatorname{cost}(c)=
+    \begin{cases}
+        \infty, & \text{known obstacle}, \\[2pt]
+        1,      & \text{known free},     \\[2pt]
+        K_u,    & \text{unobserved}.
+    \end{cases}
+    \label{eq:sys:cost}
+\end{equation}
+
+Here, $K_u$ is the cost of crossing an unobserved cell, expressed relative to the
+cost of a known free cell. In the implementation, $K_u = 20$.
+
+The obstacle cells are first dilated by the vehicle radius. Clearance is
+therefore handled during route generation rather than during flight, and a route
+that exists on this grid can be followed as a sequence of straight segments. A
+value of 0.6\,m is used rather than a rounded 0.75\,m radius, since the latter can
+close narrow aisles in the simulated warehouse.
+
+Unknown cells are expensive but not forbidden, and both extremes would fail. If
+unknown cells were forbidden, a vehicle could never leave the region it has
+already explored. If they were free, the planner would cross racks that have not
+yet been observed, since those racks do not appear on the map. With $K_u = 20$,
+the planner prefers a route through known free space and enters unknown space
+only when this is necessary to reach the target.
+
+The altitude slice extends from 2.0\,m below the vehicle to 0.85\,m above it.
+This asymmetric range avoids selecting routes that fly over the racks in the
+simulation.
+
+Teammates are also inserted into the same cost grid as moving obstacles, so
+vehicles avoid one another during route computation rather than through a late
+manoeuvre. If a newly observed obstacle intersects the current route, the route
+is checked again and recomputed when necessary.
+
+\begin{figure}[!htb]
+    \centering
+    \includegraphics[width=0.9\textwidth]{fig_cout_inconnu}
+    \caption{Route cost associated with known and unknown space.}%
+    \label{fig:sys:unknown-cost}
+\end{figure}
+
+\FloatBarrier
+
+\begin{algorithm}[!htb]
+    \caption{Route}%
+    \label{algo:sys:route}
+    \KwRequire{start $a$, goal $b$, altitude $z$, occupancy grid}
+    \KwEnsure{a list of waypoints, or $\bot$ if no route exists}
+    build $\textsc{CostView}(z - 2.0,\; z + 0.85)$ \tcp*[r]{\Cref{eq:sys:cost}}
+    add teammate positions as moving obstacles\;
+    \lIf{$b$ is unreachable}{\KwRet$\bot$}
+    \If{the straight line from $a$ to $b$ contains only known free space}{
+        \KwRet an empty waypoint list\;
+    }
+    compute an A* path from $a$ to $b$\;
+    \lIf{no path exists}{\KwRet$\bot$}
+    simplify the resulting path\;
+    \KwRet the waypoint list\;
+\end{algorithm}
+
+\FloatBarrier
+
+The final layer of the shared map stores the current position of each vehicle and
+its currently claimed target. This information is allowed to expire so that
+outdated positions and claims are not kept indefinitely. Claim assignment and
+conflict handling are described in \Cref{sec:sys:claims}.
 
 \subsection{Candidate Actions}
 \label{sec:sys:candidates}
