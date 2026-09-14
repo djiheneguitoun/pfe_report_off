@@ -147,16 +147,44 @@ real experiments~\cite{pore2026drone}.
 \section{Overview of the Proposed Approach}%
 \label{sec:sys:overview}
 
-The proposed system performs warehouse inventory inspection in an environment whose layout is not known in advance. Three UAVs operate inside the warehouse without a pre-existing map or a pre-planned trajectory. Instead, they progressively build a shared representation of the environment from their observations and use this representation to decide where to move next.
+The proposed system performs warehouse inventory inspection in an environment
+whose layout is not known in advance. It is a multi-\gls{abb:uav} system: the
+inspection is carried out by a team of identical aerial vehicles operating
+simultaneously in the same building. Its organisation is decentralised, with no
+leader and no central planner; every vehicle runs the same software and reaches
+its own decisions. The number of vehicles is not a parameter of the design, so
+the same system operates unchanged with a larger or a smaller team.
 
-The mission follows a continuous perception--decision--execution loop. The UAVs observe the environment, update the shared map, generate candidate actions from the current state of the map, select actions according to their expected value and cost, and execute them. The results of the execution are then added to the map, which changes the set of available actions for the next decision.
+The system performs online planning. No coverage path, visiting order or list of
+targets is prepared before take-off, since none of these can be established for a
+building that has not yet been described. Task allocation is dynamic: the share
+of the inspection each vehicle is responsible for is determined during the flight
+and revised continuously as the state of the search evolves. Mapping is likewise
+online, and the resulting map is shared: the vehicles jointly construct a single
+three-dimensional description of the building, which is volumetric rather than a
+floor plan, as racks have several levels and a code is defined by a height as
+much as by a position. Coordination between vehicles is implicit and passes
+entirely through this shared description; no communication protocol, negotiation
+or consensus mechanism is required.
 
-This design removes the need to know the warehouse configuration before take-off. A newly discovered obstacle can modify the traversable space and invalidate a previously selected path. A change in the warehouse can replace information already stored in the map. Similarly, if a UAV stops operating, the action it was performing is eventually released and can be selected by another UAV. The system therefore adapts to changes during the mission rather than relying on a fixed plan.
+The system is fault-tolerant, and contains no component whose function is to
+detect the failure of a vehicle. It is adaptive to change, whether the contents
+of the warehouse have been modified since an earlier mission or an obstacle
+appears during the current one. It is self-terminating: the end of the mission is
+determined by the team from the state of the inspection, not by a predefined time
+budget. Its decisions are semantically guided, in that a pre-trained
+vision-language model participates in them, and this guidance is optional---its
+removal leaves a system that remains fully operational. Finally, the system is
+physically realistic: the vehicles are flown by real autopilots, so that every
+decision it produces is one that can be executed in flight.
 
-The approach combines three properties that are central to the proposed system. First, the three UAVs cooperate through a shared representation and redistribute work during the mission. Second, exploration and inventory inspection are performed without prior knowledge of the warehouse layout. Third, a pre-trained vision-language model provides semantic guidance during the decision process. The system is composed of seven main elements, illustrated in \Cref{fig:sys:architecture}.
+The system is made of seven elements. They appear in
+\Cref{fig:sys:architecture} and are described one by one in the subsections that
+follow; the way they run together over a mission is the subject of
+\Cref{sec:sys:loop}.
 
 \subsection{Perception}
-\label{sec:sys:perception}
+\label{subsec:sys:perception}
 
 The perception pipeline separates two tasks that cannot be reliably performed at the same distance: \emph{finding} a label and \emph{reading} it.
 
@@ -175,7 +203,7 @@ This creates three states for a label:
 The \emph{spotted} state is particularly important for planning. It provides a concrete target that the system can turn into a candidate reading action.
 
 \subsection{Shared Map}
-\label{sec:sys:map}
+\label{subsec:sys:map}
 
 All three UAVs operate on a single shared map. Each UAV writes new observations to this map and consults the same representation before making its next decision. There is therefore no separate private map that must later be synchronized with the rest of the team.
 
@@ -251,7 +279,7 @@ This mechanism provides both task coordination and basic fault tolerance:
 No dedicated failure manager is required. If a UAV stops flying, its claims eventually expire and the corresponding actions return to the common candidate set. The remaining UAVs can then select these actions during their normal decision process. Fault recovery is therefore a consequence of the same claim-expiration mechanism used for ordinary coordination.
 
 \subsection{Semantic Guidance}
-\label{sec:sys:semantic}
+\label{subsec:sys:semantic}
 
 The geometric decision process is complemented by a pre-trained vision-language model (VLM). At regular intervals, a UAV provides the model with a compact description of the current warehouse state and asks which area should receive attention next and from which side it should be approached.
 
@@ -259,7 +287,6 @@ The VLM does not directly control the UAV or generate its trajectory. Instead, i
 
 This provides information that is difficult to obtain from geometry alone. A geometric map can indicate where the team has not yet explored, but it cannot determine whether one unexplored area appears more promising than another based on its visual content. Semantic guidance can, for example, favour an area containing visible cartons over an apparently empty aisle.
 
-The VLM is also optional by design. Its contribution is controlled by a weighting parameter. Setting this weight to zero removes the semantic contribution and produces a purely geometric system. In addition, VLM requests are performed asynchronously. If a response is not available when a decision is required, the UAV continues using the geometric decision process rather than waiting for the model.
 
 \subsection{Execution}
 \label{sec:sys:execution}
@@ -299,28 +326,3 @@ The different parts of the system operate at different time scales. Flight contr
 The mission terminates when the inventory no longer grows, meaning that the team has reached a state in which additional actions do not produce new inventory entries.
 
 The following sections describe these elements in detail, beginning with the perception and shared-map components on which the remaining decision and coordination mechanisms are built.
-
-
-\section{The Shared Map}%
-\label{sec:sys:map}
-
-\section{Two-Track Perception}%
-\label{sec:sys:perception}
-
-\section{Generation and Scoring of Targets}%
-\label{sec:sys:targets}
-
-\section{Coordination Mechanism}%
-\label{sec:sys:coordination}
-
-\section{Semantic Guide}%
-\label{sec:sys:semantic}
-
-\section{Flight Controller}%
-\label{sec:sys:control}
-
-\section{A Complete Mission}%
-\label{sec:sys:mission}
-
-\section{Approaches Explored and Set Aside}%
-\label{sec:sys:discarded}
