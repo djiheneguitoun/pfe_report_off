@@ -192,28 +192,471 @@ follow; the way they run together over a mission is the subject of
 
 \FloatBarrier
 
-\subsection{Perception}
+The following sections describe these elements in detail, beginning with the
+perception and shared-map components on which the remaining decision and
+coordination mechanisms are built.
+
+\section{Detailed Architecture Design}%
+\label{sec:sys:design}
+
+\subsection{Perception}%
 \label{subsec:sys:perception}
 
-The perception pipeline separates two tasks that cannot be reliably performed at
-the same distance: \emph{finding} a label and \emph{reading} it. A \gls{abb:qr}
-code can only be decoded when the UAV is sufficiently close and observes the code
-within an appropriate range of viewing angles, so a decoder alone would provide
-no useful information about labels that have not yet been approached. The system
-therefore first uses a learned detector to identify cartons and \gls{abb:qr}
-codes from several metres away, without attempting to decode them; the detected
-objects are placed in the environment using the range information provided by the
-UAV's distance sensor, and the decoder performs the actual reading once the UAV
-reaches an appropriate position and orientation. This creates three states for a
-label:
+Perception is the part of the system that observes the warehouse and provides the
+information used by all other components. At each cycle, for each vehicle, it
+receives the images from the left and right cameras, their corresponding poses,
+and one full \gls{abb:lidar} revolution. It produces three types of information
+and writes them into the shared map $\mathcal{M}$: decoded identifiers with their
+position and panel orientation, detected but undecoded labels with their position
+and approach direction, and regions identified as free or occupied.
 
-\begin{itemize}[itemsep=0.35em]
-\item \textbf{Unknown}: the label has not yet been detected.
-\item \textbf{Spotted}: the label has been detected and localized, but has not yet been decoded.
-\item \textbf{Read}: the label has been successfully decoded.
-\end{itemize}
+The perception function can therefore be written as
 
-The \emph{spotted} state is particularly important for planning. It provides a concrete target that the system can turn into a candidate reading action.
+\begin{equation}
+    f_{\mathcal{P}} :
+    \mathcal{I}^2 \times \mathcal{T} \times \mathcal{L}
+    \longrightarrow
+    \mathcal{R} \times \mathcal{S} \times \mathcal{V}
+    \label{eq:sys:perception}
+\end{equation}
+
+where $\mathcal{I}$ denotes the camera images, $\mathcal{T}$ the corresponding
+camera poses, $\mathcal{L}$ the \gls{abb:lidar} measurements, and $\mathcal{R}$,
+$\mathcal{S}$, and $\mathcal{V}$ the decoded labels, spotted labels, and spatial
+information respectively.
+
+These three types of information do not have the same cost when they are wrong. A
+wrong identifier is permanent because the system does not return to a label once
+it has been declared read. A false detection instead causes one unnecessary
+flight, while a missed uncertain detection costs nothing because the area will be
+observed again later. The perception component therefore favours rejection over
+guessing: when an observation is uncertain, it remains silent.
+
+% Figure « Inside the perception component » : le fichier
+% assets/images/fig_perception_chaine.png est absent. Décommenter à sa livraison.
+% \begin{figure}[!htb]
+%     \centering
+%     \includegraphics[width=\textwidth]{fig_perception_chaine}
+%     \caption[Inside the perception component.]{Inside the perception component.
+%         The image provides direction and identity, while the \gls{abb:lidar}
+%         provides range; the resulting information is written into the shared
+%         map.}%
+%     \label{fig:sys:perception-chain}
+% \end{figure}
+
+\subsubsection*{The Reading Envelope}
+
+A \glsxtrshort{abb:qr} code becomes unreadable before it becomes invisible.
+Reading mainly depends on two factors: distance and viewing angle. These factors
+can be combined into a single quantity. If a square panel is viewed with an angle
+$\alpha$, its apparent size is reduced by $\cos\alpha$, which is equivalent to
+observing the same panel from a distance $1/\cos\alpha$ times larger. We
+therefore define the apparent distance as
+
+\begin{equation}
+    d_{\text{app}} = \frac{d}{\cos\alpha},
+    \label{eq:sys:apparent}
+\end{equation}
+
+where $d$ is the actual distance to the panel and $\alpha$ is the angle between
+the camera viewing direction and the panel normal.
+
+\begin{figure}[!htb]
+    \centering
+    \includegraphics[width=\textwidth]{fig_distance_apparente}
+    \caption[Distance and angle produce the same effect.]{Distance and angle
+        produce the same effect on the apparent size of the \glsxtrshort{abb:qr}
+        code. A panel tilted by $\alpha$ is equivalent to an untilted panel at
+        $1/\cos\alpha$ times the distance.}%
+    \label{fig:sys:apparent-distance}
+\end{figure}
+
+\FloatBarrier
+
+The reading rate was measured over the tested positions and showed a strong
+dependence on this apparent distance.
+
+\begin{table}[!htb]
+    \centering
+    \caption{Reading rate as a function of apparent distance.}%
+    \label{tab:sys:reading-rate}
+    \begin{tabular}{@{}lrr@{}}
+        \toprule
+        $d_{\text{app}}$       & \textbf{Successful reads} & \textbf{Images} \\
+        \midrule
+        1.00--1.25\,m          & 75\%                      & 84              \\
+        1.25--1.50\,m          & 89\%                      & 115             \\
+        \textbf{1.50--4.00\,m} & \textbf{91--99\%}         & \textbf{925}    \\
+        4.00--5.00\,m          & 74\%                      & 167             \\
+        5.00--6.50\,m          & 31\%                      & 194             \\
+        beyond 6.50\,m         & 3\%                       & 185             \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\FloatBarrier
+
+These measurements define the reading envelope
+
+\begin{equation}
+    \mathcal{E}
+    =
+    \left\{
+    (d,\alpha)\;:\;
+    1.5 \leq d_{\text{app}} \leq 4.0
+    \right\}.
+    \label{eq:sys:envelope}
+\end{equation}
+
+Thus, $\mathcal{E}$ is the range of distance-and-angle conditions in which
+\glsxtrshort{abb:qr} reading is considered reliable.
+
+The two limits have different causes. The upper limit is optical: beyond about
+four metres, the \glsxtrshort{abb:qr} modules occupy too few pixels. The lower
+limit is mechanical: at very short distances, small lateral errors produce a
+large viewing angle, making it difficult for the vehicle to remain correctly
+aligned. The warehouse geometry also matters. Since the main aisle is 3.9\,m
+wide, a vehicle cannot simply move farther away from a panel to read several
+cartons. Coverage must therefore rely on suitable viewing angles rather than
+increasing distance.
+
+The reading envelope is consequently the main constraint used later when
+generating \glsxtrshort{abb:qr} reading positions.
+
+\begin{figure}[!htb]
+    \centering
+    \includegraphics[width=0.85\textwidth]{fig_enveloppe}
+    \caption[Reading rate over 1,670 images at known poses.]{Reading rate over
+        1,670 images acquired at known poses. The shaded region represents the
+        envelope $\mathcal{E} = [1.5, 4.0]$\,m used for reading positions.}%
+    \label{fig:sys:envelope}
+\end{figure}
+
+\FloatBarrier
+
+Detection has a different range because recognising a label does not require
+resolving its individual \glsxtrshort{abb:qr} modules. A label may therefore
+remain detectable after it has become unreadable. This distinction allows a
+vehicle to detect labels while moving along an aisle and return later to read
+them from a suitable position.
+
+Perception consequently uses three states:
+
+\begin{table}[!htb]
+    \centering
+    \caption{The three states of perception.}%
+    \label{tab:sys:states}
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{2.8cm}
+            >{\raggedright\arraybackslash}p{6.4cm}
+            >{\raggedright\arraybackslash}p{5.4cm}@{}}
+        \toprule
+        \textbf{State}   & \textbf{What is established}     & \textbf{What is written into $\mathcal{M}$} \\
+        \midrule
+        \textsc{Read}    & the identifier is decoded        & $(\ell, \mathbf{p}, \mathbf{n})$            \\
+        \addlinespace
+        \textsc{Spotted} & a label exists at this position  & $(\mathbf{p}, \mathbf{a})$                  \\
+        \addlinespace
+        \textsc{Nothing} & nothing reliable is established  & ---                                         \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\FloatBarrier
+
+Here, $\ell$ is the decoded identifier, $\mathbf{p}$ the label position,
+$\mathbf{n}$ its facing direction, and $\mathbf{a}$ the direction from which it
+should be approached.
+
+The \textsc{Spotted} state is important because it separates exploration from
+collection. Once a label has been spotted, the system knows where a label exists;
+only a suitable reading position is still required.
+
+\subsubsection*{Three-Dimensional Placement of an Observation}
+
+An image provides the direction of an observation but not its distance. Three
+possible sources can provide this distance: the apparent size of the
+\glsxtrshort{abb:qr} code, the translation obtained from solving its pose, or the
+\gls{abb:lidar}.
+
+The first two approaches require the physical size of the code. In the simulated
+warehouse, each carton carries a square panel of side $s = 0.40$\,m. However, the
+panel is larger than the \glsxtrshort{abb:qr} code itself because the code
+contains a two-module empty margin on each side of its 21-module grid. Since the
+decoder returns the \glsxtrshort{abb:qr} corners rather than the panel corners,
+the actual \glsxtrshort{abb:qr} side length is
+
+\begin{equation}
+    c = s \cdot \frac{21}{25} = 0.336\ \text{m}.
+    \label{eq:sys:codeside}
+\end{equation}
+
+Using $s$ instead of $c$ would overestimate the distance by about 19\%.
+
+When the four \glsxtrshort{abb:qr} corners are available, the PnP solution
+provides both the code orientation and its translation. The orientation is
+independent of the assumed physical size, whereas the translation depends
+directly on that size. The system therefore uses the corners to obtain
+orientation but uses \gls{abb:lidar} to determine distance.
+
+For an image point $\mathbf{u}$, the camera calibration matrix $K$ converts the
+pixel into a viewing ray. The ray is transformed into the world frame using the
+camera rotation $R_c$. If $\mathbf{p}_c$ is the camera position and
+$\rho(\mathbf{u})$ is the measured \gls{abb:lidar} range along that ray, the
+three-dimensional observation position is
+
+\begin{equation}
+    \rho(\mathbf{u})
+    =
+    R_c \,
+    \iota
+    \left(
+    \frac{K^{-1}\tilde{\mathbf{u}}}
+    {\left\lVert K^{-1}\tilde{\mathbf{u}} \right\rVert}
+    \right),
+    \qquad
+    \mathbf{p}
+    =
+    \mathbf{p}_c + r\,\rho(\mathbf{u}).
+    \label{eq:sys:ray}
+\end{equation}
+
+Here, $\tilde{\mathbf{u}}$ is the homogeneous form of the image point, $K$ is the
+camera intrinsic matrix, $R_c$ is the camera rotation in the world frame, $r$ is
+the \gls{abb:lidar} range, and $\iota(\cdot)$ denotes the transformation used to
+express the camera ray in the required frame.
+
+The choice of \gls{abb:lidar} is not mainly motivated by precision, since both
+distance estimates agree to within about one centimetre in the tested
+environment. It is motivated by independence: the distance estimate does not
+depend on the physical format of the printed panel. This is preferable for a
+system intended to operate in previously unseen warehouses.
+
+A spotted label is more difficult because the detector provides only an image
+region rather than four corners. Its orientation cannot therefore be recovered
+directly, and its distance must come from the \gls{abb:lidar}. Because
+\gls{abb:lidar} rays have a constant angular spacing, the spacing between
+neighbouring rays increases with distance:
+
+\[
+    \delta(r) = r\,\Delta\theta,
+\]
+
+where $\Delta\theta$ is the angular spacing between adjacent \gls{abb:lidar}
+rays.
+
+At eight metres, this spacing becomes larger than one map cell. Beyond this
+distance, the closest \gls{abb:lidar} ray may hit a neighbouring carton, a gap in
+the rack, or the wall behind the detected label. The system therefore uses two
+regimes. Within eight metres, the \gls{abb:lidar} provides the distance directly.
+Beyond eight metres, the system uses the shared map and selects the first
+occupied cell along the detected direction.
+
+\begin{figure}[!htb]
+    \centering
+    \includegraphics[width=\textwidth]{fig_regimes}
+    \caption[Two placement regimes.]{Two placement regimes. Within the trusted
+        \gls{abb:lidar} range, the ray directly provides the label distance.
+        Beyond it, the map provides the first occupied location along the
+        detected direction.}%
+    \label{fig:sys:regimes}
+\end{figure}
+
+\FloatBarrier
+
+A final consistency check uses the detected region width. If $w$ is the width of
+the detected region in pixels and $f_x$ is the camera focal length in pixels, an
+approximate distance is
+
+\[
+    \hat{d} = \frac{f_x c}{w}.
+\]
+
+This estimate is only used as a plausibility check because the detected region is
+not exactly the \glsxtrshort{abb:qr} code and may be partially occluded. A
+placement that differs from $\hat{d}$ by more than a wide tolerance is rejected.
+This mainly prevents a \gls{abb:lidar} ray from passing through a rack opening
+and placing the label incorrectly behind the rack.
+
+Finally, a spotted label is considered to face the camera that detected it.
+Although this does not provide its exact normal, it gives the side from which the
+label should later be approached.
+
+\begin{algorithm}[!htb]
+    \caption{PlaceObservation}%
+    \label{algo:sys:place}
+    \KwRequire{$K$, $(\mathbf{p}_c, R_c)$, cloud $\mathcal{C}$, map $\mathcal{M}$,
+        and either corners $Q$ (decoded) or a region $B$ (detected)}
+    \KwEnsure{$(\mathbf{p}, \mathbf{n}) \in \reals^3 \times \reals^3$, or $\bot$}
+    \eIf{$Q$ is given}{
+        $(R_q, \mathbf{t}_q) \gets \textsc{PnP}(Q, c, K)$ \tcp*[r]{decoded code}
+        $\alpha \gets \angle(-\mathbf{t}_q,\, R_q \mathbf{e}_z)$\;
+        \lIf{$\alpha > \alpha_{\max}$}{\KwRet$\bot$}
+        $\mathbf{u} \gets \textsc{centroid}(Q)$\;
+    }{
+        $\mathbf{u} \gets \textsc{centre}(B)$\;
+    }
+    $\rho \gets R_c \cdot \iota\!\left( K^{-1}\tilde{\mathbf{u}} \,/\, \lVert K^{-1}\tilde{\mathbf{u}} \rVert \right)$ \tcp*[r]{world ray, \Cref{eq:sys:ray}}
+    $r \gets \textsc{RangeLidar}(\mathbf{p}_c, \rho, \mathcal{C})$\;
+    \If{$r = \bot$ or $r > r_{\max}$}{
+        \lIf{$Q$ is given}{\KwRet$\bot$ \tcp*[f]{a read code is always close}}
+        $r \gets \textsc{RangeMap}(\mathbf{p}_c, \rho, \mathcal{M})$ \tcp*[r]{first occupied cell}
+    }
+    \lIf{$r = \bot$}{\KwRet$\bot$}
+    $\mathbf{p} \gets \mathbf{p}_c + r\,\rho$\;
+    \eIf{$Q$ is given}{
+        \lIf{$r \notin \mathcal{E}$}{\KwRet$\bot$ \tcp*[f]{reading envelope, \Cref{eq:sys:envelope}}}
+        $\mathbf{n} \gets R_c \cdot \iota(R_q \mathbf{e}_z)$, oriented towards $\mathbf{p}_c$\;
+    }{
+        $\hat{d} \gets f_x \, c \,/\, w(B)$\;
+        \lIf{$\lVert \mathbf{p} - \mathbf{p}_c \rVert \notin [\kappa_{lo}\hat{d},\, \kappa_{hi}\hat{d}]$}{\KwRet$\bot$}
+        $\mathbf{n} \gets -\Pi_{xy}\,\rho \,/\, \lVert \Pi_{xy}\,\rho \rVert$ \tcp*[r]{direction of approach}
+    }
+    \KwRet$(\mathbf{p}, \mathbf{n})$\;
+\end{algorithm}
+
+\FloatBarrier
+
+\subsubsection*{Why Detection Must Be Learned}
+
+Extending the detection range is not difficult by itself. A geometric detector
+based on thresholds and shape tests can detect panels beyond the reading
+envelope, but it produces too many false positives. In scenes without
+\glsxtrshort{abb:qr} codes, such a detector reports panels in more than a quarter
+of the images by confusing cartons, rack structures, and shadows with labels.
+
+Since every spotted label can generate a flight, such a false-positive rate would
+produce many unnecessary missions. The detector must therefore satisfy two
+conditions simultaneously.
+
+\begin{table}[!htb]
+    \centering
+    \caption{The requirement placed on the detector.}%
+    \label{tab:sys:detectors}
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{5.0cm}
+            r
+            >{\raggedright\arraybackslash}p{6.2cm}@{}}
+        \toprule
+        \textbf{Requirement}               & \textbf{Target} & \textbf{Relation to reading}             \\
+        \midrule
+        Range held at 90\% detection       & 4.0\,m          & at the limit where reading already stops \\
+        \addlinespace
+        Reports on a scene holding no code & 27\% of images  & must be reduced substantially            \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\FloatBarrier
+
+A simple geometric threshold cannot satisfy both requirements: increasing the
+threshold reduces false detections but also removes distant true labels. The two
+objectives must therefore be separated by a learned detector that recognises the
+appearance of labels in the warehouse setting rather than relying only on
+geometric shape.
+
+The detector is trained without manual annotation. Because the positions of
+cartons and panels are known in simulation, their image regions can be generated
+by projecting them using the exact camera pose. Visibility is additionally
+checked by casting rays towards points on each surface and keeping only points
+for which the corresponding object is the first surface reached. The buildings
+used to generate training examples are kept separate from those used for
+evaluation.
+
+The detector also identifies cartons as a second class. Cartons are not read, but
+their detection provides semantic information for the map, allowing the system to
+distinguish occupied rack regions from empty ones before any identifier has been
+decoded.
+
+\subsubsection*{The Perception Cycle}
+
+The vehicle uses two lateral cameras rather than a single forward camera because
+labels are located on both sides of the aisles. A vehicle flying near the aisle
+centre can therefore observe both racks during one pass. With a forward camera,
+it would need to turn towards each rack separately, increasing the number of
+required reading positions.
+
+Decoding and detection do not have the same computational cost. The adopted
+strategy is therefore asymmetric: decoding runs on both camera images at every
+cycle, while detection runs on only one camera and alternates between the two.
+Missing a detection for one cycle is inexpensive because the vehicle will
+continue through the area. Missing a decoding opportunity while the vehicle is
+correctly positioned in front of a label, however, may require another visit.
+
+Decoding is also applied to the complete image rather than only to detector
+proposals. This keeps the two processes independent: even if the learned detector
+misses a label, the decoder can still read it when the \glsxtrshort{abb:qr} code
+is visible.
+
+A final correction accounts for the renderer's one-step delay. Each image is
+therefore associated with the pose and \gls{abb:lidar} cloud from the previous
+instant rather than the instant at which the image arrives. Without this
+correction, the same label observed while approaching and leaving could be placed
+at two different positions in the map.
+
+\begin{algorithm}[!htb]
+    \caption{PerceptionCycle}%
+    \label{algo:sys:cycle}
+    \KwRequire{vehicle $i$, cycle index $k$, map $\mathcal{M}$, history $H$ (length 2)}
+    \KwEnsure{$\mathcal{M}$ updated}
+    $(D, r) \gets \textsc{Lidar}(i)$\;
+    $\mathcal{M}.\textsc{IntegrateOccupancy}(\mathbf{p}_i, D, r)$\;
+    $\mathcal{M}.\textsc{Announce}(i, \mathbf{p}_i)$\;
+    push (poses of $L$ and $R$, cloud $\mathcal{C}$) onto $H$\;
+    \lIf{$\lvert H \rvert < 2$}{\KwRet\tcp*[f]{one frame of render lag}}
+    $(\mathbf{p}_c, R_c, \mathcal{C}) \gets H[t-1]$\;
+    \For{$\mathrm{cam} \in \{L, R\}$}{
+        $I \gets \textsc{Image}(\mathrm{cam})$\;
+        \For{$(\ell, Q) \in \textsc{Decode}(I)$}{
+            \lIf{$\ell \notin \mathcal{F}$}{\Continue \tcp*[f]{foreign identifier}}
+            $o \gets \textsc{PlaceObservation}(Q, K, \mathbf{p}_c, R_c, \mathcal{C}, \mathcal{M})$\;
+            \lIf{$o \neq \bot$}{$\mathcal{M}.\textsc{WriteRead}(\ell, o)$}
+        }
+        \If{$\mathrm{cam} \equiv k \pmod 2$}{
+            \For{$(\kappa, B) \in \textsc{Detect}(I)$}{
+                $o \gets \textsc{PlaceObservation}(B, K, \mathbf{p}_c, R_c, \mathcal{C}, \mathcal{M})$\;
+                \lIf{$o = \bot$}{\Continue}
+                \lIf{$\kappa = \mathrm{qr}$}{$\mathcal{M}.\textsc{WriteSpotted}(o)$}
+                \lElse{$\mathcal{M}.\textsc{MarkSemantic}(o.\mathbf{p})$}
+            }
+        }
+        $\mathcal{M}.\textsc{IntegrateCoverage}(\mathbf{p}_c, R_c \mathbf{e}_x)$\;
+    }
+\end{algorithm}
+
+\FloatBarrier
+
+Four rejection rules are used across the two algorithms. Together, they define
+which observations are considered reliable enough to enter the map.
+
+\begin{table}[!htb]
+    \centering
+    \caption{Rejection rules and the errors they prevent.}%
+    \label{tab:sys:rejections}
+    \small
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{3.1cm}
+            >{\raggedright\arraybackslash}p{4.4cm}
+            >{\raggedright\arraybackslash}p{7.0cm}@{}}
+        \toprule
+        \textbf{Rule}          & \textbf{Condition}                                                                          & \textbf{Error prevented}                                                                             \\
+        \midrule
+        Identifier format      & $\ell \notin \mathcal{F}$                                                                   & prevents warehouse signage or foreign \glsxtrshort{abb:qr} identifiers from being entered as inventory \\
+        \addlinespace
+        Limiting incidence     & $\alpha > \alpha_{\max}$                                                                    & prevents unreliable orientation estimates from producing a wrong approach side                       \\
+        \addlinespace
+        Reading envelope       & $r \notin \mathcal{E}$                                                                      & rejects a decoded code whose estimated position is outside the valid reading range                    \\
+        \addlinespace
+        Placement plausibility & $\lVert \mathbf{p} - \mathbf{p}_c \rVert \notin$ $[\kappa_{lo}\hat{d},\ \kappa_{hi}\hat{d}]$ & prevents a \gls{abb:lidar} ray passing through a rack gap from placing a target behind the rack       \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\FloatBarrier
+
+Each rule converts a potentially harmful false observation into a missed
+observation. This is intentional: in this system, missing an uncertain
+observation is preferable to writing incorrect information into the shared map.
 
 \subsection{Shared Map}
 \label{subsec:sys:map}
@@ -356,5 +799,3 @@ seconds, which allows the VLM to provide higher-level guidance without
 interfering with the real-time control loop. The mission terminates when the
 inventory no longer grows, meaning that the team has reached a state in which
 additional actions do not produce new inventory entries.
-
-The following sections describe these elements in detail, beginning with the perception and shared-map components on which the remaining decision and coordination mechanisms are built.
