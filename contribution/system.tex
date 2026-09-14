@@ -183,16 +183,29 @@ The system is made of seven elements. They appear in
 follow; the way they run together over a mission is the subject of
 \Cref{sec:sys:loop}.
 
+\begin{sidewaysfigure}
+    \centering
+    \includegraphics[width=\textheight]{architecture}
+    \caption{Architecture of SwarmScan.}%
+    \label{fig:sys:architecture}
+\end{sidewaysfigure}
+
+\FloatBarrier
+
 \subsection{Perception}
 \label{subsec:sys:perception}
 
-The perception pipeline separates two tasks that cannot be reliably performed at the same distance: \emph{finding} a label and \emph{reading} it.
-
-A \gls{abb:qr} code can only be decoded when the UAV is sufficiently close and observes the code within an appropriate range of viewing angles. A decoder alone would therefore provide no useful information about labels that have not yet been approached. The system first uses a learned detector to identify cartons and \gls{abb:qr} codes from several metres away, without attempting to decode them.
-
-The detected objects are then placed in the environment using the range information provided by the UAV's distance sensor. Once the UAV reaches an appropriate position and orientation, the decoder performs the actual reading.
-
-This creates three states for a label:
+The perception pipeline separates two tasks that cannot be reliably performed at
+the same distance: \emph{finding} a label and \emph{reading} it. A \gls{abb:qr}
+code can only be decoded when the UAV is sufficiently close and observes the code
+within an appropriate range of viewing angles, so a decoder alone would provide
+no useful information about labels that have not yet been approached. The system
+therefore first uses a learned detector to identify cartons and \gls{abb:qr}
+codes from several metres away, without attempting to decode them; the detected
+objects are placed in the environment using the range information provided by the
+UAV's distance sensor, and the decoder performs the actual reading once the UAV
+reaches an appropriate position and orientation. This creates three states for a
+label:
 
 \begin{itemize}[itemsep=0.35em]
 \item \textbf{Unknown}: the label has not yet been detected.
@@ -205,9 +218,10 @@ The \emph{spotted} state is particularly important for planning. It provides a c
 \subsection{Shared Map}
 \label{subsec:sys:map}
 
-All three UAVs operate on a single shared map. Each UAV writes new observations to this map and consults the same representation before making its next decision. There is therefore no separate private map that must later be synchronized with the rest of the team.
-
-The map maintains four types of information:
+All three UAVs operate on a single shared map. Each UAV writes new observations
+to this map and consults the same representation before making its next decision,
+so there is no separate private map that must later be synchronized with the rest
+of the team. The map maintains four types of information:
 
 \begin{itemize}[itemsep=0.35em]
 \item \textbf{Traversability}: which parts of the volume are known to be free, occupied, or still unknown, allowing paths to be computed through known free space;
@@ -221,9 +235,9 @@ The shared representation has two important consequences. An observation made by
 \subsection{Candidate Actions}
 \label{sec:sys:candidates}
 
-The map is not directly used to generate a complete route. Instead, it is used to identify \emph{candidate actions}: locations that are currently worth visiting.
-
-Three types of actions are generated:
+The map is not directly used to generate a complete route. It is used instead to
+identify \emph{candidate actions}, meaning the locations that are currently worth
+visiting, of which three types are generated:
 
 \begin{itemize}[itemsep=0.4em]
 \item \textbf{Reading}: approach a label that has been detected but not yet decoded. The UAV must reach a suitable position and orientation in front of the label.
@@ -241,9 +255,9 @@ Although these actions have different purposes, they are represented in the same
 \subsection{Common Action Value}
 \label{sec:sys:scoring}
 
-Once candidate actions have been generated, the system evaluates them using a common numerical value. No fixed priority is imposed between reading, covering, and exploration.
-
-The value of a candidate combines three factors:
+Once candidate actions have been generated, the system evaluates them using a
+common numerical value, and no fixed priority is imposed between reading,
+covering, and exploration. The value of a candidate combines three factors:
 
 \begin{enumerate}[itemsep=0.35em]
 \item \textbf{Expected return}: the expected contribution of the action to the inventory mission. Reading an already detected label provides a direct inventory entry, while exploration mainly increases the known region and may lead to future discoveries.
@@ -256,20 +270,25 @@ The value of a candidate combines three factors:
 
 \end{enumerate}
 
-A UAV selects the highest-valued candidate among the actions that it can actually reach. Reachability is verified by computing a path through the currently known free space before the action is selected.
-
-This common scale allows the system to balance exploitation and exploration continuously. When unread labels are available, reading actions can naturally obtain higher values. When no such actions remain, exploration can become preferable without explicitly switching the system between predefined operating modes.
+A UAV selects the highest-valued candidate among the actions that it can actually
+reach, reachability being verified by computing a path through the currently
+known free space before the action is selected. This common scale allows the
+system to balance exploitation and exploration continuously: when unread labels
+are available, reading actions naturally obtain higher values, and when no such
+actions remain, exploration becomes preferable without the system being
+explicitly switched between predefined operating modes.
 
 \subsection{Claiming and Releasing}
 \label{sec:sys:claims}
 
-Coordination is performed through the shared map rather than through a central task allocator.
-
-When a UAV selects an action, it writes the selected action into the shared map as a \emph{claim}. The other UAVs see this claim during their next decision and reduce the value of candidates located close to the claimed action. They are therefore encouraged to select different areas.
-
-A claim is temporary. The UAV must periodically renew it while working on the corresponding action. If the UAV stops renewing the claim, it expires automatically.
-
-This mechanism provides both task coordination and basic fault tolerance:
+Coordination is performed through the shared map rather than through a central
+task allocator. When a UAV selects an action, it writes that action into the
+shared map as a \emph{claim}; the other UAVs see this claim during their next
+decision and reduce the value of candidates located close to it, so they are
+encouraged to select different areas. A claim is temporary: the UAV must
+periodically renew it while working on the corresponding action, and it expires
+automatically as soon as the UAV stops renewing it. This single mechanism
+provides both task coordination and basic fault tolerance:
 
 \begin{itemize}[itemsep=0.35em]
 \item it reduces redundant behaviour by discouraging multiple UAVs from selecting the same target;
@@ -281,17 +300,26 @@ No dedicated failure manager is required. If a UAV stops flying, its claims even
 \subsection{Semantic Guidance}
 \label{subsec:sys:semantic}
 
-The geometric decision process is complemented by a pre-trained vision-language model (VLM). At regular intervals, a UAV provides the model with a compact description of the current warehouse state and asks which area should receive attention next and from which side it should be approached.
+The geometric decision process is complemented by a pre-trained vision-language
+model (VLM). At regular intervals, a UAV provides the model with a compact
+description of the current warehouse state and asks which area should receive
+attention next and from which side it should be approached. The VLM does not
+directly control the UAV or generate its trajectory: its output modifies the
+value of candidate actions located in the recommended area, so semantic
+information influences the same decision mechanism as geometric information.
 
-The VLM does not directly control the UAV or generate its trajectory. Instead, its output modifies the value of candidate actions located in the recommended area. Semantic information therefore influences the same decision mechanism used by geometric information.
-
-This provides information that is difficult to obtain from geometry alone. A geometric map can indicate where the team has not yet explored, but it cannot determine whether one unexplored area appears more promising than another based on its visual content. Semantic guidance can, for example, favour an area containing visible cartons over an apparently empty aisle.
+This provides information that is difficult to obtain from geometry alone. A
+geometric map can indicate where the team has not yet explored, but it cannot
+determine whether one unexplored area appears more promising than another based
+on its visual content. Semantic guidance can, for example, favour an area
+containing visible cartons over an apparently empty aisle.
 
 
 \subsection{Execution}
 \label{sec:sys:execution}
 
-After an action has been selected, the UAV controller executes the corresponding position and observation requirement in three stages.
+After an action has been selected, the UAV controller executes the corresponding
+position and observation requirement in three stages:
 
 \begin{enumerate}[itemsep=0.35em]
 \item \textbf{Transit}: the UAV moves rapidly along the computed path through known free space.
@@ -321,8 +349,12 @@ The seven elements form a single closed loop, as illustrated in \Cref{fig:sys:ar
 \item The resulting observations update the shared map, starting the process again.
 \end{enumerate}
 
-The different parts of the system operate at different time scales. Flight control runs continuously at a high frequency, action selection is performed approximately once per second, and semantic guidance is requested only every few seconds. This separation allows the VLM to provide higher-level guidance without interfering with the real-time control loop.
-
-The mission terminates when the inventory no longer grows, meaning that the team has reached a state in which additional actions do not produce new inventory entries.
+The different parts of the system operate at different time scales: flight
+control runs continuously at a high frequency, action selection is performed
+approximately once per second, and semantic guidance is requested only every few
+seconds, which allows the VLM to provide higher-level guidance without
+interfering with the real-time control loop. The mission terminates when the
+inventory no longer grows, meaning that the team has reached a state in which
+additional actions do not produce new inventory entries.
 
 The following sections describe these elements in detail, beginning with the perception and shared-map components on which the remaining decision and coordination mechanisms are built.
