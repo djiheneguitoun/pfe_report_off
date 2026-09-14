@@ -1,0 +1,172 @@
+\chapter[Design of SwarmScan]{Design of SwarmScan, a Cooperative Inventory
+    System for Unknown Warehouses}%
+\label{chap:system}
+
+\subimport{.}{intro}
+
+\section{Problem Formulation}%
+\label{sec:sys:problem}
+
+\subsection{The Inspection Task}%
+\label{subsec:sys:task}
+
+An inventory inspection compares what is physically present on the shelves with
+the records held by the \gls{abb:wms}. Keeping these two views consistent is what
+makes the operation necessary, since miscounts and misplaced items reduce order
+accuracy and raise operating costs~\cite{pore2026drone}. The task takes as input
+a bounded space containing stored items, each carrying a visual identifier on its
+faces, and returns the list of identifiers actually found, together with the
+position at which each was read. Two properties determine whether that list is
+usable. It must account for as large a share of the stored items as possible,
+since an item that is not counted is an item the records will continue to report
+incorrectly. And it must contain no identifier that does not exist in the
+warehouse, since a single spurious entry places the whole list in doubt.
+
+\subsection{Operating Conditions}%
+\label{subsec:sys:conditions}
+
+The task is carried out under conditions that no design can change. They are
+stated here as facts, and the requirements of the following section follow from
+them.
+
+\textbf{The space}: No description of the building is available at take-off. The
+number of racks, their position and the location of the items are unknown, and
+the free volume is bounded by fixed obstacles, racks, columns and pallets left on
+the floor, as well as by moving ones, operators and handling
+vehicles~\cite{pore2026drone, pore2026uavqr}. A typical warehouse is a large
+building whose racks can exceed ten metres in
+height~\cite{kalinov2020warevision}, and the spacing between them is tight enough
+to force conservative speed planning~\cite{pore2026drone}. The contents of the
+space also change while the mission runs: items are deposited and removed during
+the operating day, and an aisle that was clear a minute earlier can be
+obstructed. Since neither the layout nor its evolution is known beforehand, no
+route through the space and no division of that space between vehicles can be
+established before the flight.
+
+\textbf{The reading}: A visual identifier is decodable only within a bounded range
+of distances, within a bounded viewing angle and below a bounded relative
+speed~\cite{dong2024motionblurred, alsulami2026deep}, so a surface can be
+observed without its label being read. Lighting and occlusion narrow that range
+further: decoding accuracy falls from 98.5\% in a well-lit environment to 85.2\%
+in low light and to 78.3\% when the code is partly
+hidden~\cite{alsulami2026deep}, and the motion of the platform produces blur that
+lowers the recognition rate~\cite{dong2024motionblurred}. The total number of
+items present is not known before the mission, and nothing in the environment
+signals that the inventory is complete.
+
+\textbf{The fleet}: The endurance of a single vehicle is bounded, and falls below
+what the coverage of a working warehouse demands: small \glspl{abb:uav} typically
+fly for twenty to thirty minutes~\cite{mohsan2023unmanned}, while a complete
+manual inventory check consumes more than three days of warehouse
+activity~\cite{kalinov2020warevision}. Several vehicles therefore operate in the
+same space, which includes aisles wide enough for only one of them at a time.
+Using more than one also shortens the mission, since two drones halved the
+inspection time of a single one in a warehouse experiment~\cite{pore2026uavqr}. A
+vehicle can stop flying at any moment, from a technical failure or a depleted
+battery, and without warning~\cite{chandran2024network}. Perception and decision
+run on the same limited onboard computer, and the mission depends on both, a
+combination identified in the literature as an open
+difficulty~\cite{sandino2020autonomous}.
+
+\subsection{Requirements and Constraints}%
+\label{subsec:sys:requirements}
+
+From these conditions follow seven results that a solution is expected to
+produce. They are stated as outcomes that can be verified on a completed mission
+rather than as mechanisms, so that they remain independent of any particular
+design.
+
+\begin{enumerate}[itemsep=0.5em]
+    \item The inventory is completed without any description of the layout, any
+          route, and any division of work being supplied before take-off.
+    \item No identifier is reported that does not correspond to an item present
+          in the warehouse.
+    \item When a vehicle stops flying, the area it was covering is inspected by
+          the remaining vehicles before the mission ends.
+    \item Two vehicles do not travel to the same objective, so that the capacity
+          of the fleet is not spent twice on a single reading.
+    \item No vehicle collides with a surface, with an obstacle that appeared
+          after take-off, or with another vehicle.
+    \item The mission ends at a moment the system determines by itself, without
+          an external instruction, and without spending the remaining flight
+          budget on a search that no longer produces readings.
+    \item The computation performed for each decision, together with the
+          perception running alongside it, remains within the onboard budget and
+          within the endurance of the platform.
+\end{enumerate}
+
+\subsection{Position of Existing Approaches}%
+\label{subsec:sys:position}
+
+No existing system produces these seven results together. Systems designed for
+warehouse inspection receive the layout before take-off and compute their
+coverage route once, on the ground, leaving the vehicle to execute
+it~\cite{kalinov2020warevision, pore2026uavqr, cristiani2020inventory,
+    alsulami2026deep, kwon2020robust, guinand2021uavugv}. What matters is not how
+that route is computed but when: the decision is made when the system knows the
+least it will ever know, and a target appearing later cannot be taken into
+account, because the component that produced the plan is no longer
+running~\cite{krayani2023goal}. The same design carries two further assumptions.
+The environment is treated as immobile, although operators and handling vehicles
+move through a working warehouse, and only about 3\% of inventory studies
+consider a dynamic one~\cite{pore2026drone}. And cooperation between flying
+vehicles is almost absent: where several vehicles are used, the ground robot
+carries the drone or places beacons rather than reading any code
+itself~\cite{kalinov2020warevision, guinand2021uavugv}.
+
+The methods that could decide during the flight are not designed for this task.
+Those that coordinate several vehicles fix the division of labour before
+take-off, by a central schedule~\cite{guinand2021uavugv}, a fixed
+split~\cite{pore2026uavqr}, or a leader broadcasting
+waypoints~\cite{chandran2024network}, and allocation able to adapt in real time
+is still described as a future direction rather than a current
+practice~\cite{kumar2025comprehensive}. Semantic reasoning appears in two
+separate places, and never where it would be needed. On a ground robot working
+alone, it does drive exploration, but the mission solves Object Goal Navigation
+and ends as soon as one instance of a designated target is
+reached~\cite{yokoyama2024vlfm, yu2023l3mvn}, and the representation built for
+that target cannot be reused for another~\cite{yokoyama2024vlfm}. On a drone, it
+only interprets an instruction given by a person: the vehicle carries out what it
+has been asked to do and never chooses where to explore~\cite{chen2024typefly}.
+Semantic reasoning, cooperation and flight therefore never occur together; three
+of the four combinations exist, and the missing one is exactly what an inventory
+requires.
+
+The two sides therefore never meet: the systems that perform the right task
+cannot react, and the systems that can react were not built for it and stop at
+the first success. Four of the seven results are ruled out by that alone. An
+inventory cannot be completed without a layout when the layout is what the
+planner consumes. The area of a vehicle that stops cannot be reassigned when the
+assignment was made once. An obstacle appearing after take-off cannot be avoided
+by a route fixed before it existed. And a system that ends at the first detection
+cannot decide when an inventory is complete. One caveat applies throughout: these
+limitations are established almost entirely on simulated missions, since about
+45\% of inventory studies are simulation-based against roughly 7\% that report
+real experiments~\cite{pore2026drone}.
+
+\section{System Overview}%
+\label{sec:sys:overview}
+
+\section{The Shared Map}%
+\label{sec:sys:map}
+
+\section{Two-Track Perception}%
+\label{sec:sys:perception}
+
+\section{Generation and Scoring of Targets}%
+\label{sec:sys:targets}
+
+\section{Coordination Mechanism}%
+\label{sec:sys:coordination}
+
+\section{Semantic Guide}%
+\label{sec:sys:semantic}
+
+\section{Flight Controller}%
+\label{sec:sys:control}
+
+\section{A Complete Mission}%
+\label{sec:sys:mission}
+
+\section{Approaches Explored and Set Aside}%
+\label{sec:sys:discarded}

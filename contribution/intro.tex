@@ -1,0 +1,53 @@
+\section{Introduction}%
+\label{sec:sys:intro}
+
+\Cref{chap:background} established that the platform and the perception pipeline
+are no longer the limiting factors in warehouse inventory inspection. Multirotor
+vehicles operate reliably in confined indoor spaces, and vision-based
+\gls{abb:qr} decoding is accurate enough for the task. The limitation lies
+elsewhere, in the assumptions these systems make before take-off: that the layout
+of the warehouse is known, that it remains unchanged for the duration of the
+mission, and that a single vehicle is sufficient. \Cref{chap:nav} examined the
+layer at which these assumptions are made, the decision layer that determines
+where a vehicle goes next, and identified four gaps. Work allocation between
+several vehicles is always decided before take-off and never revised in flight.
+Systems that select their next target from the meaning of the observed scene
+operate as a single agent. The few systems that explore an unmapped space
+autonomously have been validated only on ground robots. And those systems address
+a task that terminates at the first successful detection, whereas an inventory
+mission must cover the entire space.
+
+The system designed in this chapter addresses these four gaps within a single
+architecture. Several vehicles cooperate inside a warehouse whose layout is
+discovered during the mission rather than supplied beforehand. The coverage plan
+normally computed on the ground is replaced by a single representation shared by
+the whole team: every observation is written into it, and every decision is taken
+from it. From that representation the vehicles derive three classes of target,
+corresponding to reading a label that has already been spotted, observing a
+surface never seen from a readable angle, and extending the known region. All
+three are expressed in one common form, a pose and a viewing direction, and are
+scored on a single scale, so that reading a label competes directly against
+exploring an unobserved area instead of being governed by separate rules. Because
+the targets are produced continuously from a shared representation rather than
+assigned once before take-off, they move between vehicles while the mission runs:
+a vehicle announces the target it has selected, the announcement expires unless
+it is renewed, and this mechanism alone allows the team to absorb the loss of a
+member without any dedicated failure detection. A pre-trained vision-language
+model is integrated into the same loop and advises the team on where to search
+next, a role that has so far been evaluated only on single ground platforms. To
+the best of our knowledge, no published system combines in-flight target
+redistribution, exploration of an unknown warehouse, and semantic guidance within
+the same architecture.
+
+The chapter follows the order in which the system is constructed.
+\Cref{sec:sys:problem} formulates the problem and derives the requirements a
+solution must satisfy. \Cref{sec:sys:overview} presents an overview of the system
+and the connections between its components.
+\Cref{sec:sys:map,sec:sys:perception,sec:sys:targets,sec:sys:coordination,sec:sys:semantic,sec:sys:control}
+develop each component in turn: the shared map, the two-track perception, the
+generation and scoring of targets, the coordination mechanism, the semantic
+guide, and the flight controller. \Cref{sec:sys:mission} reassembles them and
+follows a complete mission from take-off to termination.
+\Cref{sec:sys:discarded} reports two approaches explored before this design and
+the reasons they were set aside. \Cref{fig:sys:architecture} summarises the
+architecture developed in the following sections.
