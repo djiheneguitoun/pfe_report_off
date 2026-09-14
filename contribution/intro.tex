@@ -30,13 +30,11 @@ The chapter follows the order in which the system is constructed.
 \Cref{sec:sys:problem} formulates the problem and derives the requirements a
 solution must satisfy. \Cref{sec:sys:overview} presents an overview of the system
 and the connections between its components.
-\Cref{sec:sys:map,sec:sys:perception,sec:sys:targets,sec:sys:coordination,sec:sys:semantic,sec:sys:control}
-develop each component in turn: the shared map, the two-track perception, the
-generation and scoring of targets, the coordination mechanism, the semantic
-guide, and the flight controller. \Cref{sec:sys:mission} reassembles them and
-follows a complete mission from take-off to termination.
-\Cref{sec:sys:discarded} reports two approaches explored before this design and
-the reasons they were set aside. \Cref{fig:sys:architecture} summarises the
+\Cref{subsec:sys:perception,subsec:sys:map,sec:sys:candidates,sec:sys:scoring,sec:sys:claims,subsec:sys:semantic}
+develop each component in turn: the two-track perception, the shared map, the
+generation and scoring of targets, the coordination mechanism, and the semantic
+guide. \Cref{sec:sys:mission} reassembles them and follows a complete mission
+from take-off to termination. \Cref{fig:sys:architecture} summarises the
 architecture developed in the following sections.
 
 \section{Motivation and Contributions}%

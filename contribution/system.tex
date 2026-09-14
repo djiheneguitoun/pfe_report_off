@@ -1175,85 +1175,734 @@ therefore be compared without any additional rule.
 
 \FloatBarrier
 
-\subsection{Common Action Value}
+\subsection{Target Selection}%
 \label{sec:sys:scoring}
 
-Once candidate actions have been generated, the system evaluates them using a
-common numerical value, and no fixed priority is imposed between reading,
-covering, and exploration. The value of a candidate combines three factors:
+Candidate generation produces the same list for the whole team. Target selection
+is where the vehicles differ: each vehicle evaluates this list from its own
+position and selects one candidate. The selection process is therefore executed
+independently on every vehicle, while the shared map is the only common input.
 
-\begin{enumerate}[itemsep=0.35em]
-\item \textbf{Expected return}: the expected contribution of the action to the inventory mission. Reading an already detected label provides a direct inventory entry, while exploration mainly increases the known region and may lead to future discoveries.
+Selection has two main goals. First, it must combine the expected utility of a
+candidate with the effort required to reach it. This allows the system to
+compare, for example, a valuable target that is far away with a less valuable
+target that is nearby. Second, it must make sure that the selected candidate is
+reachable. A target that cannot be reached should not be selected.
 
+\subsubsection*{The Score}
 
-\item \textbf{Execution cost}: the cost of reaching the candidate through the currently known free space. The cost is based on the computed path length rather than straight-line distance, so that obstacles and rack geometry are taken into account.
+Let $\gamma$ be a candidate with utility $u(\gamma)$ as defined in
+\Cref{sec:sys:candidates}. Let $\mathbf{p}$ be the current position of the
+vehicle, and let $L(\mathbf{p},\gamma)$ be the length of the route from
+$\mathbf{p}$ to the observation pose of $\gamma$. The travel cost per metre is
+$c_m$. The term $P_r$ is the penalty applied when another vehicle has already
+claimed the candidate, while $P_v$ is the penalty applied for each teammate
+flying near it. Finally, $\lambda$ controls the influence of the semantic guide,
+and $\beta(\gamma)$ is the bonus provided by the guide.
 
-\item \textbf{Coordination penalty}: a penalty applied when another UAV has already claimed the same action or is operating close to it.
+The score of a candidate is
 
+\begin{equation}
+    s(\gamma)
+    =
+    u(\gamma)
+    - c_m L(\mathbf{p},\gamma)
+    - P_r\,\mathbbm{1}\!\left[\gamma \text{ is claimed}\right]
+    - P_v\,n_v(\gamma)
+    + \lambda\,\beta(\gamma),
+    \label{eq:sys:score}
+\end{equation}
 
-\end{enumerate}
+where $\mathbbm{1}[\cdot]$ is the indicator function and $n_v(\gamma)$ is the
+number of teammates currently flying within the neighbour radius of the
+candidate.
 
-A UAV selects the highest-valued candidate among the actions that it can actually
-reach, reachability being verified by computing a path through the currently
-known free space before the action is selected. This common scale allows the
-system to balance exploitation and exploration continuously: when unread labels
-are available, reading actions naturally obtain higher values, and when no such
-actions remain, exploration becomes preferable without the system being
-explicitly switched between predefined operating modes.
+The claim and neighbour terms are evaluated at the observation pose of the
+candidate, whereas the guide bonus is evaluated at its observed point. Both
+distances are measured horizontally, so two vehicles at different shelf levels
+above one another are still treated as neighbours.
 
-\subsection{Claiming and Releasing}
+The travel cost is set to $c_m = 1$. This defines the unit of the score: one
+point of utility corresponds to one metre of travel. A reading target with a
+utility of 30 is therefore worth travelling up to thirty metres for, before the
+other penalties and bonuses are considered. The same applies to a coverage group
+whose utility reaches the value 30. This gives a direct meaning to the utility
+values introduced in \Cref{tab:sys:utilities}.
+
+\begin{table}[!htb]
+    \centering
+    \caption{Terms of the score and their values.}%
+    \label{tab:sys:score-terms}
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{4.4cm}
+            r
+            >{\raggedright\arraybackslash}p{7.2cm}@{}}
+        \toprule
+        \textbf{Term}                 & \textbf{Value}      & \textbf{Role}                                                      \\
+        \midrule
+        Travel cost, $c_m$            & 1 per metre         & Defines the unit of the score                                      \\
+        \addlinespace
+        Claim penalty, $P_r$          & 1000                & Effectively removes a candidate already claimed by another vehicle  \\
+        \addlinespace
+        Claim radius                  & 4\,m                & Distance below which two targets are considered the same           \\
+        \addlinespace
+        Neighbour penalty, $P_v$      & 40 per teammate     & Keeps vehicles from converging on the same area                    \\
+        \addlinespace
+        Neighbour radius              & 4\,m                & Horizontal distance below which a teammate is considered near      \\
+        \addlinespace
+        Guide bonus, zone             & 10                  & Applied when the observed point is inside the advised area         \\
+        \addlinespace
+        Guide bonus, side             & 5                   & Applied when the approach side matches the advice                  \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\FloatBarrier
+
+\subsubsection*{Keeping Vehicles Apart}
+
+Two terms in the score are used to keep the vehicles separated. They act at
+different levels.
+
+The claim penalty applies when another vehicle has already announced that it is
+going to a candidate. Its value is large enough to remove that candidate from
+consideration in normal situations, but it is still implemented as a penalty
+rather than as a hard constraint. If all remaining candidates have already been
+claimed, the vehicle can still select one. This avoids leaving a vehicle idle
+simply because no unclaimed target remains.
+
+The neighbour penalty is different. It applies when a candidate is close to a
+teammate, even if that candidate has not been claimed. Its value is 40, which is
+higher than the utility of a reading target. A target located within four metres
+of another vehicle therefore receives a negative contribution and will normally
+lose to an alternative target. The penalty is applied once for each nearby
+teammate, so a candidate close to two vehicles receives the penalty twice. In
+this way, the vehicles naturally spread through the warehouse without requiring
+the space to be explicitly divided between them.
+
+The guide bonus is the only optional term in the score. It is added when the
+observed point is inside the area recommended by the semantic guide. An
+additional bonus is given when the approach side also matches the recommendation.
+Exploration candidates receive the zone bonus but not the side bonus because they
+do not have a required approach direction. The weight $\lambda$ controls how
+strongly the guide affects the ranking. Setting $\lambda = 0$ removes the guide
+completely and leaves a purely geometric score. The semantic guide itself is
+described in \Cref{subsec:sys:semantic}.
+
+\subsubsection*{Feasibility and the Two-Stage Evaluation}
+
+\Cref{eq:sys:score} requires the route length $L(\mathbf{p},\gamma)$, which is
+computed from the map as described in \Cref{subsec:sys:map}. Computing a complete
+route for every candidate would be unnecessarily expensive, because several
+hundred candidates are available at each decision.
+
+The system therefore evaluates candidates in two stages.
+
+In the first stage, the true route length is replaced by the straight-line
+distance $\lVert \mathbf{q}_{\gamma}-\mathbf{p}\rVert$, where
+$\mathbf{q}_{\gamma}$ is the observation pose of $\gamma$. This gives a
+provisional score $\bar{s}(\gamma)$. A real route cannot be shorter than the
+straight-line distance, so
+$L(\mathbf{p},\gamma) \geq \lVert \mathbf{q}_{\gamma}-\mathbf{p}\rVert$ and
+therefore
+
+\begin{equation}
+    \bar{s}(\gamma) \geq s(\gamma)
+    \qquad \text{for every candidate } \gamma.
+    \label{eq:sys:bound}
+\end{equation}
+
+The provisional score is thus an upper bound on the final score. A candidate with
+a low provisional score cannot become better once its real route is computed.
+This allows the system to discard most candidates before performing the more
+expensive route computation.
+
+In the second stage, only the six candidates with the highest provisional scores
+are evaluated with an actual route. The candidate with the highest final score is
+then selected. This is an approximation of the exact selection, but the
+approximation is controlled by the upper-bound property above: candidates are
+discarded using an optimistic estimate of their final score rather than an
+underestimated one.
+
+Reachability is checked during the same second stage. If the map contains no
+valid route to a candidate, that candidate is discarded instead of simply
+receiving a lower score. The system therefore does not commit to an observation
+that it cannot reach. The reachability test is based on the map available at that
+moment, rather than on a predefined plan of the warehouse.
+
+Two simple filters are applied before scoring. Candidates whose observed point
+has already been visited three times without success are removed, as described in
+\Cref{sec:sys:candidates}. Candidates whose observed point is blacklisted are
+also removed.
+
+It is possible for no candidate to survive these stages, either because the list
+is empty or because none of the six best candidates is reachable. The vehicle
+then holds its current position, and this situation is recorded. If every vehicle
+is simultaneously without a target, the mission is considered complete, as
+described in \Cref{sec:sys:mission}.
+
+Selection is not repeated at every control cycle. Once a candidate has been
+selected, the vehicle keeps it until the observation has been performed, the
+target has been abandoned, or the vehicle has been unable to make progress
+towards it. Only then is a new selection made.
+
+Finally, once a candidate has been selected, the vehicle announces it in the
+shared map before starting the flight. The announcement, its expiration, and its
+release are described in \Cref{sec:sys:claims}.
+
+\begin{algorithm}[!htb]
+    \caption{SelectTarget}%
+    \label{algo:sys:select}
+    \KwRequire{vehicle position $\mathbf{p}$, candidate list $\Gamma$, map $\mathcal{M}$, guide advice $A$, weight $\lambda$}
+    \KwEnsure{the selected candidate, or $\bot$}
+    $\Gamma \gets \{\, \gamma \in \Gamma : \gamma$ not blacklisted and visited fewer than 3 times $\}$\;
+    \For{each $\gamma \in \Gamma$}{
+        $\bar{s}(\gamma) \gets$ score with the straight-line distance \tcp*[r]{\Cref{eq:sys:score,eq:sys:bound}}
+    }
+    sort $\Gamma$ by decreasing $\bar{s}$\;
+    $\mathit{best} \gets \bot$\;
+    \For{each $\gamma$ among the six first}{
+        $\mathit{route} \gets \textsc{Route}(\mathbf{p}, \text{pose of } \gamma, \text{altitude of } \gamma)$ \tcp*[r]{\Cref{algo:sys:route}}
+        \lIf{$\mathit{route} = \bot$}{\Continue \tcp*[f]{unreachable, discarded}}
+        $L \gets$ length of the route\;
+        $s(\gamma) \gets$ score with $L$ \tcp*[r]{\Cref{eq:sys:score}}
+        \lIf{$\mathit{best} = \bot$ or $s(\gamma) > s(\mathit{best})$}{$\mathit{best} \gets \gamma$}
+    }
+    \KwRet$\mathit{best}$\;
+\end{algorithm}
+
+\FloatBarrier
+
+\subsection{Coordination}%
 \label{sec:sys:claims}
 
-Coordination is performed through the shared map rather than through a central
-task allocator. When a UAV selects an action, it writes that action into the
-shared map as a \emph{claim}; the other UAVs see this claim during their next
-decision and reduce the value of candidates located close to it, so they are
-encouraged to select different areas. A claim is temporary: the UAV must
-periodically renew it while working on the corresponding action, and it expires
-automatically as soon as the UAV stops renewing it. This single mechanism
-provides both task coordination and basic fault tolerance:
+Coordination prevents the vehicles from duplicating work and helps them avoid
+collisions, without requiring direct communication between them. No message is
+exchanged and no agreement is negotiated. Instead, each vehicle writes its
+current state into the shared map and reads the information written by the
+others. All coordination rules described in this section therefore operate on the
+same shared structure.
 
-\begin{itemize}[itemsep=0.35em]
-\item it reduces redundant behaviour by discouraging multiple UAVs from selecting the same target;
-\item it automatically releases unfinished work when a UAV stops operating.
-\end{itemize}
+Separation is handled at three different scales because the problems are
+different. Two vehicles may select the same target, which is a task allocation
+problem. Two vehicles may plan routes that cross, which is a path planning
+problem. Two vehicles may simply get too close during flight, which is an
+immediate safety problem. Each case is handled by a different mechanism.
 
-No dedicated failure manager is required. If a UAV stops flying, its claims eventually expire and the corresponding actions return to the common candidate set. The remaining UAVs can then select these actions during their normal decision process. Fault recovery is therefore a consequence of the same claim-expiration mechanism used for ordinary coordination.
+\begin{table}[!htb]
+    \centering
+    \caption{The three scales of separation.}%
+    \label{tab:sys:separation}
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{2.2cm}
+            >{\raggedright\arraybackslash}p{7.4cm}
+            >{\raggedright\arraybackslash}p{4.8cm}@{}}
+        \toprule
+        \textbf{Scale} & \textbf{Mechanism}                                            & \textbf{Acts on}        \\
+        \midrule
+        Task           & Claim announced in the map and penalised in the score          & The choice of a target  \\
+        \addlinespace
+        Route          & Teammates inserted as moving obstacles with a radius of 2\,m  & The computed path       \\
+        \addlinespace
+        Flight         & Right of way below 2.5\,m, full stop below 1.5\,m             & The current motion      \\
+        \bottomrule
+    \end{tabular}
+\end{table}
 
-\subsection{Semantic Guidance}
+\FloatBarrier
+
+\subsubsection*{Claims and Their Expiry}
+
+When a vehicle selects a target, it writes a claim into the map before starting
+to fly. The claim associates the vehicle with the target position and includes an
+expiry time. Other vehicles do not treat this claim as a strict prohibition.
+Instead, they apply the penalty $P_r$ from \Cref{eq:sys:score} to candidates
+located within four metres of the claimed position.
+
+A claim is not permanent. Let $e_i$ be the expiry time of the claim held by
+vehicle $i$, $\tau_i$ the last time that vehicle published its position in the
+map, and $T_s$ the tolerated silence period. At time $t$, the claim is active
+only if
+
+\begin{equation}
+    \operatorname{active}(i,t)
+    \iff
+    \bigl(t < e_i\bigr)
+    \ \wedge\
+    \bigl(t-\tau_i \leq T_s\bigr).
+    \label{eq:sys:claim-active}
+\end{equation}
+
+The first condition gives the claim a fixed lifetime of 45\,s, counted from the
+moment the target is assigned. The claim is not extended while the vehicle works
+on the target; it is simply replaced when the vehicle selects its next one. The
+duration must therefore be long enough to cover a complete observation, including
+the transit, the approach, and the time spent holding the pose, and short enough
+that a vehicle which stops making progress does not reserve a target for much
+longer than it can use it.
+
+The second condition removes the claim when the vehicle has stopped reporting its
+position, with $T_s = 5$\,s. A vehicle publishes its position at every cycle, so
+this condition is satisfied continuously in normal operation.
+
+The same expiry mechanism is used for temporary blacklist entries. A target that
+has been abandoned is excluded for 120\,s rather than permanently, because the
+reason for the abandonment may disappear. For example, an obstacle may be
+removed, or a valid route may become available after more of the building has
+been mapped. A track that has failed three reading attempts is treated
+differently and is excluded permanently, because repeated failure is considered
+evidence that the detection itself was incorrect rather than that the approach
+was temporarily difficult.
+
+\begin{algorithm}[!htb]
+    \caption{AgeSharedState}%
+    \label{algo:sys:age}
+    \KwRequire{map $\mathcal{M}$, current time $t$}
+    \KwEnsure{expired entries removed, silent vehicles reported}
+    remove every claim whose expiry time is earlier than $t$\;
+    remove every blacklist entry whose expiry time is earlier than $t$\;
+    $S \gets \{\, i : t - \tau_i > T_s \,\}$ \tcp*[r]{vehicles no longer reporting}
+    \For{each $i \in S$}{
+        remove the claim held by $i$\;
+    }
+    \KwRet$S$\;
+\end{algorithm}
+
+\FloatBarrier
+
+\subsubsection*{Separation in Space}
+
+Claims prevent two vehicles from selecting the same work, but they do not control
+the physical distance between them. Two targets may be four metres apart and
+still have routes that cross.
+
+During route planning, teammates are therefore added to the cost grid of
+\Cref{subsec:sys:map} as moving obstacles with a radius of 2\,m. A vehicle
+computing a route consequently treats the other vehicles as obstacles and tries
+to avoid them from the beginning. This is preferable to correcting the trajectory
+only after the vehicles have already come close.
+
+During flight, a simpler rule provides a final safety layer. When two vehicles
+are closer than 2.5\,m horizontally and their altitude difference is less than
+1.2\,m, the vehicle with the higher index stops and gives way to the other. When
+the horizontal distance falls below 1.5\,m, both vehicles stop, regardless of
+their priority.
+
+The priority based on the vehicle index is arbitrary, but it gives the team a
+fixed order. This guarantees that two vehicles facing each other do not both yield
+or both continue.
+
+The vertical condition is also important. Vehicles can work on different shelf
+levels of the same rack, so a small horizontal distance does not necessarily mean
+that they are in conflict. Considering altitude prevents unnecessary stops when
+the vehicles are safely separated vertically.
+
+\subsubsection*{Releasing Work}
+
+A claim is released as soon as the vehicle stops working on its target. Four
+situations can cause this release, and each one leads to a different state for
+the target afterwards.
+
+\begin{table}[!htb]
+    \centering
+    \caption{Events that release a claim.}%
+    \label{tab:sys:release}
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{5.6cm}
+            >{\raggedright\arraybackslash}p{2.6cm}
+            >{\raggedright\arraybackslash}p{6.2cm}@{}}
+        \toprule
+        \textbf{Event}                                                       & \textbf{Claim}      & \textbf{Target}                                            \\
+        \midrule
+        The observation has been performed                                   & Released            & Removed from the candidates because the map has changed    \\
+        \addlinespace
+        The flight controller abandons the target                            & Released            & Blacklisted for 120\,s                                     \\
+        \addlinespace
+        The vehicle has not moved 30\,cm in 15\,s while holding a target     & Released            & Blacklisted for 120\,s                                     \\
+        \addlinespace
+        The vehicle stops reporting for more than 5\,s                       & Released by expiry  & Made available to the other vehicles                       \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\FloatBarrier
+
+The second and third rows describe the same mechanism activated by two different
+triggers. In both cases the target is placed in an abandoned state, and the
+release together with the blacklist entry are applied when the vehicle performs
+its next selection.
+
+The third case is important because one simple rule covers several possible
+failures. If a vehicle has held a target for fifteen seconds without moving at
+least thirty centimetres, it is considered stuck. The cause may be another vehicle
+blocking the aisle, a structure that is not yet present in the map, or repeated
+route recomputations. The system does not try to identify the exact cause.
+Instead, it releases the target, blacklists it temporarily, and starts a new
+selection.
+
+The fourth case allows the team to continue after the loss of a vehicle. A
+vehicle that stops flying also stops publishing its position in the map, and
+\Cref{eq:sys:claim-active} then invalidates its claims once the silence tolerance
+is reached. The targets it was holding become available to the other vehicles,
+and the mission continues.
+
+This mechanism requires no diagnosis, since the absence of new state information
+is sufficient whatever the cause. Two situations are nevertheless detected
+explicitly, because they can be recognised without ambiguity and because
+releasing the work immediately is preferable to waiting for the silence delay: a
+vehicle whose altitude falls below 0.3\,m, and a vehicle whose tilt exceeds 70
+degrees. In both cases the vehicle is marked as lost and its claims are released
+at once. The silence rule remains the general mechanism and covers every other
+case, including a vehicle that has become unresponsive without falling.
+
+\subsection{The Semantic Guide}%
 \label{subsec:sys:semantic}
 
-The geometric decision process is complemented by a pre-trained vision-language
-model (VLM). At regular intervals, a UAV provides the model with a compact
-description of the current warehouse state and asks which area should receive
-attention next and from which side it should be approached. The VLM does not
-directly control the UAV or generate its trajectory: its output modifies the
-value of candidate actions located in the recommended area, so semantic
-information influences the same decision mechanism as geometric information.
+The semantic guide is the only component of the system that does not rely only on
+geometric information. It is a pre-trained \gls{abb:vlm} that receives the
+current state of the search and suggests where the vehicle should look next. Its
+answer does not directly select a target. Instead, it is converted into a bonus
+that is added to the score in \Cref{eq:sys:score}, with a weight $\lambda$.
 
-This provides information that is difficult to obtain from geometry alone. A
-geometric map can indicate where the team has not yet explored, but it cannot
-determine whether one unexplored area appears more promising than another based
-on its visual content. Semantic guidance can, for example, favour an area
-containing visible cartons over an apparently empty aisle.
+The guide is optional by design. Setting $\lambda = 0$ removes its contribution
+from the score, so the system behaves exactly as if the guide were not present.
+All other components continue to work normally because none of them depends on
+the guide's advice.
 
+% Figure « What the guide receives » : le fichier assets/images/fig_guide.png
+% est absent. Décommenter à sa livraison.
+% \begin{figure}[!htb]
+%     \centering
+%     \includegraphics[width=\textwidth]{fig_guide}
+%     \caption{What the guide receives, what it is asked, and how its answer
+%         affects the target score.}%
+%     \label{fig:sys:guide}
+% \end{figure}
 
-\subsection{Execution}
-\label{sec:sys:execution}
+\subsubsection*{What the Guide Is Asked}
 
-After an action has been selected, the UAV controller executes the corresponding
-position and observation requirement in three stages:
+The guide is not asked an open question about the mission. Such a question would
+produce free text that would then have to be interpreted before it could be used.
+Instead, the two questions are designed so that each answer can be given with a
+single word or number.
 
-\begin{enumerate}[itemsep=0.35em]
-\item \textbf{Transit}: the UAV moves rapidly along the computed path through known free space.
+The first question asks which area the vehicle should visit next. To make this
+possible, the candidates generated in \Cref{sec:sys:candidates} are grouped on a
+three-metre grid. The groups are then sorted by their total utility, and at most
+six groups are kept and numbered. The guide only needs to return one of these
+numbers, so no interpretation of free text is required.
 
+The second question asks from which side the shelf in the selected area should be
+approached. The answer is one of the four horizontal sides, expressed as a
+cardinal direction. This question is useful because determining the correct
+observation side is a recurring difficulty for the geometric part. As described
+in \Cref{sec:sys:candidates}, the side is inferred from the structure surrounding
+a label, but this inference can be unreliable when the surrounding structure has
+not yet been sufficiently mapped.
 
-\item \textbf{Final approach}: the UAV reduces its speed while approaching the target in order to limit overshoot and reach the required position accurately.
+Each vehicle sends its own request and keeps its own advice. The distances given
+in the description are measured from the position of the vehicle that asked, so
+two vehicles in different parts of the building do not receive the same answer.
 
-\item \textbf{Observation hold}: the UAV maintains its position and orientation in front of the target long enough to acquire multiple camera frames for reliable QR decoding.
+\subsubsection*{What the Guide Is Given}
 
+Two rules define the information given to the guide. Both are deliberate design
+choices.
 
-\end{enumerate}
+First, the guide receives only information that is already known from the map. It
+never receives the position of an unread code, the complete layout of the
+building, or any other information that the team has not discovered through
+observation. Otherwise, the guide could answer using information that is
+unavailable to the vehicles, and its contribution would not reflect the actual
+search process.
 
-Execution is continuously monitored. If a newly discovered obstacle invalidates the path, or if the UAV fails to make sufficient progress towards the target, the current action is released and becomes available to the other UAVs. When a QR code is successfully read, its state in the shared map changes to \emph{read}, and the corresponding reading action is removed from the candidate set.
+Second, the guide receives facts, not scores. For each zone, it is given the
+number of codes that have been detected but not yet read, the number of shelf
+sections containing boxes that have not yet been observed, whether unexplored
+space is present, the facing direction of the shelves, and the distance from the
+vehicle to the zone. It also receives the number of codes read since the
+beginning of the mission. It is not given the utility or score already computed
+by the geometric selector. This prevents the guide from simply reproducing the
+geometric ranking and allows its advice to provide an additional source of
+information.
 
+\begin{table}[!htb]
+    \centering
+    \caption{Information available to the guide.}%
+    \label{tab:sys:guide-info}
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{7.6cm}
+            >{\raggedright\arraybackslash}p{7.2cm}@{}}
+        \toprule
+        \textbf{Given}                                                   & \textbf{Not given}                    \\
+        \midrule
+        Number of spotted but unread codes per zone                      & Position of any unread code           \\
+        \addlinespace
+        Number of shelf sections with boxes that have never been observed & Layout of the building               \\
+        \addlinespace
+        Presence of unexplored space                                     & Utility or score of a zone            \\
+        \addlinespace
+        Facing direction of the shelves in the zone                      & Choice made by the geometric selector \\
+        \addlinespace
+        Distance from the vehicle to the zone                            & Ground truth of any kind              \\
+        \addlinespace
+        Number of codes read since the start of the mission              &                                       \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\FloatBarrier
+
+The state can be presented to the guide in two forms. The first is visual: the
+model receives the current camera image together with a top view of the map
+showing the candidate zones and their numbers. The second is textual: the same
+information is provided as a structured description of each zone, without an
+image. Both forms contain the same facts and differ only in how those facts are
+presented. This allows models that accept images and models that do not to be
+evaluated on the same task.
+
+\subsubsection*{How the Advice Enters the Decision}
+
+The guide returns a zone defined by a centre and a radius, and optionally an
+approach side. Let $\mathbf{o}_\gamma$ be the observed point of candidate
+$\gamma$, $\sigma_\gamma$ its approach side, $(\mathbf{z},\rho)$ the advised
+zone, and $\sigma_a$ the advised side. The bonus used in \Cref{eq:sys:score} is
+
+\begin{equation}
+    \beta(\gamma)
+    =
+    B_z\,
+    \mathbbm{1}\!\left[
+        \lVert \mathbf{o}_\gamma-\mathbf{z}\rVert \leq \rho
+        \right]
+    +
+    B_s\,
+    \mathbbm{1}\!\left[
+        \sigma_\gamma=\sigma_a
+        \ \wedge\
+        \operatorname{kind}(\gamma)\neq\textsc{Explore}
+        \right],
+    \label{eq:sys:guide-bonus}
+\end{equation}
+
+where $B_z = 10$ is the bonus for being inside the advised zone and $B_s = 5$ is
+the additional bonus for matching the advised side. Both distances are measured
+horizontally. Exploration candidates receive the zone bonus but not the side
+bonus because they have no imposed approach direction.
+
+The guide is never allowed to block the vehicle. A request is sent in the
+background while the vehicle continues its current task. When the answer becomes
+available, it is stored and used from the next decision cycle. A minimum interval
+separates two consecutive requests from the same vehicle, and a new request is
+sent only after the previous request has finished.
+
+An advice is kept until a new one replaces it. It can therefore be applied to
+several successive decisions, and it may become slightly outdated while the map
+continues to change. This is acceptable because the advice only adds a bonus: an
+outdated suggestion can make a candidate less attractive than it should be, but
+it cannot make an unreachable or already completed target be selected.
+
+If no advice has been received, or if the model returns an answer that does not
+correspond to any of the proposed zones, $\beta(\gamma)$ is set to zero. The
+vehicle then makes its decision using the geometric score alone.
+
+This asynchronous design makes the guide safe to add to the system. The decision
+loop never waits for the model. A slow response therefore does not stop the
+vehicle, and a missing or invalid response has no effect on the rest of the
+system.
+
+\begin{algorithm}[!htb]
+    \caption{RequestAdvice}%
+    \label{algo:sys:advice}
+    \KwRequire{vehicle $i$, map $\mathcal{M}$, candidate list $\Gamma$, minimum interval $\Delta$}
+    \KwEnsure{the advice held by vehicle $i$ is updated when one is available}
+    \lIf{the last request from $i$ is more recent than $\Delta$}{\KwRet}
+    \If{a request from $i$ is still running}{
+        \lIf{it has not completed}{\KwRet}
+        $A \gets$ its result\;
+        \lIf{$A \neq \bot$}{store $A$ as the advice of vehicle $i$}
+    }
+    $Z \gets$ group $\Gamma$ on a 3\,m grid, sort by total utility, keep at most 6, number them\;
+    \lIf{$Z = \emptyset$}{\KwRet}
+    build the state description from $\mathcal{M}$ and $Z$ \tcp*[r]{facts only, no scores}
+    send the two questions in the background\;
+\end{algorithm}
+
+\FloatBarrier
+
+\section{System Operation}%
+\label{sec:sys:mission}%
+\label{sec:sys:loop}
+
+The previous sections described six components separately. This section shows how
+they run together during a mission. The flight controller that executes a chosen
+pose is not described here: it belongs to the vehicle platform rather than to the
+contribution of this work, and it is presented in Chapter 4.
+
+\subsection{Three Rhythms}%
+\label{subsec:sys:rhythms}
+
+The components do not run at the same rate, and this is what allows a slow
+component to be present without slowing the mission.
+
+\begin{table}[!htb]
+    \centering
+    \caption{Rates at which the components run.}%
+    \label{tab:sys:rates}
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{3.6cm}
+            >{\raggedright\arraybackslash}p{4.2cm}
+            >{\raggedright\arraybackslash}p{7.0cm}@{}}
+        \toprule
+        \textbf{Activity}     & \textbf{Rate}                  & \textbf{Reason}                                  \\
+        \midrule
+        Flight control        & Vehicle rate                   & The aircraft must be commanded continuously      \\
+        \addlinespace
+        Observation           & Every cycle, 0.2\,s            & Five observations per second for every vehicle   \\
+        \addlinespace
+        Route re-check        & Every second cycle             & Enough to detect a route that has been cut       \\
+        \addlinespace
+        Decision              & One vehicle per cycle          & A decision must never delay the physics          \\
+        \addlinespace
+        Advice from the guide & At most every 5\,s per vehicle & The answer is used when it arrives               \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\FloatBarrier
+
+A cycle lasts 0.2\,s of simulated time. During each cycle, every vehicle that is
+still flying integrates its \gls{abb:lidar} revolution into the map, publishes
+its position, and decodes both camera images. The learned detector is more
+expensive, so it runs for one vehicle per cycle and on one of its two cameras,
+alternating. With three vehicles, each one therefore runs the detector once every
+three cycles.
+
+At most one vehicle makes a decision per cycle. This is the rule that keeps the
+decision out of the control loop: the other vehicles continue to fly on the
+target they already hold while one of them chooses its next.
+
+\subsection{One Cycle}%
+\label{subsec:sys:cycle}
+
+A cycle follows the same order every time. The map is updated first, so that
+every decision taken afterwards uses the most recent state. Expired claims and
+blacklist entries are then removed. Vehicles that are flying towards a target
+check that their route is still valid, and recompute it if a newly observed
+obstacle has cut it. Finally, one vehicle without a current target selects a new
+one, announces it in the map, and starts flying.
+
+A vehicle that has reached a reading pose holds it for two seconds, which
+corresponds to ten images at the observation rate. A vehicle that has no target
+and cannot find one waits two seconds before trying again, so that a temporary
+absence of candidates does not consume the decision slot at every cycle.
+
+\subsection{Ending the Mission}%
+\label{subsec:sys:termination}
+
+The team decides for itself when the inventory is finished. Four conditions end
+the mission, and the first one to occur applies.
+
+\begin{table}[!htb]
+    \centering
+    \caption{Termination conditions.}%
+    \label{tab:sys:termination}
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{10.6cm}
+            >{\raggedright\arraybackslash}p{4.2cm}@{}}
+        \toprule
+        \textbf{Condition}                                                                  & \textbf{Value}        \\
+        \midrule
+        A given share of the expected inventory has been read, followed by a grace period   & 95\%, then 60\,s      \\
+        \addlinespace
+        No new identifier has been read for a given delay                                   & 120\,s                \\
+        \addlinespace
+        Every vehicle still flying is simultaneously without a target                       & 30\,s                 \\
+        \addlinespace
+        No vehicle is still flying                                                          & ---                   \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\FloatBarrier
+
+The first condition assumes that the size of the inventory is known in advance,
+which is realistic for a warehouse where the number of stored items is recorded
+even though their positions are not. The grace period exists because the last few
+codes are often the most expensive: without it the mission would stop the instant
+the share is reached, and with an unlimited budget it would keep flying for a
+single unreachable label.
+
+The second and third conditions do not use that assumption. They end the mission
+when progress has stopped, either because no new identifier is being found or
+because no vehicle can find anything left to do.
+
+\subsection{Behaviour When Conditions Change}%
+\label{subsec:sys:change}
+
+The three situations that a prepared plan cannot absorb are handled by the
+mechanisms already described. None of them is treated as a special case, and no
+component exists to detect them.
+
+\textbf{An obstacle appears in an aisle}: The \gls{abb:lidar} measures it, and the
+occupancy layer confirms it as solid after a few revolutions. Those cells become
+impassable in the cost grid, the route re-check finds that the current route is
+cut, and a new route is computed. If no route remains, the target is abandoned
+and blacklisted for 120\,s, and the vehicle selects another one.
+
+\textbf{The warehouse has changed since a previous mission}: The map is built from
+nothing at every mission, so a building whose contents have moved presents no
+difficulty. The same mechanism also works within a mission: because occupancy
+accumulates evidence rather than storing the last measurement, an object that is
+removed stops receiving occupied evidence and returns to free once enough rays
+have crossed it.
+
+\textbf{A vehicle is lost}: It stops publishing its position, its claims expire,
+and the work it was holding becomes available to the others, as described in
+\Cref{sec:sys:claims}. The remaining vehicles continue with a larger share of the
+building each.
+
+\section{Conclusion}%
+\label{sec:sys:conclusion}
+
+This chapter presented the design of a system that takes a complete
+\glsxtrshort{abb:qr}-code inventory of a warehouse whose layout is not known in
+advance. It is built on a single organising decision: the plan is replaced by a
+description that the vehicles write themselves while they fly, and every action
+the system takes is derived from that description rather than prepared before
+take-off. \Cref{sec:sys:problem} established why this was necessary, since no
+coverage path, visiting order or target list can be written for a building that
+has not yet been described, and \Cref{sec:sys:overview} stated the consequences
+that follow from it. Every later section builds on this decision rather than
+around it.
+
+The remaining sections turned that decision into a concrete system, and each one
+answered a difficulty left open by the previous one.
+\Cref{subsec:sys:perception} established what can be known at all, and showed
+that detecting a label and reading it are two functions with ranges that differ
+by a factor of two; the intermediate state between them is what gives the mission
+something to collect. \Cref{subsec:sys:map} organised those observations into
+four layers, among which oriented coverage is what makes remaining work definable
+without knowing where the labels are. \Cref{sec:sys:candidates} converted those
+layers into three kinds of work written in a single form, so that reading,
+covering and exploring could be compared at all. \Cref{sec:sys:scoring} priced
+them on one scale where one point of utility equals one metre of flight, which
+removed the need for any explicit arbitration between exploring and collecting.
+\Cref{sec:sys:claims} kept the vehicles apart through the same shared structure,
+using claims that expire rather than a protocol, which is also what makes the
+loss of a vehicle harmless. \Cref{subsec:sys:semantic} added the only
+non-geometric component, an advice that is weighted and removable.
+\Cref{sec:sys:mission} showed the whole system running at three different rates
+and deciding for itself when the inventory is complete.
+
+The choices made here are testable claims rather than plausible arrangements.
+That a system with no pre-planning can complete an inventory in a building it has
+never seen. That a single score is sufficient to balance exploration against
+collection, with no phase and no schedule. That coordination through expiring
+claims keeps several vehicles apart and absorbs the loss of one without any
+component observing their health. That the range of the learned detector, rather
+than that of the decoder, governs how quickly the inventory is collected. And
+that a pre-trained \gls{abb:vlm}, given only what the team has itself observed,
+improves the result over pure geometry---a claim that is equally reportable if it
+turns out to be false. Chapter 4 describes how this design was implemented, and
+Chapter 5 tests each of these claims in turn.
