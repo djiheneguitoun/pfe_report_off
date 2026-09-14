@@ -943,25 +943,237 @@ its currently claimed target. This information is allowed to expire so that
 outdated positions and claims are not kept indefinitely. Claim assignment and
 conflict handling are described in \Cref{sec:sys:claims}.
 
-\subsection{Candidate Actions}
+\subsection{Candidate Generation}%
 \label{sec:sys:candidates}
 
-The map is not directly used to generate a complete route. It is used instead to
-identify \emph{candidate actions}, meaning the locations that are currently worth
-visiting, of which three types are generated:
+Candidate generation converts the current state of the map into the set of
+actions that are worth performing. It is executed for one vehicle but does not
+depend on which vehicle: the candidates are identical for the whole team, and
+only their scores differ. They are therefore computed once from the shared map
+and made available to all vehicles rather than recomputed independently at each
+cycle.
 
-\begin{itemize}[itemsep=0.4em]
-\item \textbf{Reading}: approach a label that has been detected but not yet decoded. The UAV must reach a suitable position and orientation in front of the label.
+Three kinds of work are available at any moment. A label that has been spotted
+but not decoded can be read. A surface that is known to be occupied but has never
+been observed from a readable direction can be covered. A boundary between the
+known and unknown regions can be extended. These three actions come from
+different layers of the map, but they are represented in the same form so that
+they can later be compared on a single scale.
 
+% Figure « The three families of candidates » : le fichier
+% assets/images/fig_candidats.png est absent. Décommenter à sa livraison.
+% \begin{figure}[!htb]
+%     \centering
+%     \includegraphics[width=\textwidth]{fig_candidats}
+%     \caption{The three families of candidates generated from the same map
+%         state.}%
+%     \label{fig:sys:candidates}
+% \end{figure}
 
-\item \textbf{Covering}: observe a known surface from a new direction when the current observations are insufficient to determine whether labels are present on that surface. This allows the system to discover labels that have not yet been detected.
+\subsubsection*{One Common Form}
 
-\item \textbf{Exploring}: move towards a boundary between the known and unknown regions of the map. Such a boundary is referred to as a \emph{frontier} and provides a classical mechanism for exploring unknown space~\cite{yokoyama2024vlfm}.
+A candidate is not a location to reach but an observation to perform. It
+therefore stores both the point being observed and the pose from which it will be
+observed. Let $\mathbf{o}$ denote the observed point, $\mathbf{q}$ the vehicle
+pose, $\psi$ the heading, $\sigma$ the side from which the observation is made,
+and $u$ the utility of the action. A candidate is the tuple
 
+\begin{equation}
+    \gamma =
+    \bigl(\text{kind},\ \mathbf{o},\ \mathbf{q},\ \psi,\ \sigma,\ u\bigr),
+    \qquad
+    \text{kind} \in \{\textsc{Read},\textsc{Cover},\textsc{Explore}\}.
+    \label{eq:sys:candidate}
+\end{equation}
 
-\end{itemize}
+Here, $\sigma \in \{0,1,2,3\}$ is one of the four horizontal sides defined in
+\Cref{eq:sys:coverage}, and the heading $\psi$ is derived from the observation
+direction. Since the reading cameras are lateral, a camera pointing towards
+$\mathbf{o}$ requires a heading rotated by ninety degrees from that direction.
+For an exploration candidate, no particular direction is required, so the heading
+is left unconstrained.
 
-Although these actions have different purposes, they are represented in the same form: a \textbf{position to occupy} together with a \textbf{direction to observe}. This common representation allows reading, covering, and exploration to be evaluated together rather than being handled by separate planning modes.
+This common form allows the three kinds of work to compete directly in
+\Cref{sec:sys:scoring}. Candidate generation therefore defines what can be done
+and how useful the observation is expected to be, while the cost of reaching it
+is handled separately.
+
+\subsubsection*{Choosing the Observation Pose}
+
+Two candidate families require the vehicle to face a surface. The pose must
+therefore be placed on the correct side, at a readable distance, and in space
+that the vehicle can actually occupy.
+
+The correct side cannot be taken from the direction in which the label was first
+detected. A code observed at seventy degrees from its normal is still read from
+the front, not from that angle. The side is instead derived from the structure
+carrying the panel. A panel is attached to the long face of a rack, so its normal
+is perpendicular to the main axis of the occupied structure surrounding it. That
+axis is obtained from the occupied cells in a neighbourhood of the label. Among
+the two perpendicular directions, the one where free space is nearest is
+retained, while the detection direction is used only to break ties. When too
+little structure is present around the label to determine an axis reliably, the
+detection direction is used instead.
+
+Once the side $\mathbf{n}$ is known, the pose is placed in front of the surface at
+a reading distance. The nominal distance is 2.0\,m, at the centre of the reading
+envelope $\mathcal{E}$. If that pose is not usable, closer distances are tried
+down to 1.5\,m, then larger ones up to 4.0\,m. A pose is usable when the vehicle
+can occupy it and when no known obstacle lies between it and the observed
+surface.
+
+\begin{algorithm}[!htb]
+    \caption{ObservationPose}%
+    \label{algo:sys:obspose}
+    \KwRequire{observed point $\mathbf{o}$, side normal $\mathbf{n}$, ordered distances $D$, map $\mathcal{M}$}
+    \KwEnsure{a pose $\mathbf{q}$, or $\bot$}
+    \For{each $d$ in $D$}{
+        $\mathbf{q} \gets \mathbf{o} + d\,\mathbf{n} + \text{camera offset}$\;
+        clamp the altitude of $\mathbf{q}$ to the flight band\;
+        \lIf{$\mathbf{q}$ is not occupiable by the vehicle}{\Continue}
+        \lIf{a known obstacle lies between $\mathbf{q}$ and $\mathbf{o}$}{\Continue}
+        \KwRet$\mathbf{q}$\;
+    }
+    \KwRet$\bot$\;
+\end{algorithm}
+
+\FloatBarrier
+
+Occupiability is evaluated with a clearance of 0.9\,m rather than the 0.6\,m used
+for routes. A vehicle holding a pose can oscillate around it, so an observation
+position requires more clearance from obstacles than a position that is only
+crossed in transit.
+
+All candidates are restricted to a flight band extending from 0.9\,m to 4.5\,m,
+and an observation pose is never placed below 1.4\,m. The upper bound is not a
+limit of the vehicle but of the task: above 4.5\,m a vehicle flies over the racks
+instead of along them, and the panels located near 5\,m belong to the warehouse
+signage rather than to the inventory.
+
+\subsubsection*{The Three Families and Their Utilities}
+
+\textbf{Reading targets}: Each undecoded track produces one candidate, provided it
+has not been blacklisted and lies below the top shelf level. A track above that
+height is treated as a spurious detection rather than a label. The reading pose
+is placed as described above, with the side imposed by the surrounding structure.
+
+Repeated failures are handled by the generator itself so that a track that cannot
+be read is not proposed indefinitely. The first visit uses the nominal distance
+set. If no code is decoded, the second visit uses a closer set centred on
+1.2\,m, because small labels may not be readable from two metres. If that also
+fails, the third visit uses the opposite side. After three unsuccessful visits,
+the track is blacklisted and is no longer generated.
+
+\textbf{Coverage targets}: A coverage target is an occupied cell, within the
+flight band, whose free neighbour on a given side has never had the corresponding
+coverage bit set. Individual cells are too small to justify a separate flight, so
+they are grouped by one metre horizontally and half a metre vertically. A group
+containing fewer than three cells is discarded as noise. The observed point is
+the centre of the group, and the pose is placed on the side that defines it.
+
+\textbf{Exploration targets}: Frontier cells are free cells that touch the
+unknown region, taken within the same flight band. An isolated unknown cell
+surrounded by known space is not treated as a frontier, since it is a sampling
+gap rather than an unexplored area; the unknown must form a connected region for
+the frontier to be generated. Frontier cells are grouped by two metres, and the
+pose is placed at the centre of the group, at a fixed exploration altitude,
+without any imposed heading.
+
+The utility of a candidate depends only on what it is expected to return, not on
+the cost of reaching it, which belongs to \Cref{sec:sys:scoring}. For a coverage
+group $G$ and a frontier group $F$:
+
+\begin{equation}
+    u_{\text{\textsc{Cover}}}(G)
+    =
+    \min\left(
+    \sum_{c \in G} \omega(c),\
+    U_{\max}^{\text{cov}}
+    \right),
+    \qquad
+    u_{\text{\textsc{Explore}}}(F)
+    =
+    \min\left(
+    \omega_f \cdot \lvert F \rvert,\
+    U_{\max}^{\text{exp}}
+    \right)
+    \label{eq:sys:utility}
+\end{equation}
+
+where $\omega(c)$ is the weight of one surface cell, $\omega_f$ the weight of one
+frontier cell, and $U_{\max}^{\text{cov}}$, $U_{\max}^{\text{exp}}$ the two caps.
+A surface cell normally has weight 1, but its weight is increased to 3 when the
+semantic layer indicates that the cell contains a carton.
+
+\begin{table}[!htb]
+    \centering
+    \caption{Utility values and their origin.}%
+    \label{tab:sys:utilities}
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{5.6cm}
+            r
+            >{\raggedright\arraybackslash}p{6.4cm}@{}}
+        \toprule
+        \textbf{Quantity}                                    & \textbf{Value} & \textbf{Reason}                                  \\
+        \midrule
+        Utility of a reading target                          & 30             & A spotted label is an almost certain identifier  \\
+        \addlinespace
+        Weight of one surface cell, $\omega(c)$              & 1              & Surface has value through accumulated coverage   \\
+        \addlinespace
+        Weight of a surface cell containing a carton         & 3              & The semantic layer indicates inventory is present \\
+        \addlinespace
+        Cap on a coverage group, $U_{\max}^{\text{cov}}$     & 30             & Equal to one reading                             \\
+        \addlinespace
+        Weight of one frontier cell, $\omega_f$              & 0.15           & A frontier yields knowledge, not identifiers     \\
+        \addlinespace
+        Cap on an exploration group, $U_{\max}^{\text{exp}}$ & 20             & Below one reading                                \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\FloatBarrier
+
+Two properties follow from these values. A coverage group can at most equal a
+single reading, so no accumulation of surface outweighs a label that is already
+known to exist; when the two are equal, the travel cost decides between them.
+Exploration is capped below both, so the team explores when little else remains
+and returns to reading as soon as new labels are spotted. The balance between
+exploring and collecting is therefore produced by the values themselves, and no
+phase or schedule is required.
+
+Although the three families come from different layers of the map and represent
+very different kinds of work, they are expressed as the same tuple and can
+therefore be compared without any additional rule.
+
+\begin{algorithm}[!htb]
+    \caption{GenerateCandidates}%
+    \label{algo:sys:generate}
+    \KwRequire{map $\mathcal{M}$}
+    \KwEnsure{a list of candidates $\Gamma$}
+    $\Gamma \gets \emptyset$\;
+    \For{each track in $\mathcal{M}$ not blacklisted and below the top shelf}{
+        $\mathbf{n} \gets$ side imposed by the surrounding structure\;
+        $D \gets$ distance set for the current attempt count\;
+        $\mathbf{q} \gets \textsc{ObservationPose}(\text{track position}, \mathbf{n}, D, \mathcal{M})$\;
+        \lIf{$\mathbf{q} \neq \bot$}{add a \textsc{Read} candidate with utility $U_{\text{read}}$}
+    }
+    \For{each side $\sigma$}{
+        collect occupied cells whose free neighbour on $\sigma$ is uncovered\;
+        group them by 1\,m horizontally and 0.5\,m vertically\;
+        \For{each group of at least 3 cells}{
+            $\mathbf{q} \gets \textsc{ObservationPose}(\text{group centre}, \sigma, D, \mathcal{M})$\;
+            \lIf{$\mathbf{q} \neq \bot$}{add a \textsc{Cover} candidate with utility from \Cref{eq:sys:utility}}
+        }
+    }
+    group the frontier cells by 2\,m\;
+    \For{each group}{
+        $\mathbf{q} \gets$ nearest occupiable pose at the exploration altitude\;
+        \lIf{$\mathbf{q} \neq \bot$}{add an \textsc{Explore} candidate with utility from \Cref{eq:sys:utility}}
+    }
+    \KwRet$\Gamma$\;
+\end{algorithm}
+
+\FloatBarrier
 
 \subsection{Common Action Value}
 \label{sec:sys:scoring}
