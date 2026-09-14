@@ -960,15 +960,15 @@ known and unknown regions can be extended. These three actions come from
 different layers of the map, but they are represented in the same form so that
 they can later be compared on a single scale.
 
-% Figure « The three families of candidates » : le fichier
-% assets/images/fig_candidats.png est absent. Décommenter à sa livraison.
-% \begin{figure}[!htb]
-%     \centering
-%     \includegraphics[width=\textwidth]{fig_candidats}
-%     \caption{The three families of candidates generated from the same map
-%         state.}%
-%     \label{fig:sys:candidates}
-% \end{figure}
+\begin{figure}[!htb]
+    \centering
+    \includegraphics[width=\textwidth]{fig_candidats}
+    \caption{The three families of candidates generated from the same map
+        state.}%
+    \label{fig:sys:candidates}
+\end{figure}
+
+\FloatBarrier
 
 \subsubsection*{One Common Form}
 
@@ -1257,25 +1257,3 @@ position and observation requirement in three stages:
 
 Execution is continuously monitored. If a newly discovered obstacle invalidates the path, or if the UAV fails to make sufficient progress towards the target, the current action is released and becomes available to the other UAVs. When a QR code is successfully read, its state in the shared map changes to \emph{read}, and the corresponding reading action is removed from the candidate set.
 
-\subsection{Overall Mission Loop}
-\label{sec:sys:loop}
-
-The seven elements form a single closed loop, as illustrated in \Cref{fig:sys:architecture}.
-
-\begin{enumerate}[itemsep=0.35em]
-\item The UAVs observe the environment through the perception pipeline.
-\item The observations update the shared map.
-\item The map produces reading, covering, and exploration candidates.
-\item Candidate values are computed using expected return, execution cost, and coordination information.
-\item Each UAV selects and claims one reachable action.
-\item The controller executes the selected action and monitors its progress.
-\item The resulting observations update the shared map, starting the process again.
-\end{enumerate}
-
-The different parts of the system operate at different time scales: flight
-control runs continuously at a high frequency, action selection is performed
-approximately once per second, and semantic guidance is requested only every few
-seconds, which allows the VLM to provide higher-level guidance without
-interfering with the real-time control loop. The mission terminates when the
-inventory no longer grows, meaning that the team has reached a state in which
-additional actions do not produce new inventory entries.
