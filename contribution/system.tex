@@ -150,9 +150,7 @@ real experiments~\cite{pore2026drone}.
 The proposed system performs warehouse inventory inspection in an environment
 whose layout is not known in advance. It is a multi-\gls{abb:uav} system: the
 inspection is carried out by a team of identical aerial vehicles operating
-simultaneously in the same building. Its organisation is decentralised, with no
-leader and no central planner; every vehicle runs the same software and reaches
-its own decisions. The number of vehicles is not a parameter of the design, so
+simultaneously in the same building. Decision-making is decentralised: there is no leader and no central planner, and every vehicle runs the same software and chooses its own targets. The vehicles share what they observe through a single common map. The number of vehicles is not a parameter of the design, so
 the same system operates unchanged with a larger or a smaller team.
 
 The system performs online planning. No coverage path, visiting order or list of
@@ -164,17 +162,14 @@ online, and the resulting map is shared: the vehicles jointly construct a single
 three-dimensional description of the building, which is volumetric rather than a
 floor plan, as racks have several levels and a code is defined by a height as
 much as by a position. Coordination between vehicles is implicit and passes
-entirely through this shared description; no communication protocol, negotiation
-or consensus mechanism is required.
+entirely through this shared description.
 
-The system is fault-tolerant, and contains no component whose function is to
-detect the failure of a vehicle. It is adaptive to change, whether the contents
+The system is fault-tolerant. It is adaptive to change, whether the contents
 of the warehouse have been modified since an earlier mission or an obstacle
 appears during the current one. It is self-terminating: the end of the mission is
 determined by the team from the state of the inspection, not by a predefined time
 budget. Its decisions are semantically guided, in that a pre-trained
-vision-language model participates in them, and this guidance is optional---its
-removal leaves a system that remains fully operational. Finally, the system is
+vision-language model participates in them. the system is
 physically realistic: the vehicles are flown by real autopilots, so that every
 decision it produces is one that can be executed in flight.
 
@@ -519,54 +514,50 @@ label should later be approached.
 
 \subsubsection*{Why Detection Must Be Learned}
 
-Extending the detection range is not difficult by itself. A geometric detector
-based on thresholds and shape tests can detect panels beyond the reading
-envelope, but it produces too many false positives. In scenes without
-\glsxtrshort{abb:qr} codes, such a detector reports panels in more than a quarter
-of the images by confusing cartons, rack structures, and shadows with labels.
+A code can only be read within the reading envelope, up to about 4\,m. To plan
+its flights, the system also needs to \emph{spot} labels that are farther away,
+without reading them. A simple geometric detector, based on thresholds and shape
+tests, can find panels at these distances, but it confuses cartons, rack
+structures and shadows with labels. In images that contain no
+\glsxtrshort{abb:qr} code at all, it still reports a panel in 27\,\% of the
+images. Since every spotted label can send a drone to read it, each false
+detection wastes a flight.
 
-Since every spotted label can generate a flight, such a false-positive rate would
-produce many unnecessary missions. The detector must therefore satisfy two
-conditions simultaneously.
+The detector must therefore meet the two requirements of
+Table~\ref{tab:sys:detectors} at the same time. A geometric detector cannot:
+making its threshold stricter removes false detections, but it also removes the
+distant labels. A learned detector avoids this trade-off, because it recognises
+what a label looks like in the warehouse instead of relying only on its shape.
 
 \begin{table}[!htb]
     \centering
-    \caption{The requirement placed on the detector.}%
+    \caption{The two requirements placed on the detector.}%
     \label{tab:sys:detectors}
     \setlength{\tabcolsep}{4pt}
-    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{5.0cm}
+    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{5.2cm}
             r
-            >{\raggedright\arraybackslash}p{6.2cm}@{}}
+            >{\raggedright\arraybackslash}p{5.4cm}@{}}
         \toprule
-        \textbf{Requirement}               & \textbf{Target} & \textbf{Relation to reading}             \\
+        \textbf{Requirement} & \textbf{Geometric detector} & \textbf{Required} \\
         \midrule
-        Range held at 90\% detection       & 4.0\,m          & at the limit where reading already stops \\
+        Distance up to which 90\,\% of labels are detected & 4.0\,m & Beyond 4.0\,m, where reading stops \\
         \addlinespace
-        Reports on a scene holding no code & 27\% of images  & must be reduced substantially            \\
+        Images without any code in which a panel is reported & 27\,\% & As close to 0\,\% as possible \\
         \bottomrule
     \end{tabular}
 \end{table}
 
 \FloatBarrier
 
-A simple geometric threshold cannot satisfy both requirements: increasing the
-threshold reduces false detections but also removes distant true labels. The two
-objectives must therefore be separated by a learned detector that recognises the
-appearance of labels in the warehouse setting rather than relying only on
-geometric shape.
+The detector is trained without manual annotation. In simulation, the position
+of every carton and panel is known, so its location in each image can be computed
+from the camera pose. Rays are cast towards each object to keep only the parts
+that are actually visible. The warehouses used for training are different from
+those used for evaluation.
 
-The detector is trained without manual annotation. Because the positions of
-cartons and panels are known in simulation, their image regions can be generated
-by projecting them using the exact camera pose. Visibility is additionally
-checked by casting rays towards points on each surface and keeping only points
-for which the corresponding object is the first surface reached. The buildings
-used to generate training examples are kept separate from those used for
-evaluation.
-
-The detector also identifies cartons as a second class. Cartons are not read, but
-their detection provides semantic information for the map, allowing the system to
-distinguish occupied rack regions from empty ones before any identifier has been
-decoded.
+The detector also recognises a second class, the cartons. Cartons are not read,
+but detecting them tells the map which parts of a rack are occupied before any
+identifier has been decoded.
 
 \subsubsection*{The Perception Cycle}
 
