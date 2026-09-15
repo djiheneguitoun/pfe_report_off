@@ -31,49 +31,8 @@ methods. The chapter closes with a conclusion that brings these results together
 \label{sec:impl:stack}
 
 The system is written in Python and runs entirely in simulation. The tools are
-presented from the simulator outwards, and \Cref{tab:impl:stack} summarises them.
-
-\begin{table}[!htbp]
-    \centering
-    \caption{Technologies and libraries used.}%
-    \label{tab:impl:stack}
-    \small
-    \setlength{\tabcolsep}{4pt}
-    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{3.8cm}
-            >{\raggedright\arraybackslash}p{2.6cm}
-            >{\raggedright\arraybackslash}p{8.2cm}@{}}
-        \toprule
-        \textbf{Technology}              & \textbf{Version} & \textbf{Role}                                        \\
-        \midrule
-        Isaac Sim                        & 5.1.0            & Physics, rendering and \gls{abb:lidar} simulation    \\
-        USD (\texttt{pxr})               & With Isaac Sim   & Description of the warehouse scene                   \\
-        Pegasus Simulator                & 5.1              & Drone model and bridge to the autopilots             \\
-        Iris quadrotor                   & Pegasus model    & Simulated drone                                      \\
-        ArduPilot \glsxtrshort{abb:sitl} & 4.6.0-beta1      & Flight software, one process per drone               \\
-        \texttt{pymavlink}               & 2.4.49           & MAVLink link to the autopilots                       \\
-        ns-3                             & 3.40             & Network protocols and link latency                   \\
-        5G-LENA (\texttt{nr})            & 2.6              & 5G NR module for ns-3                                \\
-        Sionna                           & 0.19             & Radio propagation by ray tracing                     \\
-        ns3sionna                        & For ns-3.40      & Coupling of ns-3 and Sionna                          \\
-        Python                           & 3.11             & Implementation language                              \\
-        NumPy                            & 1.26.0           & Map and candidate computations                       \\
-        SciPy                            & 1.15.3           & Rotations between frames                             \\
-        OpenCV                           & 4.11.0           & Image handling and camera geometry                   \\
-        zxing-cpp                        & 3.1.1            & \glsxtrshort{abb:qr} decoding in flight              \\
-        ZBar (\texttt{pyzbar})           & 0.1.9            & Decoder used for comparison                          \\
-        BoofCV (\texttt{PyBoof})         & 0.43.1           & Decoder used for comparison                          \\
-        Ultralytics (YOLO11)             & 8.3.253          & Training and inference of the detector               \\
-        PyTorch                          & 2.7.0            & Deep learning for the detector and the guide         \\
-        Transformers                     & 5.12.1           & Loading of the vision-language model                 \\
-        bitsandbytes                     & 0.50.2           & Four-bit quantisation of the guide                   \\
-        PEFT                             & 0.20.0           & LoRA adapter of the guide                            \\
-        \texttt{qrcode}                  & 7.4.2            & Generation of the \glsxtrshort{abb:qr} images        \\
-        Pillow                           & 11.3.0           & Image handling during warehouse generation           \\
-        Matplotlib                       & 3.10.3           & Figures                                              \\
-        FFmpeg                           & 4.4.2            & Mission videos                                       \\
-        \bottomrule
-    \end{tabular}
-\end{table}
+presented from the simulator outwards, and \Cref{tab:impl:stack} summarises them
+by component.
 
 \textbf{NVIDIA Isaac Sim}\footnote{\url{https://developer.nvidia.com/isaac/sim}}
 is a robotics simulator built on NVIDIA Omniverse. It runs the rigid-body
@@ -100,10 +59,10 @@ library, is the protocol between the system and the autopilots. It carries the
 take-off orders, the velocity commands and the position readings.
 
 \textbf{ns-3}\footnote{\url{https://www.nsnam.org}} is a discrete-event network
-simulator. In the network part of the system, it simulates the communication
-stack of the radio links, either WiFi (IEEE 802.11n) or 5G NR through the
-\textbf{5G-LENA}\footnote{\url{https://5g-lena.cttc.es}} module. It also provides
-the latency of each exchange.
+simulator. In the networked version of the system, it simulates the
+communication stack of the vehicle links, either WiFi (IEEE 802.11n) or 5G NR
+through the \textbf{5G-LENA}\footnote{\url{https://5g-lena.cttc.es}} module. It
+also provides the latency of each exchange.
 
 \textbf{Sionna}\footnote{\url{https://nvlabs.github.io/sionna/}} is NVIDIA's
 library for simulating wireless communication systems. Its ray tracer computes
@@ -152,8 +111,50 @@ low-rank adapter (LoRA) that specialises the guide.
 and \textbf{FFmpeg}\footnote{\url{https://ffmpeg.org}} assembles the mission
 videos.
 
-\FloatBarrier
+\begin{table}[!tbp]
+    \centering
+    \caption{Technologies and libraries used.}%
+    \label{tab:impl:stack}
+    \footnotesize
+    \singlespacing
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{3.8cm}
+            >{\raggedright\arraybackslash}p{2.6cm}
+            >{\raggedright\arraybackslash}p{8.2cm}@{}}
+        \toprule
+        \textbf{Technology}              & \textbf{Version} & \textbf{Role}                                        \\
+        \midrule
+        Isaac Sim                        & 5.1.0            & Physics, rendering and \gls{abb:lidar} simulation    \\
+        USD (\texttt{pxr})               & With Isaac Sim   & Description of the warehouse scene                   \\
+        Pegasus Simulator                & 5.1              & Drone model and bridge to the autopilots             \\
+        Iris quadrotor                   & Pegasus model    & Simulated drone                                      \\
+        ArduPilot \glsxtrshort{abb:sitl} & 4.6.0-beta1      & Flight software, one process per drone               \\
+        \texttt{pymavlink}               & 2.4.49           & MAVLink link to the autopilots                       \\
+        ns-3                             & 3.40             & Network protocols and link latency                   \\
+        5G-LENA (\texttt{nr})            & 2.6              & 5G NR module for ns-3                                \\
+        Sionna                           & 0.19             & Radio propagation by ray tracing                     \\
+        ns3sionna                        & For ns-3.40      & Coupling of ns-3 and Sionna                          \\
+        Python                           & 3.11             & Implementation language                              \\
+        NumPy                            & 1.26.0           & Map and candidate computations                       \\
+        SciPy                            & 1.15.3           & Rotations between frames                             \\
+        OpenCV                           & 4.11.0           & Image handling and camera geometry                   \\
+        zxing-cpp                        & 3.1.1            & \glsxtrshort{abb:qr} decoding in flight              \\
+        ZBar (\texttt{pyzbar})           & 0.1.9            & Decoder used for comparison                          \\
+        BoofCV (\texttt{PyBoof})         & 0.43.1           & Decoder used for comparison                          \\
+        Ultralytics (YOLO11)             & 8.3.253          & Training and inference of the detector               \\
+        PyTorch                          & 2.7.0            & Deep learning for the detector and the guide         \\
+        Transformers                     & 5.12.1           & Loading of the vision-language model                 \\
+        bitsandbytes                     & 0.50.2           & Four-bit quantisation of the guide                   \\
+        PEFT                             & 0.20.0           & LoRA adapter of the guide                            \\
+        \texttt{qrcode}                  & 7.4.2            & Generation of the \glsxtrshort{abb:qr} images        \\
+        Pillow                           & 11.3.0           & Image handling during warehouse generation           \\
+        Matplotlib                       & 3.10.3           & Figures                                              \\
+        FFmpeg                           & 4.4.2            & Mission videos                                       \\
+        \bottomrule
+    \end{tabular}
+\end{table}
 
+\FloatBarrier
 \section{Execution Environment}%
 \label{sec:impl:environment}
 
@@ -166,6 +167,7 @@ versions listed in \Cref{tab:impl:stack}.
     \centering
     \caption{Execution environment.}%
     \label{tab:impl:environment}
+    \singlespacing
     \setlength{\tabcolsep}{4pt}
     \begin{tabular}{@{}ll@{}}
         \toprule
@@ -183,17 +185,18 @@ versions listed in \Cref{tab:impl:stack}.
 \end{table}
 
 \FloatBarrier
-
 \section{Technical Architecture}%
 \label{sec:impl:architecture}
 
-The system is evaluated entirely in simulation, under conditions close to a real
-deployment: each drone is flown by genuine autopilot software, and the system
-knows only what the drones' sensors measure. \Cref{fig:impl:architecture}
-organises the programs involved into seven layers, from the simulated world to
-the outputs of a mission. The numbered steps follow one mission cycle.
+The system is evaluated entirely in simulation, but the simulation is designed to
+reproduce the conditions of a real deployment. Each drone is flown by genuine
+autopilot software, and the system knows only what the drones' own sensors
+measure. This requires several programs to run concurrently and to exchange data.
+\Cref{fig:impl:architecture} presents their organisation as seven layers, from
+the simulated world at the bottom to the outputs of a mission at the top. The
+numbered steps follow one cycle of a mission.
 
-\begin{figure}[!htbp]
+\begin{figure}[!tbp]
     \centering
     \includegraphics[width=\textwidth]{fig_architecture_execution}
     \caption{Technical architecture of the system.}%
@@ -202,21 +205,33 @@ the outputs of a mission. The numbered steps follow one mission cycle.
 
 \subsection*{Layer 1 --- Simulated World}
 
-Isaac Sim computes the physics, renders the camera images and simulates the
-\gls{abb:lidar}. The warehouse is produced by a generator from a single integer,
-the \emph{seed}. The same seed always yields the same warehouse, and a new seed
-yields a new layout, which allows the system to be tested in buildings it has
-never seen. The seed sets the position of the racks, the share of shelf positions
-holding a carton and the take-off positions of the drones
-(\Cref{tab:impl:warehouse}). Empty shelf positions are removed from both the
-images and the physics. Each carton carries a \glsxtrshort{abb:qr} code on two
-opposite faces, so that it can be read from either aisle. The warehouse of the
-nominal scenario contains 114 identifiers on 228 panels.
+Isaac Sim provides the physical world in which the missions take place. It
+computes the motion of the rigid bodies, renders the images seen by the cameras
+and simulates the \gls{abb:lidar} measurements. The scene, with the building, the
+racks and the cartons, is described in USD (Universal Scene Description), the
+scene format used by Isaac Sim.
 
-\begin{table}[!htbp]
+The warehouse is not a fixed model. It is produced by a generator from a single
+integer, the \emph{seed}. The same seed always yields the same warehouse, while a
+different seed yields a different layout. The seed determines the position of
+each rack, the fraction of shelf positions that hold a carton and the take-off
+positions of the drones. The dimensions of the building and of the racks remain
+constant (\Cref{tab:impl:warehouse}). This mechanism is what allows the system to
+be evaluated in warehouses it has never encountered.
+
+When a shelf position is left empty, its carton is removed from the scene
+entirely, from both the rendered images and the physics. The \gls{abb:lidar} and
+the cameras therefore always observe the same set of objects. Each remaining
+carton carries a genuine \glsxtrshort{abb:qr} code on two opposite faces, both
+encoding the same identifier, so a carton can be read from either aisle adjacent
+to its rack. The warehouse of the nominal scenario, for instance, contains 114
+identifiers distributed over 228 panels.
+
+\begin{table}[!tbp]
     \centering
     \caption{The warehouse, and the quantities set by the seed.}%
     \label{tab:impl:warehouse}
+    \singlespacing
     \setlength{\tabcolsep}{4pt}
     \begin{tabular}{@{}>{\raggedright\arraybackslash}p{6.6cm}
             >{\raggedright\arraybackslash}p{8.0cm}@{}}
@@ -235,7 +250,7 @@ nominal scenario contains 114 identifiers on 228 panels.
     \end{tabular}
 \end{table}
 
-\begin{figure}[!htbp]
+\begin{figure}[!tbp]
     \centering
     \includegraphics[width=0.85\textwidth]{fig_warehouse_aisle}
     \caption{An aisle of the simulated warehouse, with \glsxtrshort{abb:qr} panels
@@ -245,19 +260,34 @@ nominal scenario contains 114 identifiers on 228 panels.
 
 \subsection*{Layer 2 --- Vehicles}
 
-Pegasus Simulator adds the drones to Isaac Sim, using the Iris quadrotor model.
-It also acts as the bridge between Isaac Sim and the autopilots: it sends the
-simulated sensor data of each drone to its autopilot and applies the resulting
-motor commands. Each drone carries two side cameras, which read the codes on both
-sides of an aisle in a single pass. It also carries a \gls{abb:lidar}, whose
-distance measurements are used to build the map, and a low-resolution front
-camera used by the visual variant of the semantic guide
-(\Cref{tab:impl:sensors}).
+Pegasus Simulator adds the drones to Isaac Sim, and each drone uses the Iris
+quadrotor model, a standard airframe in drone simulation. Pegasus also acts as
+the bridge between Isaac Sim and the flight software. It transmits the simulated
+inertial and position data of each drone to its autopilot, and it applies the
+resulting motor commands to the drone in Isaac Sim.
+
+Each drone carries four sensors, configured as shown in \Cref{tab:impl:sensors}:
+
+\begin{itemize}[itemsep=0.35em]
+    \item \textbf{Side cameras}: The two side cameras are the reading instruments.
+          They point perpendicular to the direction of flight, one to the left and
+          one to the right, so that a single pass along an aisle covers the racks on
+          both sides. They are mounted slightly below the body to keep the airframe
+          out of the images.
+    \item \textbf{Front camera}: A low-resolution front camera serves the visual
+          variant of the semantic guide.
+    \item \textbf{\glsxtrshort{abb:lidar}}: The \gls{abb:lidar} measures the
+          distance to the nearest obstacle along a set of rays distributed around
+          the drone, and these distances are used to build the map of the building.
+          It delivers a complete revolution at each rendered frame, which gives a
+          full view of the surroundings at every cycle.
+\end{itemize}
 
 \begin{table}[!htbp]
     \centering
     \caption{Sensors of a drone.}%
     \label{tab:impl:sensors}
+    \singlespacing
     \setlength{\tabcolsep}{4pt}
     \begin{tabular}{@{}ll@{}}
         \toprule
@@ -276,25 +306,45 @@ camera used by the visual variant of the semantic guide
 
 \subsection*{Layer 3 --- Flight Software}
 
-Each drone is flown by its own ArduPilot process in \glsxtrshort{abb:sitl}
-(software-in-the-loop) mode, in which the real flight code runs on the computer
-with simulated sensor data. The system never places a drone directly: it sends
-commands to the autopilot, which flies with the inertia and small errors of a
-real aircraft. Commands travel through MAVLink, the standard autopilot protocol,
-and each drone flies in GUIDED mode, in which the autopilot accepts commands from
-an external program.
+Each drone is flown by its own instance of ArduPilot, an open-source autopilot
+widely used on real drones. It runs in \glsxtrshort{abb:sitl}
+(software-in-the-loop) mode: the flight code executes on the computer as an
+ordinary program and receives simulated sensor data instead of real measurements.
+The system therefore never sets the position of a drone directly in Isaac Sim. It
+sends commands to the autopilot, which flies the drone with the inertia, delays
+and small tracking errors of a real aircraft. The behaviour observed in
+simulation thus remains close to that of physical drones.
 
-The flight controller turns the pose chosen by the system into velocity commands,
-in three phases. During \emph{transit}, the drone follows its route. During
-\emph{approach}, it slows down and turns its side camera towards the target.
-During \emph{hold}, it stays in place while the cameras observe. A target is
-abandoned when the drone stops making progress towards it
-(\Cref{tab:impl:flight}).
+The system communicates with the autopilots through MAVLink, the standard
+messaging protocol between an autopilot and a control program. Before a mission,
+each drone is connected to its autopilot and waits until the autopilot's position
+estimate is reliable. It is then switched to GUIDED mode, in which the autopilot
+accepts commands from an external program, before being armed and taking off.
+The three drones take off at staggered heights of 1.6\,m, 1.9\,m and 2.2\,m.
+
+During the mission, the flight controller converts the pose selected by the
+system (a position and a heading), together with the route leading to it, into
+velocity commands for the autopilot. It operates in three successive phases:
+
+\begin{itemize}[itemsep=0.35em]
+    \item \textbf{Transit}: The drone follows the waypoints of its route at
+          constant speed.
+    \item \textbf{Approach}: The speed of the drone decreases in proportion to the
+          remaining distance, which prevents it from overshooting into a rack. The
+          drone also rotates until its side camera faces the target.
+    \item \textbf{Hold}: The drone maintains the pose while the cameras observe. In
+          front of a label, the hold lasts 2\,s, which gives ten images to the
+          decoder.
+\end{itemize}
+
+If the drone makes no progress towards its target for 8\,s, the target is
+abandoned and a new one is selected.
 
 \begin{table}[!htbp]
     \centering
     \caption{Main flight controller parameters.}%
     \label{tab:impl:flight}
+    \singlespacing
     \setlength{\tabcolsep}{4pt}
     \begin{tabular}{@{}ll@{}}
         \toprule
@@ -312,49 +362,96 @@ abandoned when the drone stops making progress towards it
 
 \subsection*{Layer 4 --- System}
 
-The components of \Cref{chap:system} run in a single loop inside the Isaac Sim
-process. Decision-making is decentralised: there is no leader and no central
-planner, and every drone selects its own targets. What the drones share is a
-single common map, into which they all write their observations and from which
-they all read when they decide. Each cycle covers 0.2\,s of simulated time: the
-controllers send their commands, Isaac Sim advances the physics, every drone
-updates the map, expired claims are removed and at most one drone selects a new
-target. Each drone therefore observes five times per second, and the cost of
-decisions does not grow with the size of the team.
+The components described in \Cref{chap:system} run inside the Isaac Sim process,
+within a single loop: perception, the shared map, candidate generation, target
+selection and coordination.
+
+Decision-making is decentralised: there is no leader and no central planner, and
+every drone runs the same software and selects its own targets. What the drones
+share is their knowledge of the building. Each drone writes its observations into
+a single common map held by the Isaac Sim process, and reads this map when it
+selects a target.
+
+The loop proceeds in cycles of 0.2\,s of simulated time. Within a cycle:
+
+\begin{enumerate}[itemsep=0.2em]
+    \item the flight controllers send their commands;
+    \item Isaac Sim advances the physics and renders the images;
+    \item every flying drone integrates its observations into the map;
+    \item expired claims are removed;
+    \item at most one drone selects a new target.
+\end{enumerate}
+
+Each drone thus receives five observations per second. Since a single drone
+decides in each cycle, the computation spent on decisions does not increase with
+the size of the team.
 
 \subsection*{Layer 5 --- Learned Models}
 
-Two learned models run on the GPU. The YOLO11 detector (Section 4.5) locates
-labels and cartons in one side image per cycle, including labels too distant to
-be decoded, while the zxing-cpp decoder reads both images. The semantic guide
-(Section 4.6), based on Qwen2.5-VL, advises each drone on the area to visit next.
-It answers in the background, and its advice is applied to the next decision of
-the drone.
+Two learned models run on the GPU in support of the system:
+
+\begin{itemize}[itemsep=0.35em]
+    \item \textbf{The learned detector} (Section 4.5), from the YOLO11 family,
+          locates \glsxtrshort{abb:qr} labels and cartons in the images, including
+          labels too distant for their content to be decoded. It processes one side
+          camera per cycle, alternating between left and right. The decoder,
+          zxing-cpp, extracts the identifiers and processes both images at every
+          cycle.
+    \item \textbf{The semantic guide} (Section 4.6), based on the Qwen2.5-VL
+          vision-language model, advises each drone on the area to visit next.
+          Producing an answer takes a few seconds, so the guide runs in the
+          background. The drone continues its mission in the meantime, and the
+          advice is applied to its next decision.
+\end{itemize}
 
 \subsection*{Layer 6 --- Network}
 
-Since all observations converge to a single shared map, each drone would, in a
-real deployment, send its observations over a wireless link to the point that
-holds this map. The network part was developed to evaluate such links, which
-always connect two points: two drones, or a drone and a fixed point such as a base
-station. Sionna computes the signal strength of a link by ray tracing in a
-three-dimensional model of the warehouse, and reports the link as blocked when no
-path exists. ns-3 simulates the communication protocols: its nodes follow the
-positions of the drones, read continuously from a file, and test packets
-exchanged between them give the latency. The ns3sionna module can also provide
-ns-3 with the propagation computed by Sionna.
+In the system, the observations of all drones converge to a single shared map. In
+a real deployment, each drone would therefore have to send its observations over
+a wireless link to the point that holds this map. The network part was developed
+to evaluate the quality of such links inside the warehouse, where racks and walls
+attenuate and block the radio signal. A link always connects two points of the
+warehouse, which can be two drones, or a drone and a fixed point such as a base
+station. The evaluation relies on two tools with complementary roles:
 
-Two configurations were implemented (\Cref{tab:impl:network}). In the 5G
-configuration, every drone communicates through a base station placed 6\,m above
-the centre of the warehouse, which matches the organisation of the system around a
-single map. In the WiFi configuration, the nodes communicate directly with each
-other.
+\begin{itemize}[itemsep=0.35em]
+    \item \textbf{Sionna} computes the propagation of the radio signal by ray
+          tracing in a three-dimensional model of the warehouse. For the two points
+          of a link, it finds the paths followed by the signal, including
+          reflections, and derives the received signal strength. When no path
+          exists, it reports the link as blocked.
+    \item \textbf{ns-3} simulates the communication protocols, from radio access to
+          packet transport, and measures the delay with which packets travel from
+          one end of a link to the other.
+\end{itemize}
 
-\begin{table}[!htbp]
+Both tools follow the drones during the flight. The positions of the drones are
+written continuously to a file, which ns-3 reads to place and move its network
+nodes. Test packets are sent between the nodes of the simulated network to
+measure latency, while Sionna provides the signal strength of each link. The
+ns3sionna module can also make ns-3 take its propagation losses and delays
+directly from Sionna. In that case, Sionna runs as a separate server that ns-3
+contacts through ZeroMQ messages.
+
+Two network configurations were implemented (\Cref{tab:impl:network}):
+
+\begin{itemize}[itemsep=0.35em]
+    \item \textbf{5G}: Every drone communicates through a base station placed 6\,m
+          above the centre of the warehouse, operating at 3.5\,GHz with a 20\,MHz
+          bandwidth. Each radio link connects a drone to this fixed point, and all
+          traffic passes through it. This configuration corresponds to the
+          organisation of the system, in which every drone contributes to a single
+          shared map.
+    \item \textbf{WiFi}: The nodes communicate directly with each other, without
+          an access point or a base station.
+\end{itemize}
+
+\begin{table}[!tbp]
     \centering
     \caption{Network configurations.}%
     \label{tab:impl:network}
     \small
+    \singlespacing
     \setlength{\tabcolsep}{4pt}
     \begin{tabular}{@{}>{\raggedright\arraybackslash}p{3.6cm}
             >{\raggedright\arraybackslash}p{5.5cm}
@@ -375,14 +472,32 @@ semantic guide, and ns-3 adds a CPU load that slows down the simulation loop.
 
 \subsection*{Layer 7 --- Outputs}
 
-Each mission is fully recorded, and the system never reads these records while
-the mission runs. The record contains the timestamped events, the identifiers
-read over time, the decisions and trajectory of every drone, a snapshot of the
-map every 10\,s and the camera images used for the videos. After the mission, an
-automatic judge compares this record with the \emph{ground truth}, that is, the
-true identifier and position of every panel, which the system never accesses. The
-judge checks that no drone remained blocked, that no target was pursued by two
-drones, that the drones dispersed at the start, that a drone loss was absorbed and
-that the mission ended properly. It then measures the identifiers read, the known
-share of the building and the safety of the flight. All the results of
-Section 4.9 are computed from these records.
+Everything that happens during a mission is recorded, and none of these records
+is read by the system while the mission runs. A mission record contains:
+
+\begin{itemize}[itemsep=0.2em]
+    \item the timestamped events, such as the loss of a drone or the appearance of
+          an obstacle;
+    \item the number of identifiers read over time;
+    \item the decisions, trajectory and attitude of every drone;
+    \item a snapshot of the map every 10\,s and the final map;
+    \item the camera images from which the mission videos are assembled.
+\end{itemize}
+
+Once the mission is over, an automatic judge compares the record with the
+\emph{ground truth} of the warehouse, that is, the identifier and true position of
+every \glsxtrshort{abb:qr} panel, as produced by the generator. The system never
+has access to this ground truth, which is used only by the judge. The judge first
+verifies that:
+
+\begin{itemize}[itemsep=0.2em]
+    \item no drone remained blocked;
+    \item no two drones pursued the same target;
+    \item the drones dispersed at the start of the mission;
+    \item the loss of a drone, when one occurred, was absorbed by the others;
+    \item the mission ended properly.
+\end{itemize}
+
+It then measures the identifiers read, the share of the building that became
+known and the safety of the flight. All the results reported in Section 4.9 are
+computed from these records.
