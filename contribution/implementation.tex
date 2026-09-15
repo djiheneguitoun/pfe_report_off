@@ -34,6 +34,49 @@ The system is written in Python and runs entirely in simulation. The tools are
 presented from the simulator outwards, and \Cref{tab:impl:stack} summarises them
 by component.
 
+\begin{table}[H]
+    \centering
+    \caption{Technologies and libraries used.}%
+    \label{tab:impl:stack}
+    \footnotesize
+    \singlespacing
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{3.8cm}
+            >{\raggedright\arraybackslash}p{2.6cm}
+            >{\raggedright\arraybackslash}p{8.2cm}@{}}
+        \toprule
+        \textbf{Technology}              & \textbf{Version} & \textbf{Role}                                        \\
+        \midrule
+        Isaac Sim                        & 5.1.0            & Physics, rendering and \gls{abb:lidar} simulation    \\
+        USD (\texttt{pxr})               & With Isaac Sim   & Description of the warehouse scene                   \\
+        Pegasus Simulator                & 5.1              & Drone model and bridge to the autopilots             \\
+        Iris quadrotor                   & Pegasus model    & Simulated drone                                      \\
+        ArduPilot \glsxtrshort{abb:sitl} & 4.6.0-beta1      & Flight software, one process per drone               \\
+        \texttt{pymavlink}               & 2.4.49           & MAVLink link to the autopilots                       \\
+        ns-3                             & 3.40             & Network protocols and link latency                   \\
+        5G-LENA (\texttt{nr})            & 2.6              & 5G NR module for ns-3                                \\
+        Sionna                           & 0.19             & Radio propagation by ray tracing                     \\
+        ns3sionna                        & For ns-3.40      & Coupling of ns-3 and Sionna                          \\
+        Python                           & 3.11             & Implementation language                              \\
+        NumPy                            & 1.26.0           & Map and candidate computations                       \\
+        SciPy                            & 1.15.3           & Rotations between frames                             \\
+        OpenCV                           & 4.11.0           & Image handling and camera geometry                   \\
+        zxing-cpp                        & 3.1.1            & \glsxtrshort{abb:qr} decoding in flight              \\
+        ZBar (\texttt{pyzbar})           & 0.1.9            & Decoder used for comparison                          \\
+        BoofCV (\texttt{PyBoof})         & 0.43.1           & Decoder used for comparison                          \\
+        Ultralytics (YOLO11)             & 8.3.253          & Training and inference of the detector               \\
+        PyTorch                          & 2.7.0            & Deep learning for the detector and the guide         \\
+        Transformers                     & 5.12.1           & Loading of the vision-language model                 \\
+        bitsandbytes                     & 0.50.2           & Four-bit quantisation of the guide                   \\
+        PEFT                             & 0.20.0           & LoRA adapter of the guide                            \\
+        \texttt{qrcode}                  & 7.4.2            & Generation of the \glsxtrshort{abb:qr} images        \\
+        Pillow                           & 11.3.0           & Image handling during warehouse generation           \\
+        Matplotlib                       & 3.10.3           & Figures                                              \\
+        FFmpeg                           & 4.4.2            & Mission videos                                       \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
 \textbf{NVIDIA Isaac Sim}\footnote{\url{https://developer.nvidia.com/isaac/sim}}
 is a robotics simulator built on NVIDIA Omniverse. It runs the rigid-body
 physics, renders the camera images and simulates the rotating \gls{abb:lidar}.
@@ -111,50 +154,6 @@ low-rank adapter (LoRA) that specialises the guide.
 and \textbf{FFmpeg}\footnote{\url{https://ffmpeg.org}} assembles the mission
 videos.
 
-\begin{table}[!tbp]
-    \centering
-    \caption{Technologies and libraries used.}%
-    \label{tab:impl:stack}
-    \footnotesize
-    \singlespacing
-    \setlength{\tabcolsep}{4pt}
-    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{3.8cm}
-            >{\raggedright\arraybackslash}p{2.6cm}
-            >{\raggedright\arraybackslash}p{8.2cm}@{}}
-        \toprule
-        \textbf{Technology}              & \textbf{Version} & \textbf{Role}                                        \\
-        \midrule
-        Isaac Sim                        & 5.1.0            & Physics, rendering and \gls{abb:lidar} simulation    \\
-        USD (\texttt{pxr})               & With Isaac Sim   & Description of the warehouse scene                   \\
-        Pegasus Simulator                & 5.1              & Drone model and bridge to the autopilots             \\
-        Iris quadrotor                   & Pegasus model    & Simulated drone                                      \\
-        ArduPilot \glsxtrshort{abb:sitl} & 4.6.0-beta1      & Flight software, one process per drone               \\
-        \texttt{pymavlink}               & 2.4.49           & MAVLink link to the autopilots                       \\
-        ns-3                             & 3.40             & Network protocols and link latency                   \\
-        5G-LENA (\texttt{nr})            & 2.6              & 5G NR module for ns-3                                \\
-        Sionna                           & 0.19             & Radio propagation by ray tracing                     \\
-        ns3sionna                        & For ns-3.40      & Coupling of ns-3 and Sionna                          \\
-        Python                           & 3.11             & Implementation language                              \\
-        NumPy                            & 1.26.0           & Map and candidate computations                       \\
-        SciPy                            & 1.15.3           & Rotations between frames                             \\
-        OpenCV                           & 4.11.0           & Image handling and camera geometry                   \\
-        zxing-cpp                        & 3.1.1            & \glsxtrshort{abb:qr} decoding in flight              \\
-        ZBar (\texttt{pyzbar})           & 0.1.9            & Decoder used for comparison                          \\
-        BoofCV (\texttt{PyBoof})         & 0.43.1           & Decoder used for comparison                          \\
-        Ultralytics (YOLO11)             & 8.3.253          & Training and inference of the detector               \\
-        PyTorch                          & 2.7.0            & Deep learning for the detector and the guide         \\
-        Transformers                     & 5.12.1           & Loading of the vision-language model                 \\
-        bitsandbytes                     & 0.50.2           & Four-bit quantisation of the guide                   \\
-        PEFT                             & 0.20.0           & LoRA adapter of the guide                            \\
-        \texttt{qrcode}                  & 7.4.2            & Generation of the \glsxtrshort{abb:qr} images        \\
-        Pillow                           & 11.3.0           & Image handling during warehouse generation           \\
-        Matplotlib                       & 3.10.3           & Figures                                              \\
-        FFmpeg                           & 4.4.2            & Mission videos                                       \\
-        \bottomrule
-    \end{tabular}
-\end{table}
-
-\FloatBarrier
 \section{Execution Environment}%
 \label{sec:impl:environment}
 
@@ -163,7 +162,7 @@ on a single machine. Its specifications are given in
 \Cref{tab:impl:environment}, and the software installed on it corresponds to the
 versions listed in \Cref{tab:impl:stack}.
 
-\begin{table}[!htbp]
+\begin{table}[H]
     \centering
     \caption{Execution environment.}%
     \label{tab:impl:environment}
@@ -184,7 +183,6 @@ versions listed in \Cref{tab:impl:stack}.
     \end{tabular}
 \end{table}
 
-\FloatBarrier
 \section{Technical Architecture}%
 \label{sec:impl:architecture}
 
@@ -192,13 +190,11 @@ The system is evaluated entirely in simulation, but the simulation is designed t
 reproduce the conditions of a real deployment. Each drone is flown by genuine
 autopilot software, and the system knows only what the drones' own sensors
 measure. This requires several programs to run concurrently and to exchange data.
-\Cref{fig:impl:architecture} presents their organisation as seven layers, from
-the simulated world at the bottom to the outputs of a mission at the top. The
-numbered steps follow one cycle of a mission.
+\Cref{fig:impl:architecture} presents their organisation.
 
-\begin{figure}[!tbp]
+\begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{fig_architecture_execution}
+    \includegraphics[width=0.85\textwidth]{fig_architecture_execution}
     \caption{Technical architecture of the system.}%
     \label{fig:impl:architecture}
 \end{figure}
@@ -219,15 +215,7 @@ positions of the drones. The dimensions of the building and of the racks remain
 constant (\Cref{tab:impl:warehouse}). This mechanism is what allows the system to
 be evaluated in warehouses it has never encountered.
 
-When a shelf position is left empty, its carton is removed from the scene
-entirely, from both the rendered images and the physics. The \gls{abb:lidar} and
-the cameras therefore always observe the same set of objects. Each remaining
-carton carries a genuine \glsxtrshort{abb:qr} code on two opposite faces, both
-encoding the same identifier, so a carton can be read from either aisle adjacent
-to its rack. The warehouse of the nominal scenario, for instance, contains 114
-identifiers distributed over 228 panels.
-
-\begin{table}[!tbp]
+\begin{table}[H]
     \centering
     \caption{The warehouse, and the quantities set by the seed.}%
     \label{tab:impl:warehouse}
@@ -250,7 +238,7 @@ identifiers distributed over 228 panels.
     \end{tabular}
 \end{table}
 
-\begin{figure}[!tbp]
+\begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{fig_warehouse_aisle}
     \caption{An aisle of the simulated warehouse, with \glsxtrshort{abb:qr} panels
@@ -283,7 +271,7 @@ Each drone carries four sensors, configured as shown in \Cref{tab:impl:sensors}:
           full view of the surroundings at every cycle.
 \end{itemize}
 
-\begin{table}[!htbp]
+\begin{table}[H]
     \centering
     \caption{Sensors of a drone.}%
     \label{tab:impl:sensors}
@@ -340,7 +328,7 @@ velocity commands for the autopilot. It operates in three successive phases:
 If the drone makes no progress towards its target for 8\,s, the target is
 abandoned and a new one is selected.
 
-\begin{table}[!htbp]
+\begin{table}[H]
     \centering
     \caption{Main flight controller parameters.}%
     \label{tab:impl:flight}
@@ -446,7 +434,7 @@ Two network configurations were implemented (\Cref{tab:impl:network}):
           an access point or a base station.
 \end{itemize}
 
-\begin{table}[!tbp]
+\begin{table}[H]
     \centering
     \caption{Network configurations.}%
     \label{tab:impl:network}
