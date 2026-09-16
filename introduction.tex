@@ -4,3 +4,115 @@
 \label{chap.intro}
 
 \section*{Context}
+
+Warehouses sit at the centre of modern supply chains. The growth of e-commerce
+and the demand for ever faster delivery have multiplied the number of references
+stored, the size of the buildings that hold them, and the pace at which goods
+move in and out. In this setting, knowing exactly what is on the shelves is not
+an administrative detail. An inaccurate stock record leads to failed orders,
+unnecessary purchases and capital tied up in goods that nobody can find.
+
+Yet inventory remains one of the least automated operations of a warehouse. It is
+still largely carried out by operators who walk the aisles with handheld scanners
+and use lifts to reach the upper levels of the racks. The task is slow,
+repetitive and exposed to human error, it takes staff away from other work, and
+it must be repeated regularly for the records to stay reliable. As buildings grow
+larger and taller, the cost of every inventory campaign grows with them.
+
+Autonomous aerial vehicles offer a natural answer to this problem. A drone moves
+freely in three dimensions, reaches the highest shelves without any equipment,
+and carries a camera able to read the labels already present on the goods.
+Commercial solutions and research prototypes have already shown drones scanning
+racks in operating warehouses, and the idea of using several vehicles together,
+to cover a whole building in a fraction of the time, has followed naturally.
+
+This work is positioned within this context. It investigates how a team of
+autonomous drones can carry out the inventory of a warehouse on its own, from
+take-off to the delivery of a complete list of the goods the building holds, each
+one located where it stands.
+
+\section*{Problem Statement}
+
+Despite this potential, autonomous inventory by a team of drones remains an open
+challenge. Most existing approaches rely on a map of the warehouse provided in
+advance: the route of each vehicle is computed before take-off, and the work is
+divided between the vehicles once and for all. These systems perform well when
+the mission unfolds as planned, but they become fragile as soon as it does not. A
+vehicle that fails leaves its share of the work undone, an aisle blocked during
+the mission invalidates the planned route, and a building whose map is missing or
+outdated cannot be inventoried at all.
+
+Removing this dependency on a prior map raises several difficulties at once. The
+team must decide where to look without knowing where the goods are, and build its
+knowledge of the building while exploring it. It must share the work among its
+members without a central planner, which would become a single point of failure,
+while avoiding duplicated effort and collisions in narrow aisles. And it must
+keep delivering a complete inventory when the conditions of the mission change.
+
+This work addresses the challenge of building a team of drones that inventories a
+warehouse without any prior knowledge of its layout, and studies what makes such
+a team complete, efficient and robust. Four research questions guide this work:
+
+\begin{itemize}[itemsep=0.4em]
+    \item \textbf{RQ1}: How can a team of drones decide where to go and what to
+          read in a warehouse it does not know, using only the knowledge it
+          gathers during the flight?
+    \item \textbf{RQ2}: How can the vehicles share the work without a central
+          planner, while avoiding duplicated effort and remaining safe in narrow
+          aisles?
+    \item \textbf{RQ3}: How can the team remain robust when the mission does not
+          unfold as expected, such as the loss of a vehicle, an obstacle appearing
+          in an aisle, or a warehouse never seen before?
+    \item \textbf{RQ4}: How can a team that starts without any map outperform
+          static approaches that plan the whole mission in advance from a known
+          map?
+\end{itemize}
+
+\section*{Contributions}
+
+To answer these questions, this work makes the following contributions:
+
+\begin{itemize}[itemsep=0.4em]
+    \item A decentralised inventory system for a team of drones that requires no
+          map of the warehouse and builds a shared representation of the building
+          during the flight.
+    \item A perception chain that combines a learned detector with a
+          \glsxtrshort{abb:qr} decoder, able to spot labels at a distance and to
+          locate every identifier it reads.
+    \item A semantic guidance module based on a \gls{abb:vlm}, which advises the
+          vehicles on the areas to visit next.
+    \item A simulation environment for multi-drone warehouse inventory, with
+          procedurally generated warehouses and realistic flight control.
+    \item An experimental evaluation of the robustness of the system, in nominal
+          conditions and when a vehicle is lost, an obstacle appears in an aisle,
+          or the warehouse has never been seen before.
+\end{itemize}
+
+\section*{Report Organization}
+
+This report presents the work carried out as part of this final year project and
+is organised into two parts.
+
+The first part presents the background and the state of the art:
+
+\begin{itemize}[itemsep=0.4em]
+    \item \textbf{\Cref{chap:background}} introduces warehouse inventory and the
+          use of aerial robots in logistics, and presents the limits of current
+          practices.
+    \item \textbf{\Cref{chap:nav}} reviews existing approaches for autonomous
+          inventory, multi-robot exploration and task coordination, and identifies
+          the gap addressed by this work.
+\end{itemize}
+
+The second part presents the proposed contribution:
+
+\begin{itemize}[itemsep=0.4em]
+    \item \textbf{\Cref{chap:system}} presents the design of the proposed system,
+          its overall architecture and its main components.
+    \item \textbf{\Cref{chap:implementation}} describes the implementation of the
+          system and its experimental evaluation.
+\end{itemize}
+
+Finally, the report concludes with a general conclusion that summarises the
+contributions and the results obtained, and outlines the directions for extending
+this work.

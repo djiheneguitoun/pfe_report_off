@@ -1576,3 +1576,36 @@ that plan.
         missions.}%
     \label{fig:impl:approaches}
 \end{figure}
+
+\section{Conclusion}%
+\label{sec:impl:conclusion}
+
+This chapter presented the implementation of SwarmScan and its experimental
+evaluation.
+
+The implementation part described the technologies and the execution environment
+of the system, then its technical architecture, from the simulator to the
+decision layer. Two learned components were evaluated before being integrated.
+The learned detector found 98.3\% of the visible labels in two warehouses never
+used during its training, and reported a label on only 0.7\% of the images that
+contained none. The semantic guide, once specialised, chose the most useful zone
+in 96\% of 72 unseen cases, against 83\% for the geometric planner.
+
+The evaluation placed the system in four missions: a nominal mission, the loss of
+a vehicle, an obstacle appearing in an aisle, and a warehouse never seen before.
+SwarmScan read 96.5\% of the identifiers in the three missions of the reference
+warehouse and 92.3\% in the unseen one, the only identifiers missed being carried
+by the smallest labels. Against a static approach that plans the whole mission
+from a known map, it reached 90\% of the inventory at 195.6\,s instead of
+514.8\,s, and flew 1.9 to 2.5 times less to obtain the same result. The loss of a
+vehicle left its result unchanged, while the static approach lost 31 identifiers,
+and the obstacle cost it eleven seconds and no identifier. Across the four
+missions, no vehicle entered a rack, no target was duplicated, and the labels
+read were placed in the map with a median error of one centimetre.
+
+Together, these results support the core hypothesis of this work: a team of
+drones that builds its own map during the flight and decides from it, without a
+central planner, delivers a complete inventory faster than a team following a
+plan fixed in advance, and keeps delivering it when the mission does not go as
+planned. The general conclusion synthesises these findings and outlines the
+directions for future work.

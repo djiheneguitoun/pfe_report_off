@@ -2,3 +2,114 @@
 \addcontentsline{toc}{chapter}{General conclusion}
 \markboth{General conclusion}{General conclusion}
 \label{chap.general-conclusion}
+
+Inventory is among the most repetitive and least automated operations in
+warehouse management. Aerial robots are particularly well suited to this task, as
+they can reach every storage level and read the labels already attached to the
+goods. Deploying a team of drones, however, raises challenges that extend well
+beyond label reading: the team must achieve full coverage of the building,
+allocate the work among its members, and remain reliable when the mission
+deviates from its expected course.
+
+In the first part of this report, we introduced the foundations required to
+understand this problem. We first presented warehouse inventory, its operational
+cost, and the use of aerial robots in logistics. We then reviewed existing
+approaches to autonomous inventory, multi-robot exploration and task
+coordination. This review showed that most drone-based inventory systems depend
+on a map of the warehouse known in advance, from which vehicle routes and task
+allocation are fixed before take-off. Such systems perform efficiently as long as
+the mission follows the plan, but they offer no mechanism to cope with a vehicle
+failure, a change in the environment during the flight, or the absence of a prior
+map.
+
+In the second part, we presented SwarmScan, a system in which a team of three
+drones performs the inventory of a warehouse without any prior knowledge of its
+layout. The vehicles incrementally build a shared map of the building during the
+flight, and each of them selects its next target from the collective knowledge of
+the team, without relying on a central planner. The system was implemented in a
+simulation environment that generates warehouses procedurally and controls each
+vehicle through a realistic autopilot, thereby ensuring that every result stems
+from a complete flight.
+
+The implemented system introduced several mechanisms to ensure the completeness
+and robustness of the inventory. The shared map aggregates the explored space,
+the identifiers already read and the labels detected but not yet read, so that
+every decision relies on the knowledge of the entire team. A claim mechanism
+allows each vehicle to signal the target it is pursuing, thereby preventing
+duplicated effort, while claims expire automatically when a vehicle ceases to
+operate. A learned detector identifies labels at a distance, allowing the team to
+direct its effort before the labels come within reading range. In addition, a
+semantic guide based on a \gls{abb:vlm} provides high-level advice on the areas
+to explore next.
+
+The experimental evaluation demonstrated the effectiveness of this approach.
+SwarmScan read 96.5\% of the identifiers in the reference warehouse and 92.3\% in
+a warehouse never encountered during its design, without any adjustment. Compared
+with a static approach that plans the entire mission from a known map, it reached
+90\% of the inventory more than two and a half times earlier, and required 1.9 to
+2.5 times less flight distance to achieve the same result. The evaluation also
+highlighted the robustness of the system. The loss of a vehicle during the
+mission had no effect on the final inventory, whereas the static approach lost 31
+identifiers under the same conditions. The sudden appearance of an obstacle was
+handled without the loss of a single identifier. Across all missions, no vehicle
+entered a rack, no target was pursued by two vehicles simultaneously, and no
+non-existent identifier was ever recorded.
+
+These results provide answers to the four research questions of this work. First,
+a team of drones can decide where to go and what to read by relying solely on the
+knowledge acquired during the flight, as the map it builds is accurate enough to
+serve as the sole basis for its decisions. Second, the work can be distributed
+without a central planner, since the claim mechanism proved sufficient to prevent
+duplicated effort and collisions in every mission. Third, the team remains robust
+to disruptions, as the work of a lost vehicle is naturally redistributed to the
+remaining ones and obstacles are integrated into the map as soon as they are
+perceived. Finally, a team that starts without any map outperforms a static
+approach with full prior knowledge of the building, and the margin widens
+precisely in the situations that the plan fails to anticipate.
+
+Overall, this work demonstrates that prior knowledge of the warehouse layout is
+not a prerequisite for reliable drone-based inventory. A team that builds its own
+representation of the environment and continuously adapts its decisions to it
+proves both more efficient and more robust than one that executes a plan fixed
+before take-off.
+
+\section*{Discussion and Future Work}
+
+Although SwarmScan demonstrates the feasibility of map-free inventory by a team
+of drones, several directions remain open. The current system has been developed
+and evaluated exclusively in simulation, and it does not read the smallest
+labels, which would require operating closer to the shelves than the system
+allows. This work therefore provides a first complete foundation, whose
+deployment in real warehouses calls for several extensions.
+
+\textbf{Validation on Physical Drones}: The autopilot used in simulation is the
+same software that runs on real vehicles, which facilitates the transfer of the
+system to physical platforms. An experimental campaign in a real warehouse would
+validate the detection and reading performance under real lighting conditions,
+motion blur and sensor noise.
+
+\textbf{Reading the Smallest Labels}: The identifiers missed by the system are
+carried by labels approximately three times smaller than the others. A dedicated
+reading strategy, triggered for labels that are detected but not decoded, could
+approach them at a shorter distance and a lower speed in order to complete the
+inventory.
+
+\textbf{Dynamic Warehouses}: The evaluation showed that the system integrates an
+obstacle appearing during the mission. Operational warehouses, however, are
+highly dynamic environments, in which forklifts and operators circulate in the
+aisles and the stock evolves throughout the day. Extending the shared map to
+moving obstacles and to changes in the stored goods would bring the system closer
+to deployment in active facilities.
+
+\textbf{Scalability to Larger Teams and Buildings}: Since no vehicle plays a
+central role, increasing the number of drones does not alter the decision
+process. Evaluating the system with larger teams, in larger warehouses and across
+a wide range of generated layouts, would assess the limits of this scalability
+and provide statistically grounded results.
+
+Overall, these perspectives position the current work as a first operational step
+toward autonomous inventory by teams of drones in real warehouses. The system
+establishes the core capabilities required for this objective, namely building a
+map during the flight, making decisions without a central planner, and remaining
+robust to unexpected events. Future work will build on this foundation to
+progressively bring the system from simulation to real-world deployment.
