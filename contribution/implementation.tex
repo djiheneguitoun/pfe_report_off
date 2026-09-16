@@ -474,7 +474,7 @@ verifies that:
 \end{itemize}
 
 It then measures the identifiers read, the share of the building that became
-known and the safety of the flight. All the results reported in Section 4.9 are
+known and the safety of the flight. All the results reported in \Cref{sec:impl:results} are
 computed from these records.
 
 \section{Perception: Decoder and Learned Detector}%
@@ -994,7 +994,6 @@ behaviour. It continuously updates the warehouse belief and chooses the next
 movement according to what can be learned, what can be inspected, and what is
 safe.
 
-
 \section{Evaluation Protocol}%
 \label{sec:impl:protocol}
 
@@ -1002,7 +1001,6 @@ The system is evaluated on four missions with three vehicles, using the same cod
 and parameters. The proposed system and three baselines are tested on the same
 missions. Each mission lasts at most 600\,s and stops when 95\% of the panels are
 read or when no new identifier is found for 120\,s.
-
 
 \subsection{Scenarios}%
 \label{subsec:impl:scenarios}
@@ -1039,23 +1037,24 @@ and no training set.
     \centering
     \caption{Methods and decisions.}%
     \label{tab:impl:baselines}
-    \small
+    \footnotesize
     \singlespacing
     \setlength{\tabcolsep}{4pt}
+    \renewcommand{\arraystretch}{1.25}
     \begin{tabular}{@{}>{\raggedright\arraybackslash}p{3.3cm}
-            >{\raggedright\arraybackslash}p{3.5cm}
-            >{\raggedright\arraybackslash}p{4.6cm}
-            >{\raggedright\arraybackslash}p{3.0cm}@{}}
+            >{\raggedright\arraybackslash}p{3.6cm}
+            >{\raggedright\arraybackslash}p{5.0cm}
+            >{\raggedright\arraybackslash}p{2.9cm}@{}}
         \toprule
-        \textbf{Method}        & \textbf{Prior knowledge}            & \textbf{Vehicle decision}                           & \textbf{Work division}      \\
+        \textbf{Method} & \textbf{Prior knowledge} & \textbf{Vehicle decision} & \textbf{Work division} \\
         \midrule
-        Proposed system        & nothing; the map is built in flight & a target and the pose from which to read it         & Expiring claims             \\
+        Proposed system        & nothing; the map is built in flight & a target and the pose from which to read it         & expiring claims             \\
         \addlinespace
-        Pore et al.            & Warehouse plan                      & nothing; it follows its plan, one stop every 1.5\,m & One rack per vehicle        \\
+        Pore et al.            & warehouse plan                      & nothing; it follows its plan, one stop every 1.5\,m & one rack per vehicle        \\
         \addlinespace
-        Active inference       & None                                & one step among nine candidates                      & Belief fusion and proximity \\
+        Active inference       & none                                & one step among nine candidates                      & belief fusion and proximity \\
         \addlinespace
-        Reinforcement learning & None                                & Four velocities at 30\,Hz                           & Learned shared policy       \\
+        Reinforcement learning & none                                & four velocities at 30\,Hz                           & learned shared policy       \\
         \bottomrule
     \end{tabular}
 \end{table}
@@ -1071,3 +1070,509 @@ deflection of at most 1.2\,m. Two quantities are not given in the article and ha
 to be fixed: the stand-off from a shelf, set at 1.65\,m because that is the
 distance at which the OpenCV decoder reads best, and the spacing between two
 hover-and-scan stops, set at 1.5\,m.
+
+\section{Results}%
+\label{sec:impl:results}
+
+\subsection{Completeness of the Inventory}%
+\label{subsec:impl:completeness}
+
+\begin{table}[H]
+    \centering
+    \caption{Identifiers read, four methods on four missions.}%
+    \label{tab:impl:read}
+    \footnotesize
+    \singlespacing
+    \setlength{\tabcolsep}{4pt}
+    \renewcommand{\arraystretch}{1.25}
+    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{2.8cm}
+            >{\raggedleft\arraybackslash}p{2.9cm}
+            >{\raggedleft\arraybackslash}p{2.9cm}
+            >{\raggedleft\arraybackslash}p{2.9cm}
+            >{\raggedleft\arraybackslash}p{2.9cm}@{}}
+        \toprule
+        \textbf{Method} & \textbf{Nominal} & \textbf{Vehicle loss} & \textbf{Unseen warehouse} & \textbf{Obstacle} \\
+        \midrule
+        Proposed system        & 110/114 --- 96.5\% & 110/114 --- 96.5\% & 60/65 --- 92.3\% & 110/114 --- 96.5\% \\
+        \addlinespace
+        Pore et al.            & 106/114 --- 93.0\% & 75/114 --- 65.8\%  & 53/65 --- 81.5\% & 103/114 --- 90.4\% \\
+        \addlinespace
+        Active inference       & 41\%               & 38\%               & 36\%             & 39\%               \\
+        \addlinespace
+        Reinforcement learning & 19\%               & 15\%               & 14\%             & 17\%               \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+The system reads the same share of the inventory in the four missions. Losing a
+vehicle, meeting an obstacle or entering an unknown warehouse changes the time it
+takes, not the result it delivers.
+
+The identifiers that are never read all sit on the smallest panels of the
+warehouse. A panel measures 40\,cm on a side when it is glued on an ordinary
+carton, but only 11.9 to 13.3\,cm on the smallest cartons, and at the distance
+the vehicles keep from a shelf such a panel is too small to be decoded. The four
+identifiers missed in the reference warehouse are exactly those four panels, and
+four of the five missed in the second warehouse are in the same case. Reading
+them would require flying closer than the system allows, and this is a limit of
+the system.
+
+\begin{table}[H]
+    \centering
+    \caption{Identifiers read at equal times.}%
+    \label{tab:impl:read-time}
+    \small
+    \singlespacing
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{3.2cm}
+            >{\raggedright\arraybackslash}p{3.0cm}
+            >{\raggedleft\arraybackslash}p{1.5cm}
+            >{\raggedleft\arraybackslash}p{1.5cm}
+            >{\raggedleft\arraybackslash}p{1.5cm}
+            >{\raggedleft\arraybackslash}p{1.5cm}
+            >{\raggedleft\arraybackslash}p{1.5cm}@{}}
+        \toprule
+        \textbf{Mission} & \textbf{Method} & \textbf{150\,s} & \textbf{200\,s} & \textbf{300\,s} & \textbf{400\,s} & \textbf{500\,s} \\
+        \midrule
+        Nominal          & Proposed system & 50              & 107             & 110             & 110             & 110             \\
+                         & Pore et al.     & 22              & 37              & 87              & 92              & 99              \\
+        \addlinespace
+        Vehicle loss     & Proposed system & 90              & 110             & 110             & 110             & 110             \\
+                         & Pore et al.     & 22              & 37              & 72              & 75              & 75              \\
+        \addlinespace
+        Unseen warehouse & Proposed system & 53              & 60              & 60              & 60              & 60              \\
+                         & Pore et al.     & 6               & 16              & 50              & 52              & 53              \\
+        \addlinespace
+        Obstacle         & Proposed system & 76              & 101             & 110             & 110             & 110             \\
+                         & Pore et al.     & 22              & 37              & 87              & 92              & 100             \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+The first three missions have 114 identifiers to read, and the unseen warehouse
+has 65. Read at the same instant, the two methods are far apart. After 200
+seconds of flight the system holds 107 identifiers in the nominal mission, where
+the reference holds 37. In the unseen warehouse the system is finished before 300
+seconds, while the reference will need almost four more minutes to reach its own
+final count.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{ev_lecture_temps}
+    \caption{Identifiers read over time, system and reference, on the four
+        missions.}%
+    \label{fig:impl:read-time}
+\end{figure}
+
+\subsection{Pace of the Mission and Cost of the Flight}%
+\label{subsec:impl:pace}
+
+\begin{table}[H]
+    \centering
+    \caption[Milestones of the inventory.]{Milestones of the inventory. A dash
+        means the milestone was never reached.}%
+    \label{tab:impl:milestones}
+    \small
+    \singlespacing
+    \setlength{\tabcolsep}{4pt}
+    \renewcommand{\arraystretch}{1.25}
+    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{2.7cm}
+            >{\raggedright\arraybackslash}p{2.9cm}
+            >{\raggedleft\arraybackslash}p{1.3cm}
+            >{\raggedleft\arraybackslash}p{1.3cm}
+            >{\raggedleft\arraybackslash}p{1.3cm}
+            >{\raggedleft\arraybackslash}p{1.3cm}
+            >{\raggedleft\arraybackslash}p{1.3cm}
+            >{\raggedleft\arraybackslash}p{1.3cm}@{}}
+        \toprule
+        \textbf{Mission} & \textbf{Method} & \textbf{25\%} & \textbf{50\%} & \textbf{75\%} & \textbf{80\%} & \textbf{90\%} & \textbf{95\%} \\
+        \midrule
+        Nominal          & Proposed system & 120.6\,s & 154.0\,s & 175.0\,s & 180.4\,s & 195.6\,s & 227.4\,s \\
+                         & Pore et al.     & 171.2\,s & 250.0\,s & 289.8\,s & 353.6\,s & 514.8\,s & ---      \\
+        \addlinespace
+        Vehicle loss     & Proposed system & 117.4\,s & 130.8\,s & 148.6\,s & 154.4\,s & 186.6\,s & 195.6\,s \\
+                         & Pore et al.     & 170.6\,s & 269.2\,s & ---      & ---      & ---      & ---      \\
+        \addlinespace
+        Unseen warehouse & Proposed system & 111.0\,s & 124.2\,s & 141.8\,s & 144.0\,s & 164.8\,s & ---      \\
+                         & Pore et al.     & 229.4\,s & 260.4\,s & 296.4\,s & 303.6\,s & ---      & ---      \\
+        \addlinespace
+        Obstacle         & Proposed system & 115.6\,s & 135.2\,s & 191.8\,s & 192.0\,s & 206.4\,s & 215.4\,s \\
+                         & Pore et al.     & 170.6\,s & 250.4\,s & 282.6\,s & 354.4\,s & 534.4\,s & ---      \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\begin{table}[H]
+    \centering
+    \caption{Last new identifier and end of the mission.}%
+    \label{tab:impl:end}
+    \small
+    \singlespacing
+    \setlength{\tabcolsep}{4pt}
+    \renewcommand{\arraystretch}{1.25}
+    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{2.9cm}
+            >{\raggedright\arraybackslash}p{3.1cm}
+            >{\raggedleft\arraybackslash}p{2.4cm}
+            >{\raggedleft\arraybackslash}p{1.8cm}
+            >{\raggedright\arraybackslash}p{4.2cm}@{}}
+        \toprule
+        \textbf{Mission} & \textbf{Method} & \textbf{Last new identifier} & \textbf{End} & \textbf{End condition} \\
+        \midrule
+        Nominal          & Proposed system & 247.2\,s & 367.9\,s & no new identifier for 120\,s \\
+                         & Pore et al.     & 530.4\,s & 552.0\,s & plan finished                \\
+        \addlinespace
+        Vehicle loss     & Proposed system & 196.6\,s & 317.3\,s & no new identifier for 120\,s \\
+                         & Pore et al.     & 303.2\,s & 423.4\,s & no new identifier for 120\,s \\
+        \addlinespace
+        Unseen warehouse & Proposed system & 179.2\,s & 299.9\,s & no new identifier for 120\,s \\
+                         & Pore et al.     & 407.2\,s & 527.4\,s & no new identifier for 120\,s \\
+        \addlinespace
+        Obstacle         & Proposed system & 222.2\,s & 342.9\,s & no new identifier for 120\,s \\
+                         & Pore et al.     & 534.4\,s & 567.8\,s & plan finished                \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+The system reaches 90\% of the inventory at 195.6\,s in the nominal mission,
+where the reference needs 514.8\,s for the same milestone. The system also
+decides for itself when the mission is over: it stops once two minutes have
+passed without a new identifier. The reference stops only when its list of stops
+is exhausted, which in two missions happens long after its last useful reading.
+
+\begin{table}[H]
+    \centering
+    \caption{Distance flown by the team.}%
+    \label{tab:impl:distance-team}
+    \small
+    \singlespacing
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{3.2cm}
+            >{\raggedright\arraybackslash}p{3.4cm}
+            >{\raggedleft\arraybackslash}p{2.2cm}
+            >{\raggedleft\arraybackslash}p{2.4cm}
+            >{\raggedleft\arraybackslash}p{3.0cm}@{}}
+        \toprule
+        \textbf{Mission} & \textbf{Method} & \textbf{Total} & \textbf{Up to 90\%} & \textbf{Up to the final result of Pore} \\
+        \midrule
+        Nominal          & Proposed system & 291.4\,m & 138.3\,m      & 139.8\,m \\
+                         & Pore et al.     & 309.0\,m & 291.6\,m      & 300.0\,m \\
+        \addlinespace
+        Vehicle loss     & Proposed system & 267.9\,m & 136.7\,m      & 68.1\,m  \\
+                         & Pore et al.     & 185.7\,m & never reached & 140.5\,m \\
+        \addlinespace
+        Unseen warehouse & Proposed system & 360.9\,m & 136.4\,m      & 92.7\,m  \\
+                         & Pore et al.     & 266.9\,m & never reached & 234.1\,m \\
+        \addlinespace
+        Obstacle         & Proposed system & 383.3\,m & 169.5\,m      & 169.5\,m \\
+                         & Pore et al.     & 332.4\,m & 315.1\,m      & 315.1\,m \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+The totals are not directly comparable, because the two methods do not stop at
+the same moment. The last column asks the question that can be compared: how far
+must each team fly to hold the number of identifiers the reference ends with. The
+system needs 1.9 to 2.5 times less distance. Its total is nevertheless higher in
+three missions, because it keeps searching after its last reading, for as long as
+two minutes, before it accepts that nothing is left.
+
+\begin{table}[H]
+    \centering
+    \caption{Distance flown by each vehicle.}%
+    \label{tab:impl:distance-vehicle}
+    \small
+    \singlespacing
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{3.2cm}
+            >{\raggedright\arraybackslash}p{3.4cm}
+            >{\raggedleft\arraybackslash}p{2.4cm}
+            >{\raggedleft\arraybackslash}p{2.8cm}
+            >{\raggedleft\arraybackslash}p{2.4cm}@{}}
+        \toprule
+        \textbf{Mission} & \textbf{Method} & \textbf{Vehicle 0} & \textbf{Vehicle 1} & \textbf{Vehicle 2} \\
+        \midrule
+        Nominal          & Proposed system & 96.5\,m  & 95.7\,m            & 99.2\,m  \\
+                         & Pore et al.     & 126.1\,m & 120.4\,m           & 62.5\,m  \\
+        \addlinespace
+        Vehicle loss     & Proposed system & 105.6\,m & 53.7\,m, lost      & 108.6\,m \\
+                         & Pore et al.     & 94.8\,m  & 30.0\,m, lost      & 60.9\,m  \\
+        \addlinespace
+        Unseen warehouse & Proposed system & 121.7\,m & 115.0\,m           & 124.2\,m \\
+                         & Pore et al.     & 121.5\,m & 71.7\,m            & 73.7\,m  \\
+        \addlinespace
+        Obstacle         & Proposed system & 137.2\,m & 132.2\,m           & 113.9\,m \\
+                         & Pore et al.     & 126.4\,m & 143.0\,m           & 63.0\,m  \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+The system shares the effort evenly. In the nominal mission its three vehicles
+fly 96.5, 95.7 and 99.2\,m, that is less than four metres apart. The reference
+gives its third vehicle half the work of the first, because it assigns one rack
+to each vehicle and the racks are not the same length.
+
+\subsection{Loss of a Vehicle}%
+\label{subsec:impl:loss}
+
+\begin{table}[H]
+    \centering
+    \caption{Loss of a vehicle at 200.2\,s.}%
+    \label{tab:impl:loss}
+    \small
+    \singlespacing
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{5.2cm}
+            >{\raggedright\arraybackslash}p{4.7cm}
+            >{\raggedright\arraybackslash}p{4.7cm}@{}}
+        \toprule
+        \textbf{Measurement}                                & \textbf{Proposed system}                                          & \textbf{Pore et al.}                                              \\
+        \midrule
+        Identifiers read                                    & 110/114                                                           & 75/114                                                            \\
+        \addlinespace
+        Difference with the nominal mission                 & none                                                              & $-31$ identifiers                                                 \\
+        \addlinespace
+        Targets chosen by the two survivors after the loss  & 24 in total: 14 by one, 10 by the other                           & 50 stops of their own plan: 32 by one, 18 by the other            \\
+        \addlinespace
+        Distance flown by the two survivors after the loss  & 112.5\,m in total: 52.4\,m and 60.1\,m                            & 96.0\,m in total: 66.0\,m and 30.0\,m                             \\
+        \addlinespace
+        Area of the lost vehicle                            & revisited: 3 targets within 4\,m of its last one, the first at 281.6\,s & not revisited; each vehicle follows a plan fixed before the flight \\
+        \addlinespace
+        Targets abandoned                                   & 0                                                                 & no target is abandoned: a stop is served or never served          \\
+        \addlinespace
+        Stops planned and never served                      & no planned stops                                                  & 74 out of 180                                                     \\
+        \addlinespace
+        Stops of the lost vehicle never served              & its area is taken over by the others                              & 54 out of 72                                                      \\
+        \addlinespace
+        End of mission                                      & decided by the team at 317.3\,s                                   & 423.4\,s                                                          \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+Four things follow from this mission.
+
+\textbf{The delivered result does not move}: The team ends with 110 identifiers
+out of 114, exactly what it reads when all three vehicles fly to the end.
+
+\textbf{The two survivors carry on alone}: After the loss they choose 24 targets
+between them, fly 112.5\,m, and abandon none of them. From 281.6\,s they go back
+into the area their teammate was working on. Nothing was written for this
+situation: the lost vehicle simply stops refreshing its claim, the claim expires,
+and the targets it was holding become available to the others.
+
+\textbf{The work of the lost vehicle is kept}: Its readings stay in the shared
+map, its panels stay written with their position, and the count never goes down.
+
+\textbf{The reference redistributes nothing}: Its allocation is decided before
+take-off, so 54 of the 72 stops assigned to the lost vehicle are never served, 74
+stops are missed in total, and the inventory loses 31 identifiers.
+
+\subsection{Obstacle and Unseen Warehouse}%
+\label{subsec:impl:obstacle}
+
+\begin{table}[H]
+    \centering
+    \caption{Obstacle appearing at 200.2\,s.}%
+    \label{tab:impl:obstacle}
+    \small
+    \singlespacing
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{5.2cm}
+            >{\raggedright\arraybackslash}p{4.7cm}
+            >{\raggedright\arraybackslash}p{4.7cm}@{}}
+        \toprule
+        \textbf{Measurement}                          & \textbf{Proposed system}                              & \textbf{Pore et al.}                                        \\
+        \midrule
+        Identifiers read when the obstacle appears    & 101/114                                               & 37/114                                                      \\
+        \addlinespace
+        Identifiers read afterwards                   & 9, within 22\,s                                       & 66                                                          \\
+        \addlinespace
+        Identifiers read in total                     & 110/114                                               & 103/114                                                     \\
+        \addlinespace
+        Difference with the nominal mission           & none                                                  & $-3$ identifiers                                            \\
+        \addlinespace
+        Minimum distance to the obstacle              & 0.57\,m                                               & 0.28\,m                                                     \\
+        \addlinespace
+        Recorded positions within 0.5\,m of it        & 0                                                     & 33                                                          \\
+        \addlinespace
+        Recorded positions within 1\,m of it          & 26                                                    & 89                                                          \\
+        \addlinespace
+        Recorded positions above it                   & 0                                                     & 75                                                          \\
+        \addlinespace
+        Recorded positions inside it                  & 0                                                     & 0                                                           \\
+        \addlinespace
+        Paths cut by the obstacle and replaced        & 3 within the next 25\,s, 1 later                      & the plan is kept and the vehicle steps aside locally         \\
+        \addlinespace
+        Local deflections from the risk field         & the paths are recomputed instead                      & 6                                                           \\
+        \addlinespace
+        Path replannings over the mission             & 72, against 30 in the nominal mission                 & the plan is fixed before the flight                          \\
+        \addlinespace
+        Waits for priority between vehicles           & 10                                                    & 0                                                           \\
+        \addlinespace
+        90\% of the inventory reached                 & 206.4\,s, against 195.6\,s without the obstacle       & 534.4\,s                                                    \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+A recorded position is the position of a vehicle written five times per second.
+
+The obstacle costs the system eleven seconds on the 90\% milestone, and no
+identifier at all. The \gls{abb:lidar} sees the block, the shared map records it,
+and the four paths that crossed it are cut and computed again around it. The team
+then keeps its distance: it never comes closer than 0.57\,m and never flies over
+the block. The reference keeps its plan and only steps aside where the risk field
+pushes it, which brings it to 0.28\,m of the block and sends it over the top
+seventy-five times.
+
+\begin{table}[H]
+    \centering
+    \caption{Unseen warehouse.}%
+    \label{tab:impl:unseen}
+    \small
+    \singlespacing
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{5.2cm}
+            >{\raggedright\arraybackslash}p{4.7cm}
+            >{\raggedright\arraybackslash}p{4.7cm}@{}}
+        \toprule
+        \textbf{Measurement}                                    & \textbf{Proposed system} & \textbf{Pore et al.}                 \\
+        \midrule
+        Identifiers read                                        & 60/65 --- 92.3\%         & 53/65 --- 81.5\%                     \\
+        \addlinespace
+        Identifiers read at 180\,s                              & 60                       & 12                                   \\
+        \addlinespace
+        90\% of the inventory reached                           & 164.8\,s                 & never reached                        \\
+        \addlinespace
+        Foreign \glsxtrshort{abb:qr} codes of the building rejected & 3                    & not recorded                         \\
+        \addlinespace
+        Identifiers written that do not exist                   & 0                        & 0                                    \\
+        \addlinespace
+        Share of the interior known at the end                   & 89.3\%                  & the plan is given before the flight  \\
+        \addlinespace
+        End of mission                                          & 299.9\,s                 & 527.4\,s                             \\
+        \addlinespace
+        What must be known before take-off                      & nothing                  & the plan of the warehouse            \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+In a warehouse it has never seen, the system finishes its inventory before the
+reference has read a fifth of it. Nothing was adjusted for this building: the
+same thresholds, the same detector and the same decision rule are used, and the
+map is built from the first seconds of flight.
+
+\subsection{Coordination, Safety and the Map That Is Built}%
+\label{subsec:impl:safety}
+
+\begin{table}[H]
+    \centering
+    \caption{Coordination and safety, proposed system.}%
+    \label{tab:impl:coordination}
+    \small
+    \singlespacing
+    \renewcommand{\arraystretch}{1.25}
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{5.1cm}
+            >{\raggedleft\arraybackslash}p{2.3cm}
+            >{\raggedleft\arraybackslash}p{2.3cm}
+            >{\raggedleft\arraybackslash}p{2.3cm}
+            >{\raggedleft\arraybackslash}p{2.3cm}@{}}
+        \toprule
+        \textbf{Measurement}                       & \textbf{Nominal}  & \textbf{Vehicle loss} & \textbf{Unseen warehouse} & \textbf{Obstacle} \\
+        \midrule
+        Recorded positions inside a rack           & 0 / 4,215         & 0 / 2,873             & 0 / 3,195                 & 0 / 3,840         \\
+        Vehicles lost to a crash                   & 0                 & 0                     & 0                         & 0                 \\
+        Duplicated targets                         & 0                 & 0                     & 0                         & 0                 \\
+        Vehicles left without work                 & 0                 & 0                     & 0                         & 0                 \\
+        \addlinespace
+        Distance between the three first targets   & 15.6 to 23.5\,m   & 15.6 to 23.5\,m       & 7.0 to 20.9\,m            & 17.7 to 26.3\,m   \\
+        Median distance between vehicles           & 8.2\,m            & 10.4\,m               & 10.2\,m                   & 9.5\,m            \\
+        Minimum distance between vehicles          & 2.08\,m           & 3.82\,m               & 2.53\,m                   & 1.60\,m           \\
+        Waits for priority                         & 2                 & 0                     & 0                         & 10                \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+No vehicle ever enters a rack, and no two vehicles ever work on the same target
+at the same moment. The team splits from its very first decision, since the three
+first targets are never less than seven metres apart, and it stays spread out
+afterwards, around nine metres between two vehicles. The closest approach of the
+whole evaluation is 1.60\,m, in the mission where the obstacle narrows an aisle.
+It is handled by the priority rule rather than avoided by chance: the ten waits
+recorded in that mission are the vehicle with lower priority holding its position
+until the other has passed.
+
+\begin{table}[H]
+    \centering
+    \caption{What the shared map holds at the end, proposed system.}%
+    \label{tab:impl:map-quality}
+    \small
+    \singlespacing
+    \renewcommand{\arraystretch}{1.25}
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{5.1cm}
+            >{\raggedleft\arraybackslash}p{2.3cm}
+            >{\raggedleft\arraybackslash}p{2.3cm}
+            >{\raggedleft\arraybackslash}p{2.3cm}
+            >{\raggedleft\arraybackslash}p{2.3cm}@{}}
+        \toprule
+        \textbf{Measurement}                    & \textbf{Nominal} & \textbf{Vehicle loss} & \textbf{Unseen warehouse} & \textbf{Obstacle} \\
+        \midrule
+        Share of the interior known             & 87.6\%           & 86.0\%                & 89.3\%                    & 87.9\%            \\
+        Median position error of a panel        & 1.0\,cm          & 1.0\,cm               & 1.0\,cm                   & 1.0\,cm           \\
+        Median orientation error of a panel     & 1.2\textdegree   & 1.4\textdegree        & 1.4\textdegree            & 1.2\textdegree    \\
+        Identifiers written that do not exist   & 0                & 0                     & 0                         & 0                 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+The inventory is not only complete, it is placed. A panel that has been read is
+written one centimetre from where it truly is, and facing the right way to within
+one and a half degrees, which is what makes the map usable as an inventory rather
+than as a list. No identifier that does not exist was ever written, in any
+mission.
+
+\subsection{The Four Approaches Side by Side}%
+\label{subsec:impl:comparison}
+
+\begin{table}[H]
+    \centering
+    \caption{The four approaches.}%
+    \label{tab:impl:approaches}
+    \footnotesize
+    \singlespacing
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{3.2cm}
+            >{\raggedright\arraybackslash}p{3.2cm}
+            >{\raggedright\arraybackslash}p{3.0cm}
+            >{\raggedright\arraybackslash}p{2.5cm}
+            >{\raggedright\arraybackslash}p{2.3cm}@{}}
+        \toprule
+                                                & \textbf{Proposed system}            & \textbf{Pore et al.}                                 & \textbf{Active inference}          & \textbf{Reinforcement learning}                     \\
+        \midrule
+        Plan of the warehouse before the flight & no, the map is built in flight      & yes                                                  & no                                 & no                                                  \\
+        \addlinespace
+        Training of the policy                  & none                                & none                                                 & none                               & PPO, 192 parallel environments, 500 layouts         \\
+        \addlinespace
+        What a vehicle decides                  & a target and its reading pose       & nothing; it follows its plan, one stop every 1.5\,m  & one heading among nine candidates  & four velocities, thirty times per second            \\
+        \addlinespace
+        How the work is divided                 & claims that expire                  & one rack per vehicle, fixed before the flight        & shared belief and a proximity term & learned, with shared weights                        \\
+        \addlinespace
+        Loss of a vehicle                       & the others take over its area       & the work of the lost vehicle is not redistributed    & no dedicated mechanism             & losses drawn during training                        \\
+        \addlinespace
+        Identifiers read, nominal mission       & 96.5\%                              & 93.0\%                                               & 41\%                               & 19\%                                                \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+The two methods that decide from a map built in flight are the two that finish
+the inventory. The reference is close on the nominal mission, where its plan is
+enough, and loses a third of the inventory as soon as the flight departs from
+that plan.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{ev_methodes}
+    \caption{Share of the inventory read by the four methods on the four
+        missions.}%
+    \label{fig:impl:approaches}
+\end{figure}
