@@ -780,9 +780,7 @@ geometric.
 its current observation to the policy, which directly outputs its velocity
 command. The same policy therefore performs navigation, target selection and task
 allocation, and no manual rule specifies which \glsxtrshort{abb:qr} code or area
-should be searched next.
-
-Unread-code positions are not given to the policy. They are used only during
+should be searched next. Unread-code positions are not given to the policy. They are used only during
 training, by the reward and the critic. The critic can therefore use privileged
 information, while the final policy only needs onboard observations.
 
@@ -995,3 +993,81 @@ costs remain included. The resulting criterion is:
 behaviour. It continuously updates the warehouse belief and chooses the next
 movement according to what can be learned, what can be inspected, and what is
 safe.
+
+
+\section{Evaluation Protocol}%
+\label{sec:impl:protocol}
+
+The system is evaluated on four missions with three vehicles, using the same code
+and parameters. The proposed system and three baselines are tested on the same
+missions. Each mission lasts at most 600\,s and stops when 95\% of the panels are
+read or when no new identifier is found for 120\,s.
+
+
+\subsection{Scenarios}%
+\label{subsec:impl:scenarios}
+
+\begin{table}[H]
+    \centering
+    \caption{The four missions.}%
+    \label{tab:impl:missions}
+    \singlespacing
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{3.2cm}
+            >{\raggedleft\arraybackslash}p{2.2cm}
+            >{\raggedright\arraybackslash}p{8.8cm}@{}}
+        \toprule
+        \textbf{Mission}   & \textbf{Identifiers} & \textbf{Change}                                              \\
+        \midrule
+        Nominal            & 114                  & nothing; this is the reference                               \\
+        Vehicle loss       & 114                  & one vehicle stops at 200.2\,s        \\
+        Obstacle           & 114                  & a block of $1 \times 1 \times 2$\,m appears at 200.2\,s \\
+        Unseen USD    & 65                   & wider aisles and fewer cartons       \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+Both warehouses are generated as described in
+\Cref{sec:impl:architecture}. The second warehouse is never used at any stage of
+the design: its plan, its images and its panels enter no setting, no threshold
+and no training set.
+
+\subsection{Methods Compared}%
+\label{subsec:impl:baselines}
+
+\begin{table}[H]
+    \centering
+    \caption{Methods and decisions.}%
+    \label{tab:impl:baselines}
+    \small
+    \singlespacing
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{3.3cm}
+            >{\raggedright\arraybackslash}p{3.5cm}
+            >{\raggedright\arraybackslash}p{4.6cm}
+            >{\raggedright\arraybackslash}p{3.0cm}@{}}
+        \toprule
+        \textbf{Method}        & \textbf{Prior knowledge}            & \textbf{Vehicle decision}                           & \textbf{Work division}      \\
+        \midrule
+        Proposed system        & nothing; the map is built in flight & a target and the pose from which to read it         & Expiring claims             \\
+        \addlinespace
+        Pore et al.            & Warehouse plan                      & nothing; it follows its plan, one stop every 1.5\,m & One rack per vehicle        \\
+        \addlinespace
+        Active inference       & None                                & one step among nine candidates                      & Belief fusion and proximity \\
+        \addlinespace
+        Reinforcement learning & None                                & Four velocities at 30\,Hz                           & Learned shared policy       \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+The method of Pore et al.~\cite{pore2026uavqr} is reimplemented on the same
+simulator, as an independent module that receives only what the authors give
+their system: the plan of the warehouse, an onboard \gls{abb:lidar} that
+refreshes the risk field, a front camera decoded with the OpenCV detector, and a
+confidence score that schedules a second reading when it is low. Its published
+values are kept as they are, including a safety radius of 0.5\,m,
+$\beta = 10$\,m$^{-1}$, $\tau = 0.4$, a minimum separation of 1.2\,m and a local
+deflection of at most 1.2\,m. Two quantities are not given in the article and had
+to be fixed: the stand-off from a shelf, set at 1.65\,m because that is the
+distance at which the OpenCV decoder reads best, and the spacing between two
+hover-and-scan stops, set at 1.5\,m.

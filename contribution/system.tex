@@ -140,10 +140,7 @@ inventory cannot be completed without a layout when the layout is what the
 planner consumes. The area of a vehicle that stops cannot be reassigned when the
 assignment was made once. An obstacle appearing after take-off cannot be avoided
 by a route fixed before it existed. And a system that ends at the first detection
-cannot decide when an inventory is complete. One caveat applies throughout: these
-limitations are established almost entirely on simulated missions, since about
-45\% of inventory studies are simulation-based against roughly 7\% that report
-real experiments~\cite{pore2026drone}.
+cannot decide when an inventory is complete
 \section{Overview of the Proposed Approach}%
 \label{sec:sys:overview}
 
@@ -161,8 +158,7 @@ and revised continuously as the state of the search evolves. Mapping is likewise
 online, and the resulting map is shared: the vehicles jointly construct a single
 three-dimensional description of the building, which is volumetric rather than a
 floor plan, as racks have several levels and a code is defined by a height as
-much as by a position. Coordination between vehicles is implicit and passes
-entirely through this shared description.
+much as by a position.
 
 The system is fault-tolerant. It is adaptive to change, whether the contents
 of the warehouse have been modified since an earlier mission or an obstacle
@@ -175,7 +171,7 @@ decision it produces is one that can be executed in flight.
 
 The system is made of seven elements. They appear in
 \Cref{fig:sys:architecture} and are described one by one in the subsections that
-follow; the way they run together over a mission is the subject of
+follow.
 \Cref{sec:sys:loop}.
 
 \begin{sidewaysfigure}
@@ -187,9 +183,6 @@ follow; the way they run together over a mission is the subject of
 
 \FloatBarrier
 
-The following sections describe these elements in detail, beginning with the
-perception and shared-map components on which the remaining decision and
-coordination mechanisms are built.
 
 \section{Detailed Architecture Design}%
 \label{sec:sys:design}
@@ -223,9 +216,7 @@ information respectively.
 These three types of information do not have the same cost when they are wrong. A
 wrong identifier is permanent because the system does not return to a label once
 it has been declared read. A false detection instead causes one unnecessary
-flight, while a missed uncertain detection costs nothing because the area will be
-observed again later. The perception component therefore favours rejection over
-guessing: when an observation is uncertain, it remains silent.
+flight, while a missed uncertain detection costs nothing.
 
 \begin{figure}[!htb]
     \centering
@@ -310,10 +301,7 @@ The two limits have different causes. The upper limit is optical: beyond about
 four metres, the \glsxtrshort{abb:qr} modules occupy too few pixels. The lower
 limit is mechanical: at very short distances, small lateral errors produce a
 large viewing angle, making it difficult for the vehicle to remain correctly
-aligned. The warehouse geometry also matters. Since the main aisle is 3.9\,m
-wide, a vehicle cannot simply move farther away from a panel to read several
-cartons. Coverage must therefore rely on suitable viewing angles rather than
-increasing distance.
+aligned.
 
 The reading envelope is consequently the main constraint used later when
 generating \glsxtrshort{abb:qr} reading positions.
