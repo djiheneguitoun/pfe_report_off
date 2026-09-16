@@ -182,7 +182,7 @@ versions listed in \Cref{tab:impl:stack}.
         \bottomrule
     \end{tabular}
 \end{table}
-
+\newpage
 \section{Technical Architecture}%
 \label{sec:impl:architecture}
 
@@ -260,15 +260,13 @@ Each drone carries four sensors, configured as shown in \Cref{tab:impl:sensors}:
     \item \textbf{Side cameras}: The two side cameras are the reading instruments.
           They point perpendicular to the direction of flight, one to the left and
           one to the right, so that a single pass along an aisle covers the racks on
-          both sides. They are mounted slightly below the body to keep the airframe
-          out of the images.
+          both sides. 
     \item \textbf{Front camera}: A low-resolution front camera serves the visual
           variant of the semantic guide.
     \item \textbf{\glsxtrshort{abb:lidar}}: The \gls{abb:lidar} measures the
           distance to the nearest obstacle along a set of rays distributed around
           the drone, and these distances are used to build the map of the building.
-          It delivers a complete revolution at each rendered frame, which gives a
-          full view of the surroundings at every cycle.
+         
 \end{itemize}
 
 \begin{table}[H]
@@ -423,16 +421,7 @@ contacts through ZeroMQ messages.
 
 Two network configurations were implemented (\Cref{tab:impl:network}):
 
-\begin{itemize}[itemsep=0.35em]
-    \item \textbf{5G}: Every drone communicates through a base station placed 6\,m
-          above the centre of the warehouse, operating at 3.5\,GHz with a 20\,MHz
-          bandwidth. Each radio link connects a drone to this fixed point, and all
-          traffic passes through it. This configuration corresponds to the
-          organisation of the system, in which every drone contributes to a single
-          shared map.
-    \item \textbf{WiFi}: The nodes communicate directly with each other, without
-          an access point or a base station.
-\end{itemize}
+
 
 \begin{table}[H]
     \centering
