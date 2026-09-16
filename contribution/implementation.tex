@@ -226,7 +226,7 @@ be evaluated in warehouses it has never encountered.
         \toprule
         \textbf{Quantity}                                   & \textbf{Value or range}                                \\
         \midrule
-        Interior dimensions                                 & 19.34\,m\,\texttimes\,29.80\,m                          \\
+        Interior dimensions                                 & 19.34\,m $\times$ 29.80\,m                          \\
         Racks                                               & 3, each 1.40\,m deep, 17.62\,m long and 6.00\,m high   \\
         Shelf levels per rack                               & 3                                                      \\
         Minimum aisle width                                 & 3.00\,m                                                \\
@@ -280,7 +280,7 @@ Each drone carries four sensors, configured as shown in \Cref{tab:impl:sensors}:
         \textbf{Sensor parameter}                           & \textbf{Value}                                            \\
         \midrule
         Side cameras                                        & 2, pointing left and right                                \\
-        Side camera resolution                              & 1024\,\texttimes\,768 pixels                              \\
+        Side camera resolution                              & $1024 \times 768$ pixels                              \\
         Side camera field of view                           & 60\textdegree                                             \\
         Frame rate                                          & 5 images per second                                       \\
         \glsxtrshort{abb:lidar} field of view               & 360\textdegree\ horizontally, 36\textdegree\ vertically   \\
@@ -546,8 +546,6 @@ Training and evaluation use different warehouses.
     \end{tabular}
 \end{table}
 
-Figure « Training examples » : le fichier assets/images/fig_annotation.png est
-absent. Décommenter à sa livraison.
 \begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{fig_annotation}
@@ -610,8 +608,6 @@ three times. It is therefore retained because false detections can trigger
 unnecessary flights. On the same images, the learned detector also extends the
 spotting distance from 4\,m to 8\,m.
 
-Figure « Spotting rate » : le fichier assets/images/fig_portees.png est absent.
-Décommenter à sa livraison.
 \begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{fig_portees}
@@ -744,15 +740,6 @@ cases.
     \end{tabular}
 \end{table}
 
-Figure « Choice of the next zone » : le fichier assets/images/fig_guide.png est
-absent. Décommenter à sa livraison.
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=\textwidth]{fig_guide}
-    \caption{Choice of the next zone, on the 72 unseen cases.}%
-    \label{fig:impl:guide}
-\end{figure}
-
 \textbf{Execution during a mission}: The guide runs in a background thread, so it
 does not stop the drones while answering. Each drone sends a request at most
 every 5\,s and continues flying during inference. The advice is then used for the
@@ -785,3 +772,226 @@ geometric.
         \bottomrule
     \end{tabular}
 \end{table}
+
+\section{The Reinforcement Learning Approach}%
+\label{sec:impl:rl}
+
+\textbf{Principle}: One policy is shared by the three drones. Each drone gives
+its current observation to the policy, which directly outputs its velocity
+command. The same policy therefore performs navigation, target selection and task
+allocation, and no manual rule specifies which \glsxtrshort{abb:qr} code or area
+should be searched next.
+
+Unread-code positions are not given to the policy. They are used only during
+training, by the reward and the critic. The critic can therefore use privileged
+information, while the final policy only needs onboard observations.
+
+\textbf{Observation}: Each drone receives two $32 \times 32$ crops of the shared
+map, centred on the drone and aligned with its heading, each containing nine map
+layers:
+
+\begin{itemize}[itemsep=0.2em]
+    \item a local crop covering 8\,m;
+    \item a larger crop covering 32\,m.
+\end{itemize}
+
+It also receives a 98-value vector containing \gls{abb:lidar} information, the
+drone's current motion, the relative positions of the other drones, and the task
+thresholds.
+
+\textbf{Action}: The policy outputs four velocity values at 30\,Hz, bounded and
+normalised before being applied. The policy therefore controls the drone
+continuously, rather than selecting from a fixed list of movements.
+
+\textbf{Reward}: The reward combines six objectives:
+
+\begin{equation}
+    r = \text{coverage} + \text{\glsxtrshort{abb:qr} readings}
+    + \text{collision avoidance} + \text{progress}
+    - \text{command changes} - \text{drone proximity}
+    \label{eq:impl:reward}
+\end{equation}
+
+More precisely:
+
+\begin{itemize}[itemsep=0.3em]
+    \item \textbf{Coverage}: rewards discovering useful areas and new viewpoints,
+          while penalising unnecessary overlap.
+    \item \textbf{\glsxtrshort{abb:qr} readings}: gives a strong reward for reading
+          a new \glsxtrshort{abb:qr} code and a smaller reward for reaching a
+          suitable reading posture.
+    \item \textbf{Milestones}: additional rewards are given at 50\%, 75\% and 90\%
+          team coverage.
+    \item \textbf{Collision avoidance}: penalises approaching obstacles, with a
+          stronger penalty below 0.25\,m.
+    \item \textbf{Progress}: a potential-based term encourages movement toward the
+          nearest unread code.
+    \item \textbf{Command smoothness}: penalises sudden changes in velocity.
+    \item \textbf{Drone separation}: penalises drones that get too close to each
+          other.
+\end{itemize}
+
+The reward weights change during training:
+
+\begin{equation}
+    c(t) = 1 - 0.5t, \qquad l(t) = 1 + 2t
+    \label{eq:impl:reward-schedule}
+\end{equation}
+
+where $c(t)$ controls the importance of exploration and $l(t)$ the importance of
+\glsxtrshort{abb:qr} reading.
+
+\textbf{Training}: PPO is used for training, with one policy shared by all three
+drones. Sixty-four warehouses are simulated in parallel, which gives
+$64 \times 3 = 192$ parallel drones. Each episode uses:
+
+\begin{itemize}[itemsep=0.2em]
+    \item one of 500 fixed warehouse layouts;
+    \item different initial positions and headings;
+    \item optionally, one randomly selected drone failure between 25\% and 75\% of
+          the episode.
+\end{itemize}
+
+\textbf{Curriculum}: The task becomes gradually more difficult.
+
+\begin{table}[H]
+    \centering
+    \caption{Curriculum thresholds.}%
+    \label{tab:impl:curriculum}
+    \singlespacing
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{5.4cm}
+            >{\raggedleft\arraybackslash}p{4.4cm}
+            >{\raggedleft\arraybackslash}p{4.4cm}@{}}
+        \toprule
+        \textbf{Parameter} & \textbf{Easy level} & \textbf{Nominal level} \\
+        \midrule
+        Reading distance   & 4.00\,m             & 1.25\,m                \\
+        Incidence angle    & 60\textdegree       & 50\textdegree          \\
+        Maximum speed      & 1.45\,m/s           & 0.60\,m/s              \\
+        Maximum rotation   & 1.6\,rad/s          & 0.8\,rad/s             \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+Early training allows easier \glsxtrshort{abb:qr} readings and faster movement,
+while later levels progressively approach the real inspection constraints. The
+level increases when the smoothed \glsxtrshort{abb:qr} reading performance
+remains high, and decreases when performance becomes too low. At the final level,
+drone failures can also occur during training.
+
+\textbf{Main idea}: the reinforcement learning approach learns the search
+behaviour from training. The trained policy decides how to move, where to search,
+and how the three drones cooperate.
+
+\section{The Active Inference Approach}%
+\label{sec:impl:aif}
+
+\textbf{Principle}: No policy is trained. Each drone maintains a belief about the
+warehouse, evaluates several possible actions, and selects the one with the
+lowest expected free energy:
+
+\begin{equation}
+    \text{chosen action} = \arg\min_x G(x)
+    \label{eq:impl:argmin}
+\end{equation}
+
+The score combines:
+
+\begin{equation}
+    G = -\text{information} - \text{exploration} + \text{movement cost}
+    + \text{drone risk} + \text{obstacle risk}
+    \label{eq:impl:efe}
+\end{equation}
+
+\textbf{Shared map}: The warehouse is represented by an occupancy grid in which
+each cell starts at $p = 0.5$. The \gls{abb:lidar} measurements update the grid:
+the crossed cells become more likely to be free, and the hit cell becomes more
+likely to be occupied. The three drones exchange their maps, which are fused into
+a shared representation, and each drone combines this shared map with its local
+map.
+
+\textbf{Uncertainty}: Uncertainty is measured using the occupancy entropy:
+
+\begin{equation}
+    H(p) = -p \log p - (1-p) \log (1-p)
+    \label{eq:impl:entropy}
+\end{equation}
+
+A high $H$ means the cell is uncertain, and a low $H$ that it is well known. The
+average entropy $\bar{H}$ represents the uncertainty of the shared map.
+
+\textbf{Candidate actions}: Nine candidates are evaluated, eight directions at
+approximately 1\,m and one hover action. A candidate is removed if it lies
+outside the navigable area, or if its occupancy is above 0.65.
+
+\textbf{Expected free energy}: Each valid candidate is evaluated using five
+terms:
+
+\begin{itemize}[itemsep=0.3em]
+    \item \textbf{Information gain $IG$}: how much new information the position can
+          provide.
+    \item \textbf{Frontier term $F$}: preference for uncertain or unexplored areas.
+    \item \textbf{Movement cost}: penalises unnecessary movement.
+    \item \textbf{Drone collision risk $C$}: penalises positions close to other
+          drones.
+    \item \textbf{Obstacle risk $Cl$}: strongly penalises positions close to
+          occupied cells.
+\end{itemize}
+
+\begin{table}[H]
+    \centering
+    \caption{Main weights of the expected free energy.}%
+    \label{tab:impl:efe}
+    \singlespacing
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{8.0cm}
+            >{\raggedleft\arraybackslash}p{3.0cm}@{}}
+        \toprule
+        \textbf{Term}         & \textbf{Weight} \\
+        \midrule
+        Information gain      & $-2.5$          \\
+        Frontier attraction   & $-0.8$          \\
+        Movement cost         & $+0.1$          \\
+        Drone collision risk  & $+5.0$          \\
+        Obstacle risk         & $+25.0$         \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+The lowest-$G$ action is preferred. During stochastic evaluation, actions are
+sampled according to
+
+\begin{equation}
+    P(x_i) \propto \exp\Bigl(-\frac{G_i - \min_j G_j}{T}\Bigr), \qquad T = 0.3
+    \label{eq:impl:softmax}
+\end{equation}
+
+and this randomness helps prevent the three drones from repeatedly choosing the
+same action.
+
+\textbf{Change detection}: The system also checks whether the real environment
+differs from the current map. New \gls{abb:lidar} observations are compared with
+the map prediction, and a large difference produces an alert. The alert starts a
+30-cycle recovery phase, during which information gathering receives additional
+importance, followed by a durable phase that continues to reduce map uncertainty.
+Normal operation resumes when both the map uncertainty and the detected change
+become sufficiently low.
+
+\textbf{\glsxtrshort{abb:qr} inventory variant}: For \glsxtrshort{abb:qr}
+inspection, the same framework is adapted. Candidates correspond to possible
+inspection movements. The epistemic term measures how many previously unscanned
+facade cells could become visible, while the pragmatic term measures the distance
+to useful inspection positions along the warehouse aisles. Safety and movement
+costs remain included. The resulting criterion is:
+
+\begin{equation}
+    G = -w_e \, \text{epistemic} - w_p \, \text{pragmatic}
+    + w_r \, \text{risk} + \text{movement cost}
+    \label{eq:impl:efe-inventory}
+\end{equation}
+
+\textbf{Main idea}: the active inference approach does not learn a fixed
+behaviour. It continuously updates the warehouse belief and chooses the next
+movement according to what can be learned, what can be inspected, and what is
+safe.

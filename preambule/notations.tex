@@ -1,5 +1,7 @@
-% Fix the problem of \times (caused by babel or arabtex)
-\renewcommand{\times}{\mathbin{\mathsf{x}}}
+% Fix the problem of \times (caused by babel or arabtex). On pointe directement
+% le glyphe de la police mathematique, ce qui donne un vrai signe de
+% multiplication. Ne pas utiliser \texttimes : il vient de TS1 et sort un Ö.
+\renewcommand{\times}{\mathbin{\mathchar"2202}}
 
 
 % Number sets
