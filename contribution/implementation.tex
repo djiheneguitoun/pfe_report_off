@@ -129,7 +129,7 @@ geometry, including the pose of a code estimated from its four corners.
 \glsxtrshort{abb:qr} decoder used in flight.
 \textbf{ZBar}\footnote{\url{https://github.com/mchehab/zbar}} and
 \textbf{BoofCV}\footnote{\url{https://boofcv.org}} were compared with it on the
-same images (Section 4.8.1).
+same images (\Cref{sec:impl:perception}).
 
 \textbf{Ultralytics}\footnote{\url{https://docs.ultralytics.com}} is the framework
 used to train and run the learned detector, which belongs to the YOLO11 family.
@@ -377,13 +377,13 @@ the size of the team.
 Two learned models run on the GPU in support of the system:
 
 \begin{itemize}[itemsep=0.35em]
-    \item \textbf{The learned detector} (Section 4.5), from the YOLO11 family,
+    \item \textbf{The learned detector} (\Cref{sec:impl:perception}), from the YOLO11 family,
           locates \glsxtrshort{abb:qr} labels and cartons in the images, including
           labels too distant for their content to be decoded. It processes one side
           camera per cycle, alternating between left and right. The decoder,
           zxing-cpp, extracts the identifiers and processes both images at every
           cycle.
-    \item \textbf{The semantic guide} (Section 4.6), based on the Qwen2.5-VL
+    \item \textbf{The semantic guide} (\Cref{sec:impl:guide}), based on the Qwen2.5-VL
           vision-language model, advises each drone on the area to visit next.
           Producing an answer takes a few seconds, so the guide runs in the
           background. The drone continues its mission in the meantime, and the
@@ -420,8 +420,6 @@ directly from Sionna. In that case, Sionna runs as a separate server that ns-3
 contacts through ZeroMQ messages.
 
 Two network configurations were implemented (\Cref{tab:impl:network}):
-
-
 
 \begin{table}[H]
     \centering
@@ -478,3 +476,312 @@ verifies that:
 It then measures the identifiers read, the share of the building that became
 known and the safety of the flight. All the results reported in Section 4.9 are
 computed from these records.
+
+\section{Perception: Decoder and Learned Detector}%
+\label{sec:impl:perception}
+
+Reading a code and detecting a label are two different tasks. The decoder reads a
+\glsxtrshort{abb:qr} code only within the reading envelope, up to about 4\,m,
+while the detector must find labels from farther away so that unexplored areas
+remain available to the planner.
+
+\textbf{The decoder}: The decoder was selected experimentally because the reading
+range depends on the decoder. A benchmark of 3,481 images was collected with the
+exact camera pose recorded, over \textbf{five acquisition campaigns covering
+    different warehouses, viewpoints and flight conditions}.
+
+\begin{table}[H]
+    \centering
+    \caption{Decoders compared on the same 3,481 images.}%
+    \label{tab:impl:decoders}
+    \small
+    \singlespacing
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{3.9cm}
+            >{\raggedleft\arraybackslash}p{2.6cm}
+            >{\raggedleft\arraybackslash}p{2.0cm}
+            >{\raggedleft\arraybackslash}p{2.5cm}
+            >{\raggedleft\arraybackslash}p{2.0cm}@{}}
+        \toprule
+        \textbf{Decoder}                 & \textbf{Reading in the useful zone} & \textbf{Apparent range} & \textbf{Median position error} & \textbf{Time per image} \\
+        \midrule
+        zxing-cpp (retained)             & 90.2\%                              & 3.65\,m                 & 0.75\,cm                       & 4\,ms                   \\
+        ZBar                             & 91.2\%                              & 4.50\,m                 & 0.44\,cm                       & 54\,ms                  \\
+        BoofCV                           & 87.2\%                              & 4.50\,m                 & 1.02\,cm                       & 128\,ms                 \\
+        OpenCV QRCodeDetector            & 80.8\%                              & 1.65\,m                 & 1.00\,cm                       & 126\,ms                 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+zxing-cpp is retained. Between 1.5\,m and 4\,m, it reads 91--99\% of the images,
+which defines the 4\,m reading envelope used by the system.
+
+\textbf{The detector}: The system uses a learned detector rather than a geometric
+detector based on thresholds and shape tests: a YOLO11-nano model with 2.58
+million parameters and two classes, \glsxtrshort{abb:qr} labels and cartons. It
+uses a 1024-pixel input, half-precision inference, and a confidence threshold of
+0.5.
+
+The training data are annotated automatically from the simulator, which knows the
+position of every carton and panel and projects them into the camera image.
+Training and evaluation use different warehouses.
+
+\begin{table}[H]
+    \centering
+    \caption{Annotated sets used for the detector.}%
+    \label{tab:impl:datasets}
+    \singlespacing
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{3.0cm}
+            >{\raggedright\arraybackslash}p{4.8cm}
+            >{\raggedleft\arraybackslash}p{2.0cm}
+            >{\raggedleft\arraybackslash}p{2.0cm}
+            >{\raggedleft\arraybackslash}p{2.0cm}@{}}
+        \toprule
+        \textbf{Set} & \textbf{Warehouses}      & \textbf{Images} & \textbf{Labels} & \textbf{Cartons} \\
+        \midrule
+        Training     & 6 (seeds 0--5)           & 3,000           & 23,016          & 26,304           \\
+        Sealed test  & 2 (seeds 9033 and 9019)  & 800             & 5,917           & 6,495            \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+Figure « Training examples » : le fichier assets/images/fig_annotation.png est
+absent. Décommenter à sa livraison.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{fig_annotation}
+    \caption{Training examples generated automatically without manual
+        annotation.}%
+    \label{fig:impl:annotation}
+\end{figure}
+
+Two variants were trained on the same data, using 1024 and 640 pixels, and
+evaluated on the sealed warehouses.
+
+\begin{table}[H]
+    \centering
+    \caption{The two trained variants.}%
+    \label{tab:impl:variants}
+    \singlespacing
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{5.4cm}
+            >{\raggedleft\arraybackslash}p{3.6cm}
+            >{\raggedleft\arraybackslash}p{2.6cm}@{}}
+        \toprule
+        \textbf{Measurement} & \textbf{1024\,px (retained)} & \textbf{640\,px} \\
+        \midrule
+        mAP50                & 98.6\%                       & 97.4\%           \\
+        mAP50-95             & 85.9\%                       & 81.4\%           \\
+        Recall on labels     & 97.7\%                       & 94.7\%           \\
+        Precision on labels  & 97.6\%                       & 97.3\%           \\
+        Recall on cartons    & 92.5\%                       & 91.1\%           \\
+        Precision on cartons & 95.3\%                       & 93.2\%           \\
+        Time per image       & 12.1\,ms                     & 11.9\,ms         \\
+        Training time        & 48\,min                      & 21\,min          \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+The 1024-pixel variant is retained because it has almost the same inference time
+while detecting more labels and cartons. The confidence threshold was then
+selected on the same images.
+
+\begin{table}[H]
+    \centering
+    \caption{Confidence threshold for the 1024-pixel variant.}%
+    \label{tab:impl:threshold}
+    \singlespacing
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{3.2cm}
+            >{\raggedleft\arraybackslash}p{3.6cm}
+            >{\raggedleft\arraybackslash}p{7.0cm}@{}}
+        \toprule
+        \textbf{Threshold} & \textbf{Visible labels found} & \textbf{Images without a code where a panel is reported} \\
+        \midrule
+        0.25               & 99.4\%                        & 2.3\%                                                   \\
+        0.5 (retained)     & 98.3\%                        & 0.7\%                                                   \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+The 0.5 threshold reduces recall by one point but reduces false reports by about
+three times. It is therefore retained because false detections can trigger
+unnecessary flights. On the same images, the learned detector also extends the
+spotting distance from 4\,m to 8\,m.
+
+Figure « Spotting rate » : le fichier assets/images/fig_portees.png est absent.
+Décommenter à sa livraison.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{fig_portees}
+    \caption{Spotting rate of the two detectors as a function of distance.}%
+    \label{fig:impl:ranges}
+\end{figure}
+
+\section{The Semantic Guide}%
+\label{sec:impl:guide}
+
+The semantic guide is the second learned component. It uses the current state of
+the mission to suggest the area a drone should visit next. Its suggestion is not
+a command; it is converted into a bonus for candidate targets in the suggested
+zone.
+
+\textbf{Two variants}: Two input formats were tested. The visual variant provides
+a frontal-camera image and a top view of the map with candidate zones shown as
+numbered circles. The model answers two questions: which zone to visit and which
+side to approach from. The textual variant provides the state of each candidate
+zone as a structured record and asks only for the zone number. The visual variant
+is retained for the missions.
+
+\textbf{What the model receives}: The record is built only from the shared map
+and contains observed information. It includes the elapsed time, number of
+identifiers already read, the position and heading of each drone, and, for each
+candidate zone, its centre, unread labels, unobserved surfaces, aisle-facing
+side, and distance from the drone. A reduced record removes four fields that did
+not improve the choice: total candidate count, target types, zone radius, and
+number of unexplored frontier groups. Zone numbers are randomly assigned at every
+request so that the model must use the zone information rather than its position.
+
+\begin{quote}
+    \textbf{Prompt}: You help a team of drones that must read
+    \glsxtrshort{abb:qr} codes glued on cardboard boxes in a warehouse. The drone
+    must fly to the zone where it will read the largest number of codes that are
+    not read yet.
+
+    \textbf{Question}: Which zone should the drone go to next? Answer with
+    \texttt{ANSWER: <zone number>}.
+\end{quote}
+
+\textbf{Choice of the model}: The model must run together with Isaac Sim, so
+memory usage is an important constraint. Several models were implemented and
+measured.
+
+\begin{table}[H]
+    \centering
+    \caption{Tested models.}%
+    \label{tab:impl:models}
+    \singlespacing
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{5.6cm}
+            >{\raggedright\arraybackslash}p{2.8cm}
+            >{\raggedleft\arraybackslash}p{2.0cm}
+            >{\raggedleft\arraybackslash}p{3.2cm}@{}}
+        \toprule
+        \textbf{Model}              & \textbf{Quantisation} & \textbf{Memory} & \textbf{Time per question} \\
+        \midrule
+        SmolVLM-500M-Instruct       & none                  & 1.7\,GB         & 0.7\,s                     \\
+        Qwen2.5-VL, 7\,B            & 4 bits                & 6.3\,GB         & ---                        \\
+        Qwen2.5-VL, 3\,B (retained) & 4 bits                & 2.5\,GB         & about 3\,s                 \\
+        Qwen2.5-VL, 3\,B            & 8 bits                & 4.2\,GB         & ---                        \\
+        Qwen2.5-VL, 3\,B            & none                  & 6.7\,GB         & 3.3\,s                     \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+The retained model is Qwen2.5-VL with three billion parameters, quantised to four
+bits using NF4 with double quantisation and half-precision computation.
+
+\textbf{The offline bench}: The configuration was selected using recorded
+missions rather than live flights. Every 30 seconds, a snapshot records the
+information available to the guide. The correct answer is determined afterwards
+from the simulator as the zone containing the largest number of unread panels.
+
+The benchmark contains 102 cases. Before testing the model, two references were
+measured: random selection succeeds in 17\% of cases, while the geometric planner
+succeeds in 85--87\%.
+
+\begin{table}[H]
+    \centering
+    \caption{Correct zone chosen, on the 102 cases.}%
+    \label{tab:impl:bench}
+    \singlespacing
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{10.8cm}
+            >{\raggedleft\arraybackslash}p{3.4cm}@{}}
+        \toprule
+        \textbf{What the model receives}                                    & \textbf{Correct zone} \\
+        \midrule
+        Random choice                                                       & 17\%                  \\
+        The two images alone: a frontal camera and the map seen from above   & 19\%                  \\
+        The map redrawn for the model, without any text                     & 25\%                  \\
+        The redrawn map, plus four numbers per zone in sentences            & 40\%                  \\
+        The camera image, plus enriched facts on each zone                  & 58\%                  \\
+        The redrawn map, the facts, and two solved examples                 & 61\%                  \\
+        The camera image and the full record, in sentences                  & 76\%                  \\
+        The camera image and the full record, as JSON                       & 78\%                  \\
+        The full record as JSON, without any image                          & 79\%                  \\
+        The camera image and reduced record (retained)                      & 83\%                  \\
+        The geometric planner                                               & 85--87\%              \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\textbf{Specialising the model}: A small task-specific training step was then
+added. The quantised model remains frozen, while LoRA adapters of rank 8 are
+trained on the language-model attention projections. This adds 3.7 million
+trainable parameters, or 0.1\% of the model. Training uses 66 recorded cases,
+each shown six times with different random zone numbering, giving 396 examples
+over two epochs. The resulting adapter is 15\,MB and is evaluated on 72 unseen
+cases.
+
+\begin{table}[H]
+    \centering
+    \caption{Specialised guide on 72 unseen cases.}%
+    \label{tab:impl:lora}
+    \singlespacing
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{7.2cm}
+            >{\raggedleft\arraybackslash}p{3.0cm}@{}}
+        \toprule
+        \textbf{Method}             & \textbf{Correct zone} \\
+        \midrule
+        Nearest zone                & 25\%                  \\
+        Geometric planner           & 83\%                  \\
+        Model before specialisation & 83\%                  \\
+        Specialised guide           & 96\%                  \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+Figure « Choice of the next zone » : le fichier assets/images/fig_guide.png est
+absent. Décommenter à sa livraison.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{fig_guide}
+    \caption{Choice of the next zone, on the 72 unseen cases.}%
+    \label{fig:impl:guide}
+\end{figure}
+
+\textbf{Execution during a mission}: The guide runs in a background thread, so it
+does not stop the drones while answering. Each drone sends a request at most
+every 5\,s and continues flying during inference. The advice is then used for the
+next decision. The output is parsed by taking the first number following
+\texttt{ANSWER} that matches one of the current candidate zones. If no valid zone
+is returned, no semantic bonus is added and the decision remains purely
+geometric.
+
+\begin{table}[H]
+    \centering
+    \caption{Retained configuration of the semantic guide.}%
+    \label{tab:impl:guide-config}
+    \singlespacing
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{5.2cm}
+            >{\raggedright\arraybackslash}p{9.4cm}@{}}
+        \toprule
+        \textbf{Element}             & \textbf{Retained value}                         \\
+        \midrule
+        Model                        & Qwen2.5-VL, 3 billion parameters                \\
+        Quantisation                 & 4 bits, NF4 with double quantisation            \\
+        Adapter                      & LoRA rank 8, 3.7 million parameters, 15\,MB     \\
+        Input                        & Reduced zone record and the image               \\
+        Zone numbering               & Random at every request                         \\
+        Output                       & \texttt{ANSWER: <zone number>}                  \\
+        Request interval             & 5\,s per drone, in background                   \\
+        Bonus for advised zone       & 10                                              \\
+        Bonus for advised side       & 5                                               \\
+        Weight of advice, $\lambda$  & 1                                               \\
+        \bottomrule
+    \end{tabular}
+\end{table}
