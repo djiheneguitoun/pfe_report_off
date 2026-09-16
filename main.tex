@@ -2,7 +2,6 @@
 
 \input{preambule/preamble}
 
-
 % !TEX root = main.tex
 \begin{document}
 \setcounter{tocdepth}{2}
@@ -32,8 +31,6 @@
   \addcontentsline{toc}{chapter}{List of figures}
   \listoftables
   \addcontentsline{toc}{chapter}{List of tables}
-  \lstlistoflistings
-  \addcontentsline{toc}{chapter}{List of \lstlistlistingname}
   \listofalgorithms
   \addcontentsline{toc}{chapter}{List of Algorithms}
 }
@@ -53,7 +50,4 @@
 \include{conclusion}
 \printbibliography[heading=bibintoc]
 
-\begin{appendices}  
-  \import{appendices}{reqs}
-\end{appendices}
 \end{document}
