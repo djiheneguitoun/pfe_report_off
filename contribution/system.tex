@@ -761,21 +761,29 @@ before the impact point so that the obstacle cell itself is not marked as free.
 
 \subsubsection*{Oriented Coverage}
 
-Seeing a rack does not necessarily mean that a \glsxtrshort{abb:qr} code placed
-on it could be read. A panel is readable only from the side it faces, so a cell
-observed from the far end of an aisle or from behind a rack cannot be considered
-covered. The map therefore records whether a code located in a cell and facing a
-given direction would have been readable from the observed side.
+Seeing a rack does not mean that its \glsxtrshort{abb:qr} codes can be read. A
+code can only be read when the vehicle observes its panel from the side where the
+code is facing. For example, observing a rack from its front does not provide
+coverage for a code placed on its back.
 
-Each cell stores four bits corresponding to the four horizontal sides. A bit is
-set when that side has been observed with an apparent distance inside the reading
-envelope $\mathcal{E}$ of \Cref{eq:sys:envelope}, and when no known obstacle
-blocks the observation.
+To represent this, the map stores coverage for the four horizontal directions of
+each cell. Each cell $c$ has four coverage bits, one for each horizontal side. A
+bit is set when that side has been observed from a distance inside the reading
+envelope $\mathcal{E}$ defined in \Cref{eq:sys:envelope}, and when no known
+obstacle blocks the observation.
 
-Let $C(c)$ denote the four coverage bits of cell $c$, and let
-$\kappa(\mathbf{v}) \in \{0,1,2,3\}$ return the index of the horizontal side
-closest to the direction $\mathbf{v}$. For a panel with normal vector
-$\mathbf{n}$, the corresponding side is considered covered when
+Let $C(c)$ denote the four coverage bits of cell $c$. Each bit indicates that the
+corresponding side of the cell has already been observed from a valid reading
+distance.
+
+For a panel with normal vector $\mathbf{n}$, the vector $\mathbf{n}$ indicates
+the direction in which the panel faces. The vehicle must therefore observe the
+panel from the opposite direction, $-\mathbf{n}$. The function
+$\kappa(\mathbf{v}) \in \{0,1,2,3\}$ converts a horizontal direction $\mathbf{v}$
+into the index of the closest side of the cell.
+
+The panel is considered covered when the corresponding bit in $C(c)$ has been
+set:
 
 \begin{equation}
     \operatorname{covered}(c,\mathbf{n})
@@ -784,13 +792,14 @@ $\mathbf{n}$, the corresponding side is considered covered when
     \label{eq:sys:coverage}
 \end{equation}
 
-Here, $\&$ denotes the bitwise conjunction. The direction $-\mathbf{n}$ is used
-because the panel must be observed from the side towards which it faces.
+Here, $\&$ denotes the bitwise AND operation. In simple terms, this equation
+checks whether the side from which the panel must be observed has already been
+covered.
 
-This distinction prevents a rack from being considered complete simply because a
-vehicle has passed near it. Candidate generation can instead determine which
-surfaces still require a visit, without knowing whether a label is actually
-present there.
+This prevents a rack from being considered fully inspected simply because a
+vehicle passed close to it. Instead, the candidate generation process can
+identify the directions or surfaces that still need to be explored, without
+knowing in advance whether a \glsxtrshort{abb:qr} code is actually present there.
 
 \begin{figure}[!htb]
     \centering
@@ -803,30 +812,31 @@ present there.
 
 \subsubsection*{Label Table}
 
-The label table contains two types of entries: a \emph{panel} for a decoded
-label, and a \emph{track} for a detected label that has not yet been decoded.
+The label table stores two kinds of entries. A \emph{panel} is a label that has
+been decoded. A \emph{track} is a label that has been detected but not yet
+decoded.
 
-A panel stores the decoded code, its position, its facing direction, and the
-number of readings. When the same panel is read several times, the individual
-position estimates are combined to obtain a more stable stored position.
+A panel stores the decoded code, its position, the direction it faces, and how
+many times it has been read. When the same panel is read again, the system
+combines the new position with the previous ones, so the stored position becomes
+more stable.
 
-A track stores an estimated position and an observation direction. Repeated
-detections are merged when they are sufficiently close, and their position and
-direction estimates are averaged. As a vehicle moves along an aisle, the same
-label may first be detected from a sharp angle and later from a more frontal
-view, so the averaged direction approaches the actual panel normal.
+A track stores an estimated position and the direction from which it was seen.
+When two detections are close enough, the system merges them and averages their
+positions and directions. A vehicle often sees the same label first from a sharp
+angle and later from the front, so this average moves closer to the real
+direction of the panel.
 
-Each carton carries the same code on two opposite faces. Two readings with the
-same identifier but sufficiently distant positions may therefore correspond to
-two different faces of the same carton, and at most two faces are stored for one
-identifier.
+Each carton carries the same code on two opposite faces. Two readings can
+therefore share the same identifier and still be far apart, because they come
+from two different faces. The system stores at most two faces for one identifier.
 
-Let $\varepsilon$ be the distance threshold below which two readings are
-considered to belong to the same face, $p$ the position of a new reading, and
-$\operatorname{faces}(\ell)$ the set of faces already stored for identifier
-$\ell$. The nearest existing face is updated when it lies within $\varepsilon$;
-otherwise a second face is created if fewer than two faces exist; otherwise the
-reading is rejected as a decoding error:
+Let $\varepsilon$ be the distance below which two readings are treated as the
+same face, $p$ the position of a new reading, and $\operatorname{faces}(\ell)$
+the faces already stored for identifier $\ell$. The system updates the nearest
+face when it is closer than $\varepsilon$. If it is further away and fewer than
+two faces exist, the system creates a second face. Otherwise it rejects the
+reading as a decoding error:
 
 \begin{equation}
     \begin{cases}
@@ -840,19 +850,20 @@ reading is rejected as a decoding error:
     \label{eq:sys:faces}
 \end{equation}
 
-Here, $d(p,f)$ is the distance from the new reading to an existing face. In the
-implementation, $\varepsilon = 0.45$\,m, slightly above the carton thickness.
+Here, $d(p,f)$ is the distance from the new reading to a stored face. The
+implementation uses $\varepsilon = 0.45$\,m, slightly more than the thickness of
+a carton.
 
-When a label is successfully decoded, nearby uncertain tracks are no longer
-needed. Any track located within $\varepsilon$ of the new panel is therefore
-removed, which prevents the number of tracks from growing indefinitely during a
-long mission.
+Once a label is decoded, the uncertain tracks around it are no longer useful. The
+system removes every track within $\varepsilon$ of the new panel, which stops the
+number of tracks from growing without limit during a long mission.
 
 \subsubsection*{Routes and the Cost of the Unknown}
 
-The map provides the current knowledge of the warehouse structure, and route
-planning is performed directly on this representation. A horizontal slice around
-the vehicle altitude is used, and each cell receives a traversal cost:
+The map already holds what the team knows about the building, and routes are
+planned directly on it. The planner takes a flat slice of the map, around the
+height at which the vehicle flies, and gives every cell a price. The price says
+how expensive it is to fly through that cell:
 
 \begin{equation}
     \operatorname{cost}(c)=
@@ -864,30 +875,29 @@ the vehicle altitude is used, and each cell receives a traversal cost:
     \label{eq:sys:cost}
 \end{equation}
 
-Here, $K_u$ is the cost of crossing an unobserved cell, expressed relative to the
-cost of a known free cell. In the implementation, $K_u = 20$.
+An obstacle costs infinity, so the planner never crosses it. An empty cell costs
+1. A cell nobody has looked at costs $K_u$. The system uses $K_u = 20$: one
+unseen cell is as expensive as twenty empty ones.
 
-The obstacle cells are first dilated by the vehicle radius. Clearance is
-therefore handled during route generation rather than during flight, and a route
-that exists on this grid can be followed as a sequence of straight segments. A
-value of 0.6\,m is used rather than a rounded 0.75\,m radius, since the latter can
-close narrow aisles in the simulated warehouse.
+Unknown cells are expensive, but not forbidden. Both extremes would fail. If they
+were forbidden, a vehicle could never leave the part it has already seen. If they
+were free, the planner would cut straight through a rack that is still missing
+from the map. With 20, a vehicle stays in known empty space, and enters unknown
+space only when there is no other way.
 
-Unknown cells are expensive but not forbidden, and both extremes would fail. If
-unknown cells were forbidden, a vehicle could never leave the region it has
-already explored. If they were free, the planner would cross racks that have not
-yet been observed, since those racks do not appear on the map. With $K_u = 20$,
-the planner prefers a route through known free space and enters unknown space
-only when this is necessary to reach the target.
+Every obstacle is first made larger by the size of the vehicle. The drone can
+then be treated as a point, and any route found is already wide enough to fly.
+The system adds 0.6\,m, although the vehicle needs 0.75\,m: with 0.75\,m the
+narrow aisles close completely and no route is found.
 
-The altitude slice extends from 2.0\,m below the vehicle to 0.85\,m above it.
-This asymmetric range avoids selecting routes that fly over the racks in the
-simulation.
+The slice starts 2.0\,m below the vehicle and stops 0.85\,m above it. There is
+more room below on purpose. If it reached higher, the planner would find an empty
+path above the racks, and the vehicle would fly over them instead of along them.
 
-Teammates are also inserted into the same cost grid as moving obstacles, so
-vehicles avoid one another during route computation rather than through a late
-manoeuvre. If a newly observed obstacle intersects the current route, the route
-is checked again and recomputed when necessary.
+The other vehicles are placed in the same grid, as obstacles that move. Each one
+therefore avoids its teammates while it builds its route, instead of reacting at
+the last second. The route is checked again during the flight, and recomputed if
+a new obstacle cuts it.
 
 \begin{figure}[!htb]
     \centering
@@ -917,10 +927,10 @@ is checked again and recomputed when necessary.
 
 \FloatBarrier
 
-The final layer of the shared map stores the current position of each vehicle and
-its currently claimed target. This information is allowed to expire so that
-outdated positions and claims are not kept indefinitely. Claim assignment and
-conflict handling are described in \Cref{sec:sys:claims}.
+The last layer of the shared map stores where each vehicle is and which target it
+has claimed. These entries delete themselves, so an old position or an old claim
+never stays in the map. \Cref{sec:sys:claims} explains how a vehicle claims a
+target and what happens when two want the same one.
 
 \subsection{Candidate Generation}%
 \label{sec:sys:candidates}
@@ -1588,7 +1598,7 @@ two vehicles in different parts of the building do not receive the same answer.
 Two rules define the information given to the guide. Both are deliberate design
 choices.
 
-First, the guide receives only information that is already known from the map. It
+First, The guide receives only information that is available to the vehicle through its current observations and shared map. It
 never receives the position of an unread code, the complete layout of the
 building, or any other information that the team has not discovered through
 observation. Otherwise, the guide could answer using information that is
