@@ -1,14 +1,12 @@
 \usepackage[abbreviations, automake]{glossaries-extra}
 
-% Render every abbreviation occurrence in bold (long form and short form, first
-% use and subsequent uses). The style bakes these default fonts into the
-% category at \setabbreviationstyle time, so they must be redefined BEFORE it.
-\renewcommand*{\glsabbrvdefaultfont}[1]{\textbf{#1}}
-\renewcommand*{\glslongdefaultfont}[1]{\textbf{#1}}
+% Abbreviations are typeset in the running text font: no bold, neither on the
+% short form nor on the long form. Only the letters that make up the acronym
+% are tagged, and the tag merely upper-cases them (no font change).
 
 \setabbreviationstyle{long-short}
 \GlsXtrEnableInitialTagging{abbreviation}{\itag}
-\newcommand{\taghighlight}[1]{\uppercase{\textbf{#1}}}
+\newcommand{\taghighlight}[1]{\uppercase{#1}}
 \renewcommand{\glsxtrtagfont}{\taghighlight}
 \makeglossaries
 
