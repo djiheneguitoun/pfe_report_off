@@ -12,13 +12,8 @@
 An \glsxtrfull{abb:uav}, commonly called a drone, is an aircraft that operates
 without a pilot on board. It can be controlled remotely by a human operator or
 autonomously by software running on the vehicle. A \gls{abb:uav} is also equipped
-with sensors selected according to its mission~\cite{kumar2025comprehensive}.
+with sensors selected according to its mission.\Glspl{abb:uav} are used in many fields, including surveillance, monitoring, search and rescue, and mapping~\cite{kumar2025comprehensive}. 
 
-\Glspl{abb:uav} are used in many fields, including surveillance, monitoring,
-search and rescue, and mapping~\cite{kumar2025comprehensive}. Multirotor
-\glspl{abb:uav} are particularly useful for repetitive or risky activities, such
-as warehouse inventory management and infrastructure inspection, because they
-reduce the need for human involvement~\cite{tejeroruiz2024realistic}.
 
 \subsection{Main Categories of UAVs}%
 \label{subsec:bg:uav-categories}
@@ -27,328 +22,319 @@ The literature generally distinguishes four main types of \glspl{abb:uav}:
 fixed-wing, single-rotor, multirotor, and hybrid
 platforms~\cite{mohsan2023unmanned}.
 
-\textbf{Fixed-wing UAVs} use wings to generate lift and are designed for
+\textbf{Fixed-wing UAVs:} they use wings to generate lift and are designed for
 efficient and fast flight. They offer long endurance and are therefore suitable
-for large-area surveys and structure inspection~\cite{mohsan2023unmanned}.
+for large-area surveys and structure inspection.
 However, they cannot hover and require a conventional take-off and landing
-procedure~\cite{mohsan2023unmanned}. These constraints make them unsuitable for
+procedure. These constraints make them unsuitable for
 confined indoor environments.
 
-\textbf{Single-rotor UAVs}, similar to helicopters, can hover and carry
-relatively large payloads~\cite{mohsan2023unmanned}. However, their mechanical
+\textbf{Single-rotor UAVs:} they are similar to helicopters, can hover and carry
+relatively large payloads. However, their mechanical
 structure is more complex, and they are generally more expensive and difficult to
-operate~\cite{mohsan2023unmanned}.
+operate.
 
-\textbf{Multirotor UAVs} are widely used for imaging and inspection because of
-their low cost, compact size, manoeuvrability, and ability to take off, land, and
-hover vertically~\cite{mohsan2023unmanned}. Quadrotors are the most common
+\textbf{Multirotor UAVs:} they are widely used for imaging and inspection because of their low cost, compact size, manoeuvrability, and ability to take off, land, and hover vertically. Quadrotors are the most common
 configuration. Their main limitations are shorter flight time and lower payload
-capacity compared with larger platforms~\cite{mohsan2023unmanned}.
+capacity compared with larger platforms.
 
-\textbf{Hybrid UAVs} combine characteristics of fixed-wing and rotary-wing
+\textbf{Hybrid UAVs:} they combine characteristics of fixed-wing and rotary-wing
 \glspl{abb:uav}. They can perform vertical take-off and landing and can hover,
 while also providing better flight efficiency than conventional
-multirotors~\cite{mohsan2023unmanned}. However, their design and control are more
-complex~\cite{mohsan2023unmanned}.
+multirotors. However, their design and control are more
+complex.
 
-\subsubsection*{Suitability for Indoor Applications}
+\subsubsection*{Suitability for Indoor Applications:}
 
-Among these types, multirotor \glspl{abb:uav} are particularly suitable for
-indoor inspection. Their ability to hover and move freely in three dimensions
-allows them to approach objects closely~\cite{mohsan2023unmanned}, and their
-compact size lets them operate in narrow aisles and at different rack
-levels~\cite{pore2026uavqr}. Vertical take-off and landing platforms have
-therefore become widely used in warehousing
-operations~\cite{kalinov2020warevision}, and recent inspection systems rely on
-quadrotors in both simulation and real experiments~\cite{pore2026uavqr}. However,
-autonomous control remains challenging because the drone must plan and execute
-its movements safely in a confined and complex
-environment~\cite{mohsan2023unmanned}.
+Among these types, multirotor \glspl{abb:uav} are the most suitable for indoor
+inspection. They can hover and move freely in three dimensions, which lets them
+approach objects closely, and their compact size
+allows them to fly in narrow aisles and reach different rack levels. The main difficulty is autonomous control, since the drone must plan and follow its path safely in a confined space.
 
 \subsection{Components of a UAV Platform}%
 \label{subsec:bg:uav-components}
 
-A \gls{abb:uav} platform combines several subsystems that work together to
-provide flight, sensing, computation, and communication.
-\Cref{fig:bg:uav-architecture} gives an overview of these subsystems and of the
-information exchanged between them.
+A \gls{abb:uav} platform combines five subsystems: an airframe with its
+propulsion, a flight control system, onboard sensors, a computing and
+communication unit, and a power supply.
+\Cref{fig:bg:uav-architecture} shows how they are connected.
+\begin{figure}[htbp]
+    \centering
+    \begin{tikzpicture}[
+        font=\small,
+        box/.style={rounded corners=2pt, draw, minimum height=0.55cm,
+                    minimum width=2.6cm, align=center, inner sep=2pt,
+                    font=\scriptsize},
+        sens/.style={box, draw=red!55!black,    fill=red!8},
+        ctrl/.style={box, draw=green!45!black,  fill=green!10},
+        mech/.style={box, draw=orange!70!black, fill=orange!12},
+        comm/.style={box, draw=cyan!55!black,   fill=cyan!10},
+        pwr/.style={box,  draw=violet!60!black, fill=violet!8},
+        ext/.style={box,  draw=black!50, fill=black!6, minimum width=2.6cm},
+        ttl/.style={font=\scriptsize\bfseries, anchor=west},
+        grp/.style={rounded corners=4pt, draw=black!45, inner sep=5pt},
+        frame/.style={rounded corners=6pt, draw=black!75, thick, inner sep=7pt},
+        lbl/.style={font=\scriptsize\itshape, fill=white, inner sep=1.5pt},
+        flow/.style={-{Stealth[length=2.8mm,width=2.2mm]}, very thick},
+        duo/.style={{Stealth[length=2.8mm,width=2.2mm]}-{Stealth[length=2.8mm,width=2.2mm]},
+                    very thick},
+        pw/.style={-{Stealth[length=2.8mm,width=2.2mm]}, very thick, dashed,
+                   draw=violet!65!black},
+    ]
 
+    %===================== SENSORS =====================
+    \node[ttl] (tS) at (0,0.78) {Onboard Sensors};
+    \node[sens] (imu)  at (1.45,0.3)  {IMU};
+    \node[sens] (baro) at (4.35,0.3)  {Barometer};
+    \node[sens] (mag)  at (7.25,0.3)  {Magnetometer};
+    \node[sens] (rgb)  at (1.45,-0.35){RGB camera};
+    \node[sens] (dep)  at (4.35,-0.35){Depth camera};
+    \node[sens] (lid)  at (7.25,-0.35){LiDAR / ToF};
+    \node[grp, fit=(tS)(imu)(mag)(rgb)(lid)] (Gs) {};
 
+    %===================== COMPUTING =====================
+    \node[ttl] (tK) at (0,-2.25) {Computing and Communication};
+    \node[comm] (cc) at (1.45,-2.73) {Companion computer};
+    \node[comm] (wf) at (4.35,-2.73) {Wi-Fi data link};
+    \node[comm] (tl) at (7.25,-2.73) {Telemetry radio};
+    \node[grp, fit=(tK)(cc)(tl)] (Gk) {};
+
+    %===================== FLIGHT CONTROL =====================
+    \node[ttl] (tC) at (0,-4.65) {Flight Control System};
+    \node[ctrl] (ap)  at (1.45,-5.13) {Autopilot};
+    \node[ctrl] (fc)  at (4.35,-5.13) {Flight controller};
+    \node[ctrl] (pid) at (7.25,-5.13) {PID low-level control};
+    \node[grp, fit=(tC)(ap)(pid)] (Gc) {};
+
+    %===================== PROPULSION =====================
+    \node[ttl] (tM) at (0,-7.05) {Airframe and Propulsion};
+    \node[mech] (frm) at (1.45,-7.53) {Frame};
+    \node[mech] (mot) at (4.35,-7.53) {Motors};
+    \node[mech] (prp) at (7.25,-7.53) {Propellers};
+    \node[grp, fit=(tM)(frm)(prp)] (Gm) {};
+
+    %===================== POWER =====================
+    \node[ttl] (tP) at (0,-9.45) {Power Supply};
+    \node[pwr] (bat) at (1.45,-9.93) {Battery};
+    \node[pwr] (pdb) at (4.35,-9.93) {Power distribution};
+    \node[grp, fit=(tP)(bat)(pdb)] (Gp) {};
+
+    %===================== UAV BOUNDARY =====================
+    \node[frame, fit=(Gs)(Gk)(Gc)(Gm)(Gp)] (UAV) {};
+    \node[font=\scriptsize\bfseries, anchor=south west]
+        at ([yshift=0.8mm]UAV.north west) {UAV};
+
+    %========== EXTERNAL ==========
+    \node[ttl] (tE) at (12.5,-3.9) {External};
+    \node[ext] (env)  at (13.8,-4.4) {Environment};
+    \node[ext] (gs)   at (13.8,-5.1) {Ground station};
+    \node[ext] (dock) at (13.8,-5.8) {Charging station};
+    \node[grp, draw=black!45, fit=(tE)(env)(dock)] (Ge) {};
+
+    %============ VERTICAL FLOW ============
+    \draw[flow] (Gs.south -| mot) --
+        node[lbl,pos=0.5]{observations} (Gk.north -| mot);
+    \draw[flow] (Gk.south -| mot) --
+        node[lbl,pos=0.5]{mission commands} (Gc.north -| mot);
+    \draw[flow] (Gc.south -| mot) --
+        node[lbl,pos=0.5]{actuator commands} (Gm.north -| mot);
+    \draw[pw]   (Gp.north -| mot) --
+        node[lbl,pos=0.5]{power} (Gm.south -| mot);
+
+    %============ RETURN LOOP ============
+    \draw[flow] (Gm.west) -- ++(-0.45,0)
+        |- node[lbl,pos=0.25,rotate=90]{vehicle motion} (Gs.west);
+
+    %====== EXTERNAL LINKS ======
+    \draw[flow] (env.west)  -- ++(-0.5,0)
+        |- node[lbl,pos=0.80]{scene} (Gs.east);
+    \draw[duo]  (gs.west)   -- ++(-1.3,0)
+        |- node[lbl,pos=0.80]{telemetry, data} (Gk.east);
+    \draw[flow] (dock.west) -- ++(-2.1,0)
+        |- node[lbl,pos=0.80]{recharge} (Gp.east);
+
+    \end{tikzpicture}
+    \caption{Architecture of a UAV platform.}%
+    \label{fig:bg:uav-architecture}
+\end{figure}
+\FloatBarrier
 \subsubsection*{Airframe and Propulsion System}
 
-The airframe and the propulsion chain form the physical layer of the platform.
-The airframe carries every other subsystem and fixes the geometry of the vehicle,
-while the propulsion chain converts stored electrical energy into the thrust that
-lifts it and moves it along the aisles.
+The airframe carries every other subsystem, while the propulsion chain converts
+electrical energy into thrust. The elements below follow the description given
+in~\cite{mohsan2023unmanned}.
 
-\begin{itemize}[itemsep=0.5em]
-    \item \textbf{Frame}: Provides the mechanical structure of the \gls{abb:uav}
-          and supports its main components~\cite{mohsan2023unmanned}.
-    \item \textbf{Motors}: Convert electrical energy into mechanical rotation to
-          drive the propellers~\cite{mohsan2023unmanned}.
-    \item \textbf{Propellers}: Generate the thrust required for flight and
-          movement. Their number and arrangement define the multirotor
-          configuration, with quadrotors being the most
-          common~\cite{mohsan2023unmanned}.
+\begin{itemize}[itemsep=0.4em]
+    \item \textbf{Frame}: Provides the mechanical structure and supports the
+          other components.
+    \item \textbf{Motors}: Convert electrical energy into rotation to drive the
+          propellers.
+    \item \textbf{Propellers}: Generate the thrust needed to lift the vehicle
+          and move it. Their number and arrangement define the multirotor
+          configuration, with quadrotors being the most common.
 \end{itemize}
 
 \subsubsection*{Flight Control System}
 
-The flight control system is what keeps the vehicle in the air. It closes the
-loop between what the sensors measure and what the motors do, and it operates at
-three levels: stabilising the attitude, following a requested trajectory, and
-planning the mission from which those trajectories are derived.
+This subsystem closes the loop between what the sensors measure and what the
+motors do. Its three levels are described in~\cite{mohsan2023unmanned}.
 
-\begin{itemize}[itemsep=0.5em]
-    \item \textbf{Flight controller}: Processes sensor measurements and generates
-          the commands required to maintain the \gls{abb:uav}'s stability and
-          control its movement~\cite{pore2026drone, mohsan2023unmanned}.
-    \item \textbf{Autopilot}: Provides higher-level functions such as mission
-          planning and waypoint generation~\cite{mohsan2023unmanned}. PX4 and
-          ArduPilot are widely used open-source autopilot
+\begin{itemize}[itemsep=0.4em]
+    \item \textbf{Flight controller}: Processes the sensor measurements and
+          produces the commands that keep the vehicle stable.
+    \item \textbf{Autopilot}: Handles mission planning and waypoint generation.
+          PX4 and ArduPilot are the most widely used open-source
           stacks~\cite{acharya2020cornet}.
-    \item \textbf{Low-level control}: Regulates the \gls{abb:uav}'s altitude,
-          velocity, and orientation so that it follows the requested trajectory.
-          \Gls{abb:pid} controllers are widely used because they are simple to
-          implement~\cite{mohsan2023unmanned}.
+    \item \textbf{Low-level control}: Regulates altitude, velocity and
+          orientation so that the vehicle follows the requested trajectory.
+          \Gls{abb:pid} controllers are common here because they are simple to
+          implement.
 \end{itemize}
 
 \subsubsection*{Onboard Sensors}
 
-Sensing serves two distinct purposes on an inspection platform. One group of
-sensors estimates the state of the vehicle itself, its attitude, altitude,
-heading and position, while a second group observes the environment in order to
-detect obstacles and to read the codes attached to the racks.
+Two groups of sensors are used: one estimates the state of the vehicle, the
+other observes the environment. The following description draws
+on~\cite{jacinto2024pegasus, pore2026drone}.
 
-\begin{itemize}[itemsep=0.5em]
+\begin{itemize}[itemsep=0.4em]
     \item \textbf{IMU}: Combines an accelerometer and a gyroscope to measure
-          linear acceleration and angular motion~\cite{jacinto2024pegasus}.
+          linear acceleration and angular motion.
     \item \textbf{Barometer and magnetometer}: Provide altitude and heading
-          information, respectively~\cite{chandran2024network, jacinto2024pegasus}.
-    \item \textbf{RGB camera}: Provides visual information and is commonly used
-          for barcode and \gls{abb:qr} code detection in warehouse
-          applications~\cite{pore2026drone}.
-    \item \textbf{Depth camera and LiDAR}: Provide distance information for
-          mapping and obstacle detection~\cite{pore2026drone, chang2023review}.
+          respectively.
+    \item \textbf{GNSS/GPS}: Provides global positioning outdoors. Indoors the
+          signal is unreliable, so other methods are
+          required~\cite{pore2026uavqr}.
+    \item \textbf{RGB camera}: Provides the images used to detect and read
+          barcodes and \gls{abb:qr} codes.
+    \item \textbf{Depth camera and LiDAR}: Provide distance measurements for
+          mapping and obstacle detection~\cite{chang2023review}.
     \item \textbf{ToF sensors}: Measure distance from the travel time of a
           signal, with accuracy decreasing as the distance
-          grows~\cite{tejeroruiz2024realistic}. They are therefore suited to
-          short-range proximity detection~\cite{pore2026drone}.
-    \item \textbf{GNSS/GPS}: Provides global positioning for outdoor
-          flight~\cite{jacinto2024pegasus}. Since \gls{abb:gps} is unreliable
-          indoors, other positioning methods are required in warehouse
-          environments~\cite{pore2026uavqr}.
+          grows~\cite{tejeroruiz2024realistic}, which makes them suited to
+          short-range proximity detection.
 \end{itemize}
 
 \subsubsection*{Onboard Computing and Communication}
 
-Beyond flight control, an inspection mission needs computing power for perception
-and decision, and links to carry the results out of the vehicle. These functions
-are kept apart from the flight control unit, so that a heavy processing task
-cannot interfere with the stability of the platform.
+Perception and decision are kept apart from flight control, so that a heavy
+computation cannot affect the stability of the vehicle. The architecture below
+follows~\cite{acharya2020cornet}.
 
-\begin{itemize}[itemsep=0.5em]
-    \item \textbf{Companion computer}: Runs the high-level logic of the mission,
-          separately from the flight control unit~\cite{acharya2020cornet}.
-    \item \textbf{Communication interfaces}: Allow the \gls{abb:uav} to exchange
-          information with a ground station and, in multi-\gls{abb:uav} systems,
-          with other drones~\cite{chandran2024network, acharya2020cornet}.
-    \item \textbf{Wi-Fi and telemetry radio}: Wi-Fi links are commonly used for
-          data exchange in warehouse prototypes~\cite{cristiani2020inventory},
-          while the flight control unit uses a radio modem for telemetry and
-          flight control~\cite{acharya2020cornet}.
+\begin{itemize}[itemsep=0.4em]
+    \item \textbf{Companion computer}: Runs the high-level logic of the mission
+          and sends the resulting commands to the flight control unit.
+    \item \textbf{Wi-Fi data link}: Carries the collected data to the ground
+          station and, in multi-\gls{abb:uav} systems, to the other
+          drones~\cite{chandran2024network}.
+    \item \textbf{Telemetry radio}: Carries the flight status and the control
+          messages exchanged with the ground station.
 \end{itemize}
 
-\subsubsection*{Power Supply}
-
-All the subsystems above draw on a single onboard energy source, and that source
-sets the horizon of the mission. Battery capacity determines how long the vehicle
-can fly, and therefore how much of a warehouse one flight can cover before the
-drone has to return and recharge.
-
-\begin{itemize}[itemsep=0.5em]
-    \item \textbf{Battery}: Supplies energy to all \gls{abb:uav} subsystems and
-          directly affects flight
-          endurance~\cite{kumar2025comprehensive, mohsan2023unmanned}.
-    \item \textbf{Flight endurance}: Depends mainly on vehicle weight, size, and
-          payload~\cite{mohsan2023unmanned}. Small \glspl{abb:uav} typically fly
-          for twenty to thirty minutes, so limited battery capacity restricts the
-          duration of an inspection mission~\cite{mohsan2023unmanned}.
-    \item \textbf{Extended operation}: Multiple \glspl{abb:uav} can distribute
-          the workload~\cite{kumar2025comprehensive}, while some systems use
-          ground charging stations that the drone visits when its battery falls
-          below a threshold~\cite{cristiani2020inventory}.
-\end{itemize}
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=\textwidth]{uav_architecture}
-    \caption[Architecture of a UAV platform]{Architecture of a \gls{abb:uav}
-        platform. Onboard sensors feed measurements to the flight control
-        system, which turns them into actuator commands for the airframe and
-        propulsion subsystem, while the companion computer issues the high-level
-        mission commands and maintains the links to the ground station. The
-        power supply constrains the duration of the mission and is replenished at
-        a ground charging station.}%
-    \label{fig:bg:uav-architecture}
-\end{figure}
-
-% Retient la figure dans 1.2.3 : sans cette barrière elle peut flotter jusque
-% dans 1.2.4, loin du texte qui la commente.
-\FloatBarrier
 
 \subsection{UAVs in Indoor Environments}%
 \label{subsec:bg:uav-indoor}
 
-Indoor \gls{abb:uav} operation differs from outdoor flight because warehouses are
-confined, \gls{abb:gps}-denied, and often contain both static and moving
-obstacles.
+Indoor flight differs from outdoor flight in several ways. Warehouses are
+confined spaces, built around narrow aisles and multi-level racks that leave
+little room to manoeuvre. They also contain obstacles that move, since operators
+and forklifts share the same aisles, so the vehicle must detect and avoid them
+during the flight. Poor lighting, motion blur and occlusions degrade both
+navigation and the reading of codes~\cite{pore2026drone, pore2026uavqr}.
+Positioning is a further difficulty, because the \gls{abb:gnss} signal is
+unreliable indoors and the vehicle must therefore estimate its position from its
+own sensors~\cite{chang2023review}.
 
-Several characteristics of the indoor setting shape the way a platform must
-operate. Warehouses are structured and confined spaces, built around narrow
-aisles and multi-level racks that leave limited room for
-manoeuvring~\cite{pore2026drone, pore2026uavqr}. Indoor conditions also make
-\gls{abb:gnss} unreliable, so \glspl{abb:uav} must rely on alternative
-localisation methods~\cite{pore2026drone, chang2023review}. Racks, shelves,
-workers and forklifts can obstruct the path of the vehicle, which makes real-time
-obstacle detection and avoidance necessary~\cite{pore2026drone, pore2026uavqr}.
-Illumination changes, motion blur and occlusions further degrade both navigation
-and visual inspection~\cite{pore2026uavqr}. Wireless communication must finally
-be considered, especially in multi-\gls{abb:uav} systems where drones need to
-exchange information during the mission~\cite{acharya2020cornet}.
+Multirotor platforms answer these constraints well. They hover and move in three
+dimensions, which lets them approach an object from any
+position~\cite{mohsan2023unmanned}, and they reach storage locations at
+different heights without occupying floor space or requiring any change to the
+building~\cite{pore2026uavqr}. Flying autonomously, however, still requires the
+vehicle to detect obstacles, plan a safe trajectory and adapt its movement when
+the environment changes.
 
-Against these constraints, the platform brings a set of capabilities that suit
-the indoor setting. Multirotor \glspl{abb:uav} move in three dimensions and
-hover, which lets them approach objects from different
-positions~\cite{mohsan2023unmanned} and reach storage locations at different
-heights without occupying floor space or requiring modifications to the
-warehouse~\cite{pore2026uavqr}. Their sensing is equally flexible, since cameras,
-LiDAR and other sensors can be integrated according to the requirements of the
-navigation and inspection tasks~\cite{pore2026uavqr}. Operating autonomously,
-however, requires the vehicle to detect obstacles, plan safe trajectories and
-adapt its movement when the environment changes~\cite{pore2026uavqr}.
-
-These capabilities are exploited in several indoor applications.
-\Glspl{abb:uav} inspect infrastructure and industrial facilities while reducing
-human exposure to repetitive or risky
-tasks~\cite{tejeroruiz2024realistic, mohsan2023unmanned}, and monitor indoor
-facilities and environmental conditions with cameras and other onboard
-sensors~\cite{pore2026drone}. LiDAR and other depth sensors additionally support
-three-dimensional mapping and obstacle detection~\cite{pore2026drone}. In
-inventory inspection, the vehicle scans the codes placed on racks and feeds the
-collected information into warehouse inventory
-management~\cite{pore2026drone, kalinov2020warevision, cristiani2020inventory}.
 
 \subsection{Multi-UAV Systems and Coordination}%
 \label{subsec:bg:uav-multi}
 
-Working with a single platform imposes three limits on an inspection mission.
-Energy comes first, since battery life directly limits how long a mission can
-last~\cite{kumar2025comprehensive}, and small \glspl{abb:uav} typically stay in
-the air for only twenty to thirty minutes~\cite{mohsan2023unmanned}. Coverage
-follows from that endurance, because a single platform can inspect only one area
-at a time, so the space it covers in one flight remains bounded. The mission is
-finally vulnerable to failure: if the drone stops flying during the inspection,
-the task ends there, since no other agent can take over from
+A single platform imposes three limits on an inspection mission. Energy comes
+first, since battery life directly bounds how long a mission can last, and small
+\glspl{abb:uav} typically stay in the air for only twenty to thirty
+minutes~\cite{mohsan2023unmanned}. Coverage follows from that endurance, because
+one vehicle inspects a single area at a time, so the space it covers in one
+flight remains bounded. The mission is also vulnerable to failure: if the drone
+stops flying, the task ends there, since no other agent can take over from
 it~\cite{chandran2024network}.
 
-Deploying several platforms addresses these limits. The workload is divided
-between the drones, and mission time decreases as the number of agents
-grows~\cite{chandran2024network}; in a warehouse experiment, two \glspl{abb:uav}
-halved the inspection time compared with a single drone~\cite{pore2026uavqr}.
-Robustness and efficiency both improve, especially on complex
-tasks~\cite{kumar2025comprehensive}, and the redundancy brings fault tolerance,
-since a drone that is lost can be detected by the others, which then replan their
-paths so that the uncovered area is still inspected~\cite{chandran2024network}.
-That redundancy stays under control, as coordination keeps the overlap low and
-duplicate readings remained negligible in the same two-drone warehouse
-experiment~\cite{pore2026uavqr}.
+Deploying several platforms answers these limits. The workload is divided between
+the drones, so mission time decreases as the team grows, and the loss of one
+member no longer ends the mission, because the others detect it and replan their
+paths to cover the area it was inspecting~\cite{chandran2024network}. The gain is
+measurable: in a warehouse experiment, two \glspl{abb:uav} halved the inspection
+time of a single drone while keeping duplicate readings
+negligible~\cite{pore2026uavqr}.
 
 The literature distinguishes three families of coordination architecture, which
-differ in where the decisions are taken and, as a consequence, in how much
-computation and communication each drone has to carry.
+differ in where the decisions are taken and, as a result, in how much computation
+and communication each drone has to carry. The description below draws
+on~\cite{kumar2025comprehensive, chandran2024network}.
 
 \begin{itemize}[itemsep=0.5em]
-    \item \textbf{Centralized}: All \glspl{abb:uav} communicate directly with a
-          central control station, which handles map generation and path
-          planning~\cite{kumar2025comprehensive}. This star topology minimises
-          onboard computation but adds communication overhead, so a trade-off
-          exists between network time and station computation
-          time~\cite{kumar2025comprehensive}. The mission also depends on a
-          single node, which becomes a point of
-          failure~\cite{chandran2024network}.
+    \item \textbf{Centralized}: All \glspl{abb:uav} communicate with a central
+          station, which builds the map and plans the paths. This minimises
+          onboard computation but adds communication overhead, and the whole
+          mission depends on a single node, which becomes a point of failure.
     \item \textbf{Distributed}: The drones receive initial information from a
-          central node, then decide on board~\cite{kumar2025comprehensive}. Each
-          \gls{abb:uav} processes its own sensor data, builds a local map, plans
-          its path, and keeps information about the others to allocate tasks
-          efficiently~\cite{kumar2025comprehensive}. The cost is a higher
-          computational and communication load, which makes energy efficiency
-          critical~\cite{kumar2025comprehensive}, and the network can split if a
-          drone in the formation fails~\cite{chandran2024network}.
-    \item \textbf{Decentralized}: Control is shared among the \glspl{abb:uav},
-          which exchange information about their position and environment and
-          decide collaboratively without a central control
-          centre~\cite{kumar2025comprehensive}. This removes the single point of
-          failure and lets the drones reconfigure their links when the topology
-          changes~\cite{chandran2024network}. In exchange, it requires more
-          sophisticated algorithms and communication
-          protocols~\cite{kumar2025comprehensive}, and local exchanges introduce
-          latency that reduces responsiveness~\cite{chandran2024network}.
+          central node, then decide on board. Each one processes its own sensor
+          data, builds a local map and plans its path, which raises the
+          computational and communication load. The network can also split if a
+          drone in the formation fails.
+    \item \textbf{Decentralized}: Control is shared among the drones, which
+          exchange information about their position and environment and decide
+          together, without any central station. This removes the single point of
+          failure and lets them reconfigure their links when the topology
+          changes, but it requires more complex algorithms and introduces latency
+          in the decisions.
 \end{itemize}
-
 \subsection{UAV Simulation Environments}%
 \label{subsec:bg:uav-simulation}
 
-Simulation is an important step in \gls{abb:uav} research because real flight
-experiments can be expensive, time-consuming, impractical, and sometimes
-unsafe~\cite{jacinto2024pegasus}. A simulator allows researchers to develop and
-test control, perception, and navigation algorithms in a virtual environment
-while providing repeatable scenarios and access to the exact state of the
-simulated vehicle, which can be used as a reference for
-evaluation~\cite{jacinto2024pegasus, tejeroruiz2024realistic}. Simulation is also
-widely used to generate data for learning-based methods and to train
-reinforcement learning agents~\cite{jacinto2024pegasus}.
+Simulation is an important step in \gls{abb:uav} research, because real flight
+experiments are expensive, slow, and sometimes unsafe. A simulator lets
+researchers develop and test control, perception and navigation algorithms in a
+virtual environment, with repeatable scenarios and access to the exact state of
+the vehicle, which serves as a reference for evaluation. It is also the usual way
+to produce the data needed to train learning-based
+methods~\cite{jacinto2024pegasus}.
 
-A \gls{abb:uav} simulator aims to reproduce the main elements involved in a real
-flight:
+A simulator aims to reproduce four elements of a real
+flight~\cite{jacinto2024pegasus, tejeroruiz2024realistic}.
 
 \begin{itemize}[itemsep=0.5em]
-    \item \textbf{Physics and vehicle dynamics}: The physics engine calculates
-          the \gls{abb:uav}'s movement based on its structure and inertial
-          properties~\cite{acharya2020cornet}. Accurately reproducing real flight
-          dynamics remains one of the main challenges of aerial
-          simulation~\cite{tejeroruiz2024realistic}.
-    \item \textbf{Autopilot in the loop}: The simulator can be connected to
-          flight-control software or hardware through \glsxtrfull{abb:sitl} and
-          \glsxtrfull{abb:hitl} simulation~\cite{jacinto2024pegasus}. In
-          \gls{abb:sitl}, the autopilot receives simulated sensor measurements and
-          sends control commands back to the
-          simulator~\cite{acharya2020cornet}.
-    \item \textbf{Sensor models}: Simulation frameworks can reproduce sensors
-          commonly used on \glspl{abb:uav}, such as \glspl{abb:imu}, barometers,
-          magnetometers, \gls{abb:gps}, cameras, and
-          \gls{abb:lidar}~\cite{jacinto2024pegasus, tejeroruiz2024realistic}.
-          These models can include measurement characteristics and noise to make
-          the simulated data closer to real sensor
-          outputs~\cite{jacinto2024pegasus, tejeroruiz2024realistic}.
-    \item \textbf{Rendering and visual fidelity}: Realistic rendering is
-          important for vision-based navigation and perception algorithms because
-          their performance depends directly on the generated
-          images~\cite{jacinto2024pegasus}. Modern frameworks therefore use game
-          engines to provide realistic environments and visual
-          assets~\cite{tejeroruiz2024realistic}.
+    \item \textbf{Physics and vehicle dynamics}: A physics engine computes the
+          motion of the vehicle from its structure and its inertial properties.
+          Reproducing real flight dynamics accurately remains the main
+          difficulty of aerial simulation.
+    \item \textbf{Autopilot in the loop}: The simulator can be connected to the
+          firmware of a real flight controller through \glsxtrfull{abb:sitl} and
+          \glsxtrfull{abb:hitl} simulation. In \gls{abb:sitl}, the autopilot
+          receives the simulated measurements and sends back the motor
+          commands~\cite{acharya2020cornet}.
+    \item \textbf{Sensor models}: Frameworks reproduce the sensors found on a
+          real platform, such as the \gls{abb:imu}, the barometer, the
+          magnetometer, \gls{abb:gps}, cameras and \gls{abb:lidar}, and they can
+          add noise to bring the simulated data closer to real measurements.
+    \item \textbf{Rendering}: Visual quality matters for any algorithm that
+          works on images, which is why recent frameworks rely on game engines.
 \end{itemize}
 
-Several platforms are available for \gls{abb:uav} simulation, with differences in
-their physics engines, rendering capabilities, sensor support, and integration
-with flight-control software. \Cref{tab:bg:simulators} compares the main
-platforms considered in \gls{abb:uav} research.
+Several platforms are available, and they differ in their physics engine, their
+rendering quality, the sensors they simulate, and their integration with
+flight-control software. \Cref{tab:bg:simulators} compares the main ones.
 
 \begin{table}[htbp]
     \centering
-    \caption[Comparison of the main UAV simulation platforms]{Comparison of the
-        main UAV simulation platforms, adapted from~\cite{jacinto2024pegasus}.
-        \checkmark{} indicates that the feature is available, while -- indicates
-        that it is not.}%
+    \caption{Comparison of the main UAV simulation platforms.}%
     \label{tab:bg:simulators}
     \small
     \setlength{\tabcolsep}{4pt}
@@ -374,20 +360,22 @@ platforms considered in \gls{abb:uav} research.
         Pegasus    & NVIDIA Isaac Sim      & \checkmark & \checkmark & \checkmark & \checkmark & Medium \\
         \bottomrule
     \end{tabular}
+
+    \vspace{0.6em}
+    \begin{minipage}{\textwidth}
+        \footnotesize Adapted from~\cite{jacinto2024pegasus}. 
+    \end{minipage}
 \end{table}
 
 \FloatBarrier
 
-Despite its advantages, simulation cannot reproduce all the conditions of a real
-flight. The main limitation is the simulation-to-reality gap, particularly for
-visual perception, where lighting, occlusion, and sensor imperfections are
-difficult to reproduce
-accurately~\cite{pore2026uavqr, jacinto2024pegasus, tejeroruiz2024realistic}. For
-example, one warehouse system achieved about 95 to 96\% \gls{abb:qr} detection
-accuracy in simulation but only 86 to 90.5\% in real
-experiments~\cite{pore2026uavqr}. Photorealistic simulation also requires
-significant computational resources, while complex simulation frameworks can
-increase the development effort~\cite{jacinto2024pegasus, acharya2020cornet}.
+Simulation cannot reproduce every condition of a real flight. The main limit is
+the simulation-to-reality gap, which is largest for visual perception, where
+lighting, occlusion and sensor imperfections are difficult to model
+accurately~\cite{jacinto2024pegasus, tejeroruiz2024realistic}. One warehouse
+system reached about 95 to 96\% \gls{abb:qr} detection accuracy in simulation but
+only 86 to 90.5\% in real experiments~\cite{pore2026uavqr}. Photorealistic
+simulation also demands significant computing power~\cite{acharya2020cornet}.
 
 \section{Warehouse Inventory Inspection and the Case for UAVs}%
 \label{sec:bg:inspection}
@@ -395,84 +383,64 @@ increase the development effort~\cite{jacinto2024pegasus, acharya2020cornet}.
 \subsection{Warehouse Inventory Inspection}%
 \label{subsec:bg:inspection-definition}
 
-Inventory inspection is the operation that checks what is actually stored on the
-shelves and compares it with the records kept by the \gls{abb:wms}. Its purpose
-is to keep these two views consistent, because miscounts and misplaced items
-directly affect order accuracy and raise operating costs~\cite{pore2026drone}.
-The task is shaped by the environment in which it takes place. A typical
-warehouse is a large building with many racks that can exceed ten metres in
-height, where every pallet and every pallet position carries a unique identifier,
-most often a barcode and more rarely an \gls{abb:rfid} or \gls{abb:qr}
-marker~\cite{kalinov2020warevision}. Most facilities today are high-density,
-large-scale storage sites, and as they keep growing in height and width,
-obtaining timely inventory visibility without compromising operational safety has
-become a real difficulty~\cite{pore2026uavqr}. In practice, the process is still
-largely manual: a worker takes each pallet down, scans it, and puts it back,
-which makes the operation repetitive and slow~\cite{kalinov2020warevision}. A
-complete inventory check can consume more than three days of normal warehouse
-activity~\cite{kalinov2020warevision}, so counting is usually performed
-periodically rather than continuously, and managers have little visibility of
-stock levels in real time~\cite{pore2026drone}.
+Inventory inspection checks what is actually stored on the shelves and compares
+it with the records kept by the \gls{abb:wms}. Keeping these two views consistent
+matters, because miscounts and misplaced items reduce order accuracy and raise
+operating costs~\cite{pore2026drone}. The environment makes the task difficult. A
+typical warehouse is a large building with racks that can exceed ten metres in
+height, and every pallet position carries a unique identifier, most often a
+barcode. The process is also still largely manual: a worker takes each pallet
+down, scans it, and puts it back, and a complete check can consume more than
+three days of normal warehouse activity~\cite{kalinov2020warevision}. Counting is
+therefore periodic rather than continuous, which leaves managers with little
+real-time visibility of stock levels~\cite{pore2026uavqr}.
 
 \subsection{Traditional and Automated Inspection Methods}%
 \label{subsec:bg:inspection-methods}
 
-Four families of methods are used today to carry out this operation.
+Four families of methods are used today.
 
 \begin{itemize}[itemsep=0.5em]
     \item \textbf{Manual inspection}: Operators walk through the aisles, read the
-          labels, and update the records, sometimes still on
-          paper~\cite{pore2026drone}. The method requires no special
-          infrastructure, but it is time-consuming, labour-intensive, and exposed
-          to human error~\cite{pore2026uavqr}.
-    \item \textbf{Barcode and QR code scanning}: Optical identifiers are the
-          dominant technology, and 1D barcodes alone are used in around 87\% of
-          warehouses~\cite{kalinov2020warevision}. They are cheap to print, but
-          reading them with a camera in real warehouse conditions is difficult,
-          because of insufficient lighting, image artefacts produced by
-          rolling-shutter cameras, and the small physical size of the
-          codes~\cite{kalinov2020warevision}.
-    \item \textbf{RFID systems}: Radio tags are the main alternative to optical
-          codes. They require dedicated readers and infrastructure, whereas
-          \gls{abb:qr} codes can be deployed without any~\cite{pore2026uavqr},
-          and their performance degrades near metal racks because of multipath
-          and signal attenuation~\cite{pore2026drone}.
-    \item \textbf{Ground mobile robots (AGVs and AMRs)}: Scanners or cameras are
-          mounted on a ground platform that moves along the aisles. These robots
-          reduce manual work, but they stay on the floor plane, which limits
-          their vertical reach, and they occupy floor space that competes with
-          picking and forklift operations~\cite{pore2026uavqr}.
+          labels, and update the records. The method needs no special
+          infrastructure, but it is slow, labour-intensive, and exposed to human
+          error~\cite{pore2026uavqr}.
+    \item \textbf{Barcode and QR code scanning}: Optical identifiers dominate,
+          and 1D barcodes alone are used in around 87\% of warehouses. They are
+          cheap to print, but camera-based reading is difficult in real
+          conditions because of poor lighting, rolling-shutter artefacts, and the
+          small size of the codes~\cite{kalinov2020warevision}.
+    \item \textbf{RFID systems}: Radio tags require dedicated readers and
+          infrastructure, whereas \gls{abb:qr} codes need
+          none~\cite{pore2026uavqr}, and their performance degrades near metal
+          racks because of multipath and attenuation~\cite{pore2026drone}.
+    \item \textbf{Ground mobile robots (AGVs and AMRs)}: These reduce manual
+          work, but they stay on the floor plane, which limits their vertical
+          reach, and they occupy space that competes with picking
+          operations~\cite{pore2026uavqr}.
 \end{itemize}
 
-These four families differ in cost and in the degree of automation they offer,
-but they share the same structural limits. None of them reaches the upper levels
-of a high rack without either a lift or a human operator, each one requires
-either a significant amount of manual work or dedicated infrastructure, and at
-the scale of a full warehouse the inspection cycle is still measured in days
-rather than hours~\cite{kalinov2020warevision, pore2026uavqr}.
+The four families share the same structural limits: none reaches the top of a
+high rack without a lift or an operator, each one needs either manual work or
+dedicated infrastructure, and at warehouse scale the inspection cycle is still
+measured in days~\cite{kalinov2020warevision, pore2026uavqr}.
 
 \subsection{UAV-Based Inventory Inspection}%
 \label{subsec:bg:inspection-uav}
 
-\Glspl{abb:uav} address these limits directly. Because a drone moves freely in
-three dimensions, it can reach storage locations that are otherwise inaccessible,
-and it does so without requiring any structural change to the
-building~\cite{pore2026uavqr}. Compared with ground robots, it offers a better
-vertical reach and interferes less with floor operations, which makes it
-particularly suitable for dense warehouse layouts~\cite{pore2026uavqr}. Turning
-aisle traversal into an automated coverage problem also shortens the audit cycle
-and allows high-frequency counting during shifts or at night, without scaling the
-workforce in proportion~\cite{pore2026drone}. Two further benefits are reported:
-sensing elevated rack levels no longer requires forklifts or scissor lifts, which
-removes a fall hazard for the operator, and standardising flight speed, distance,
-and scan geometry produces more repeatable observations than manual
-scanning~\cite{pore2026drone}.
+\Glspl{abb:uav} answer these limits directly. A drone reaches storage locations
+that are otherwise inaccessible, without any structural change to the building,
+and it interferes less with floor operations than a ground
+robot~\cite{pore2026uavqr}. Treating aisle traversal as an automated coverage
+problem also shortens the audit cycle and allows frequent counting without
+increasing the workforce. Two further benefits are reported: elevated racks no
+longer require forklifts or scissor lifts, which removes a fall hazard, and
+standardising flight speed and scan geometry produces more repeatable
+observations than manual scanning~\cite{pore2026drone}.
 
-Several systems have been proposed to put this idea into practice. They differ in
-the identification technology they use, in the way the drone locates itself, in
-the number of vehicles involved, and in how they are validated.
-\Cref{tab:bg:inspection-systems} summarises six representative systems published
-between 2020 and 2026.
+Several systems implement this idea. They differ in their identification
+technology, their localisation method, the number of vehicles, and their
+validation. \Cref{tab:bg:inspection-systems} summarises six of them.
 
 \begin{table}[htbp]
     \centering
@@ -508,125 +476,76 @@ between 2020 and 2026.
 
 Three observations follow from this table, and a review of more than a hundred
 warehouse-drone studies confirms them at a larger scale~\cite{pore2026drone}.
-First, most systems use a single drone, and only one of those listed above
-evaluates a second aerial vehicle~\cite{pore2026uavqr}. When several vehicles do
-appear, they are heterogeneous rather than cooperating aerial agents: the ground
-robot acts as a carrier or as a beacon deployer instead of a second
-scanner~\cite{kalinov2020warevision, guinand2021uavugv}. Single-\gls{abb:uav}
-systems remain clearly dominant in the literature, which makes scalability an
-open research question~\cite{pore2026drone}. Second, validation is uneven. Only
-one of these systems reports results in a real warehouse
-testbed~\cite{pore2026uavqr}, while the others stay in the
-laboratory~\cite{kalinov2020warevision, cristiani2020inventory} or in
-simulation~\cite{alsulami2026deep}. At the scale of the whole field, about 45\%
-of inventory-management studies are simulation-based against roughly 7\% that
-report real experiments~\cite{pore2026drone}. Third, the environment is almost
-always assumed static: only about 3\% of inventory studies consider a dynamic
-warehouse with moving workers and vehicles~\cite{pore2026drone}. It is also worth
-noting that most of these systems follow a pre-planned coverage path through
-known aisles, rather than discovering the layout during the mission.
 
-The inspection mission itself concentrates several difficulties that are still
-not fully solved. Perception is the first one: vision-based reading of barcodes
-and \gls{abb:qr} codes is sensitive to glare, low illumination, occlusion, motion
-blur, and label orientation, and a code that cannot be decoded is an item that is
-not counted~\cite{pore2026drone}. Navigation is the second: the warehouse is
-\gls{abb:gps}-denied, so localisation must rely on onboard sensing or on
-additional infrastructure, and the tight spacing between racks combined with
-moving obstacles such as workers and forklifts forces conservative speed
-planning~\cite{pore2026drone}. Energy is the third: the limited battery capacity
-of a small platform caps the coverage achievable in one flight, which makes
-docking and mission partitioning necessary in large
-facilities~\cite{pore2026drone}. These constraints interact rather than adding
-up, because on-board computation, memory, and endurance all limit how much
-processing can be done during a long scanning mission~\cite{pore2026uavqr}. A
-complete system must therefore guarantee reliable obstacle avoidance, sustain a
-high decoding rate under variable illumination and partial occlusion, and keep
-the inventory database synchronised, all at the same time~\cite{pore2026uavqr}.
+First, single-\gls{abb:uav} systems dominate. Only one of the systems listed
+above evaluates a second aerial vehicle~\cite{pore2026uavqr}, and where several
+vehicles appear, the ground robot is a carrier or a beacon deployer rather than a
+second scanner~\cite{kalinov2020warevision, guinand2021uavugv}. Scalability
+therefore remains an open question.
 
+Second, validation is uneven. Only one system reports results in a real warehouse
+testbed~\cite{pore2026uavqr}, and across the field about 45\% of
+inventory-management studies are simulation-based against roughly 7\% with real
+experiments.
+
+Third, the environment is almost always assumed static, since only about 3\% of
+studies consider a dynamic warehouse with moving workers and vehicles. Most
+systems also follow a pre-planned coverage path through known aisles rather than
+discovering the layout during the mission.
 \section{QR Codes and Their Reading from a UAV}%
 \label{sec:bg:qr}
 
-\subsection{QR Codes and the Difficulty of Reading Them from a UAV}%
+\subsection{Why Reading a QR Code from a UAV Is Difficult}%
 \label{subsec:bg:qr-codes}
 
-\Glspl{abb:qr} codes are two-dimensional visual identifiers that can store more
-information than traditional barcodes and include error-correction mechanisms
-that improve readability under partial
-degradation~\cite{dong2024motionblurred, pore2026uavqr}. A \gls{abb:qr} code is
-built from position detection patterns, format information, and data
-modules~\cite{dong2024motionblurred}. The three square markers placed in the
-corners have fixed proportions, which allows a decoder to locate the code and
-correct its perspective, while Reed--Solomon error correction recovers the data
-even when the symbol is partly hidden or blurred~\cite{pore2026uavqr}. These
-properties make \gls{abb:qr} codes suitable for identifying items in warehouse
-environments~\cite{pore2026uavqr}. Reading them from a \gls{abb:uav} is more
-difficult, however, because image quality changes continuously during flight.
-Five factors degrade the image at that moment.
+A \gls{abb:qr} code is a two-dimensional identifier that stores more data than a
+barcode and includes an error-correction mechanism, so it can still be decoded
+when the symbol is partly hidden or blurred~\cite{dong2024motionblurred}. A code
+is only decodable, however, within a bounded range of distances, viewing angles
+and relative speeds. Five factors push the image outside that range during
+flight.
 
 \begin{itemize}[itemsep=0.5em]
-    \item \textbf{Distance and scale}: The code becomes too small to decode
-          reliably when the \gls{abb:uav} is far from the
-          target~\cite{kalinov2020warevision, alsulami2026deep}.
-    \item \textbf{Viewing angle}: Labels may be observed from different angles,
-          producing perspective
-          distortion~\cite{pore2026drone, pore2026uavqr, alsulami2026deep}.
-    \item \textbf{Motion blur}: \Gls{abb:uav} movement and vibration can blur the
-          captured image and reduce recognition
-          accuracy~\cite{dong2024motionblurred, kalinov2020warevision}.
-    \item \textbf{Lighting}: Poor
-          illumination~\cite{kalinov2020warevision, alsulami2026deep} and
-          glare~\cite{pore2026drone} can significantly affect decoding
-          performance.
-    \item \textbf{Occlusion}: Shelves, packaging, or other objects may partially
-          hide the code and prevent successful
-          decoding~\cite{alsulami2026deep}.
+    \item \textbf{Distance}: The code becomes too small to decode when the
+          vehicle is far from the target~\cite{kalinov2020warevision}.
+    \item \textbf{Viewing angle}: Labels are rarely seen head-on, which distorts
+          the symbol~\cite{alsulami2026deep}.
+    \item \textbf{Motion blur}: The movement and the vibration of the platform
+          blur the captured image~\cite{dong2024motionblurred}.
+    \item \textbf{Lighting}: Poor illumination and glare degrade
+          decoding~\cite{pore2026drone}.
+    \item \textbf{Occlusion}: Shelves or packaging may hide part of the
+          code~\cite{alsulami2026deep}.
 \end{itemize}
 
-These factors do not act separately: in flight they appear together, which
-explains why results obtained in simulation do not transfer directly to a real
-warehouse. One inventory system reached a \gls{abb:qr} accuracy of about 95 to
-96\% in simulation but only 86 to 90.5\% in a real testbed, and the gap grew with
-the complexity of the scenario, from around 5\% in the simplest case to more than
-10\% in the hardest one~\cite{pore2026uavqr}. The authors of that work attribute
-the difference to real lighting and occlusion conditions, and note that their
-simulation stayed accurate for dynamics and coordination but not for optical
-detection~\cite{pore2026uavqr}.
+These factors act together, which is why simulation results do not transfer
+directly to a real warehouse. One inventory system reached about 95 to 96\%
+accuracy in simulation but only 86 to 90.5\% in a real testbed, a gap its authors
+attribute to real lighting and occlusion~\cite{pore2026uavqr}.
 
 \subsection{QR Code Detection and Recognition Methods}%
 \label{subsec:bg:qr-detection}
 
-\Gls{abb:qr} code reading methods can be grouped into three main families.
+Three families of methods are used to read these codes.
 
 \begin{itemize}[itemsep=0.5em]
-    \item \textbf{Classical image processing}: These methods use hand-designed
-          operations such as template matching, projection analysis, or
-          segmentation~\cite{alsulami2026deep}. They are relatively simple, but
-          they are sensitive to lighting, distortion, noise, and
-          occlusion~\cite{alsulami2026deep}. Warehouse tests confirm these
-          limits: one template-matching approach gave poor results at one metre
-          and required a new set of patterns for each
+    \item \textbf{Classical image processing}: Hand-designed operations such as
+          template matching or segmentation. They are simple but fail in real
+          warehouse conditions: one template-matching approach gave poor results
+          at one metre and needed a new set of patterns for each
           environment~\cite{kalinov2020warevision}.
-    \item \textbf{Deep learning-based detection}: Neural networks learn visual
-          features directly and are generally more robust to variations in scale,
-          distortion, and partial occlusion~\cite{alsulami2026deep}.
-          Architectures such as Faster R-CNN, SSD, and YOLO have been applied to
-          this task~\cite{alsulami2026deep}. Recent \gls{abb:uav}-oriented work
-          using YOLOv8 reported 92.4\% mAP on simulated images with
-          millisecond-level inference, which makes this family suitable for
-          real-time applications~\cite{alsulami2026deep}. Computational cost
-          nevertheless remains an important constraint for onboard deployment,
-          since some deep learning pipelines require more computing power than a
-          drone can carry~\cite{kalinov2020warevision}.
-    \item \textbf{Image restoration}: These approaches first enhance or restore
-          degraded images before decoding. Recent methods use deep learning and
-          generative models to reduce blur and improve \gls{abb:qr} recognition
-          under difficult imaging conditions~\cite{dong2024motionblurred}.
-          Processing time remains a limitation of this family, and reducing it is
-          an explicit direction for future work~\cite{dong2024motionblurred}.
+    \item \textbf{Deep learning detection}: Neural networks learn visual features
+          directly and tolerate scale changes, distortion and partial occlusion.
+          A recent YOLOv8-based system reached 92.4\% mAP with millisecond-level
+          inference, which makes this family usable in real time. Its cost is the
+          computing power it requires on board~\cite{alsulami2026deep}.
+    \item \textbf{Image restoration}: The degraded image is enhanced before
+          decoding, usually with generative models that remove blur. The added
+          processing time is the main
+          limitation~\cite{dong2024motionblurred}.
 \end{itemize}
 
-\section{Chapter Conclusion}%
+\section{Conclusion}%
 \label{sec:bg:conclusion}
 
 This chapter has introduced the elements needed to understand the rest of this

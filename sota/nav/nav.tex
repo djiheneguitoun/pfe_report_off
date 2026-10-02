@@ -2,7 +2,6 @@
 \label{chap:nav}
 
 \subimport{.}{intro}
-
 \section{Open-Loop and Closed-Loop Navigation}%
 \label{sec:nav:principles}
 
@@ -10,17 +9,16 @@
 \label{subsec:nav:openloop-principle}
 
 In open-loop navigation, the complete path is resolved before the drone starts
-moving. The planner takes as input a map of the environment, a start position,
-and a target~\cite{kumar2025comprehensive}, then searches for the route that
-minimises a chosen cost. That cost need not be distance: flight time, energy
-consumption, the number of turns, or path smoothness are all used in
-practice~\cite{kumar2025comprehensive}. Once the route has been obtained, the
-vehicle executes it as computed.
+moving. The planner takes as input a map of the environment, a start position and
+a target, then searches for the route that minimises a chosen cost. That cost
+need not be distance: flight time, energy consumption or path smoothness are all
+used in practice. Once the route has been obtained, the vehicle executes it as
+computed. This mode of operation is also known as offline planning, and it
+presupposes a static environment~\cite{kumar2025comprehensive}.
 
-This mode of operation is also known as offline planning, and it presupposes a
-static environment~\cite{kumar2025comprehensive}. Where that assumption holds, it
-offers a real advantage: the problem is solved once, on the ground, without the
-computational constraints of the onboard hardware.
+Where that assumption holds, it offers a real advantage: the problem is solved
+once, on the ground, without the computational constraints of the onboard
+hardware.
 
 \subsection{Principle of Closed-Loop Navigation}%
 \label{subsec:nav:closedloop-principle}
@@ -28,409 +26,279 @@ computational constraints of the onboard hardware.
 In closed-loop navigation, the decision is re-derived throughout the flight. The
 drone observes its surroundings, updates its internal representation of them, and
 selects its next action from that updated state. Online planning rests on the
-same principle and is designed to accommodate unexpected obstacles and changing
-conditions~\cite{kumar2025comprehensive}. Learning-based methods make this
+same principle and is designed for unexpected obstacles and changing
+conditions~\cite{kumar2025comprehensive}. Learning-based methods make the
 structure explicit: the agent executes an action, the environment returns an
-observation and a reward, and both are fed back into the following decision,
-closing the loop~\cite{chang2023review}.
+observation and a reward, and both feed back into the following
+decision~\cite{chang2023review}.
 
 The benefit is robustness. Fixed waypoints and pre-computed paths adapt poorly to
 conditions that evolve and to obstacles that were not anticipated, which raises
 the risk of collision~\cite{pore2026uavqr}.
 
-\Cref{fig:nav:taxonomy} summarises the two principles and the families of methods
-attached to each of them, together with the section where each family is
-examined.
+
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=\textwidth]{planning_taxonomy}
-    \caption[Taxonomy of the navigation methods compared in this
-        chapter]{Taxonomy of the navigation methods compared in this chapter.
-        On the left, open-loop methods resolve the complete route from a known
-        map before take-off. On the right, closed-loop methods commit only to
-        the next action, then re-evaluate it from what the vehicle has just
-        observed. Each family is examined in the section indicated below
-        it.}%
+    \begin{tikzpicture}[
+        font=\small,
+        head/.style={rounded corners=3pt, draw, thick, minimum height=0.7cm,
+                     align=center, font=\footnotesize\bfseries, inner sep=4pt},
+        fam/.style={rounded corners=2pt, draw, minimum height=0.6cm,
+                    minimum width=2.9cm, align=center, font=\footnotesize,
+                    inner sep=3pt},
+        ol/.style={draw=blue!55!black,   fill=blue!7},
+        cl/.style={draw=orange!70!black, fill=orange!8},
+        line/.style={draw=black!55, thick},
+    ]
+
+    \node[head, draw=black!70, fill=black!5] (root) at (0,0)
+        {Autonomous navigation};
+
+    \node[head, ol] (ol) at (-4.1,-1.5) {Open-loop\\
+        \footnotesize\mdseries path fixed before flight};
+    \node[head, cl] (cl) at ( 4.1,-1.5) {Closed-loop\\
+        \footnotesize\mdseries decision recomputed in flight};
+
+    \draw[line] (root.south) -- ++(0,-0.4) -| (ol.north);
+    \draw[line] (root.south) -- ++(0,-0.4) -| (cl.north);
+
+    \node[fam, ol] (cls) at (-5.7,-3.1) {Classical\\algorithms};
+    \node[fam, ol] (bio) at (-2.5,-3.1) {Bio-inspired\\algorithms};
+
+    \draw[line] (ol.south) -- ++(0,-0.35) -| (cls.north);
+    \draw[line] (ol.south) -- ++(0,-0.35) -| (bio.north);
+
+    \node[fam, cl] (lrn) at (0.9,-3.1) {Learning-based};
+    \node[fam, cl] (aif) at (4.1,-3.1) {Active inference};
+    \node[fam, cl] (llm) at (7.3,-3.1) {Language and VLM};
+
+    \draw[line] (cl.south) -- ++(0,-0.35) -| (lrn.north);
+    \draw[line] (cl.south) -- ++(0,-0.35) -| (aif.north);
+    \draw[line] (cl.south) -- ++(0,-0.35) -| (llm.north);
+
+    \end{tikzpicture}
+    \caption{Taxonomy of the navigation methods compared in this chapter.}%
     \label{fig:nav:taxonomy}
 \end{figure}
 
 \FloatBarrier
-
 \section{Open-Loop Methods: Classical Algorithms}%
 \label{sec:nav:classical}
 
 Classical algorithms come from robotics and operations research, and they form
 the first family in the standard taxonomy of trajectory design
-methods~\cite{krayani2023goal}. They all share one assumption: the workspace is
-known before the flight and does not change during the mission. The first four
-methods search for a path inside a graph. The last two describe the mission as an
-optimisation problem and solve it with a solver.
+methods~\cite{krayani2023goal}. They share one assumption: the workspace is known
+before the flight and does not change during the mission. Several of them derive
+from dynamic programming, which solves a large decision problem by cutting it
+into successive stages.
 
-\subsection{Dynamic Programming}%
-\label{subsec:nav:dp}
+\subsection{Graph Search: Dijkstra and A*}%
+\label{subsec:nav:graphsearch}
 
-Dynamic programming is not really a competitor of the methods that follow. It is
-the general principle behind several of them. The idea is to cut a large decision
-problem into a series of smaller steps, solve each step one after the other, and
-then build the global solution from these partial results.
+The workspace is represented as a graph, where each node is a position and each
+edge carries a cost. Finding a path becomes finding the cheapest chain of edges
+between two nodes.
 
-For \glspl{abb:uav}, it has been used to build a trajectory that fits inside a
-fixed mission time, and to choose in which order a drone should visit wireless
-sensor nodes to collect data~\cite{krayani2023goal}. Its cost grows quickly with
-the number of nodes, which makes it too slow for real time, and it works poorly
-on fine grids, because more accuracy means more
-computation~\cite{krayani2023goal}.
+Dijkstra explores the graph outwards from the start, like a circle that keeps
+growing, and stops when it reaches the goal. Every direction is explored, so the
+path is always the shortest one, but many nodes are visited for
+nothing~\cite{chang2023review}.
 
-\subsection{Dijkstra's Algorithm}%
-\label{subsec:nav:dijkstra}
+A* adds an estimate of the distance remaining to the goal and expands the node
+whose total cost, travelled plus estimated, is the lowest. The search becomes
+directed and reaches the goal after far fewer nodes. Its result depends on the
+quality of that estimate, and the vehicle moves only between neighbouring nodes,
+which produces a route with sharp turns~\cite{kumar2025comprehensive}.
 
-Dijkstra looks for the shortest path between two points in a graph. It starts
-from the departure point and explores the graph in all directions, like a circle
-that grows, until this circle reaches the goal~\cite{chang2023review}. Because it
-explores everything around the start, it always finds the shortest path.
-
-It has been used to bring a drone to its target in the shortest time for a given
-battery level~\cite{krayani2023goal}. Its advantages are that the result is
-guaranteed, that it is simple to implement, and that it works in any
-environment~\cite{kumar2025comprehensive}. Its drawbacks come from the same
-behaviour: it is slow, it becomes expensive on large graphs, and it only works in
-static environments~\cite{kumar2025comprehensive}.
-
-\subsection{A* Algorithm}%
-\label{subsec:nav:astar}
-
-A* improves Dijkstra with one simple idea. Instead of exploring in all
-directions, it also estimates how far each point still is from the goal, and it
-explores first the points that seem closer to it~\cite{chang2023review}. The
-search becomes directed instead of blind, so A* reaches the target after visiting
-far fewer points, and it returns a path that is close to the best
-one~\cite{kumar2025comprehensive}.
-
-This gain has a price. A* uses a lot of memory in large environments, and the
-quality of the result depends on the quality of the estimate it
-uses~\cite{kumar2025comprehensive}. The path is also not smooth, because the
-drone can only move towards a fixed set of neighbouring directions, which gives a
-route with sharp turns~\cite{chang2023review}. Finally, A* returns a list of
-waypoints, not a trajectory that the vehicle can directly
-follow~\cite{krayani2023goal}.
-
-\subsection{D* and Its Variants}%
+\subsection{Incremental Replanning: D* and Its Variants}%
 \label{subsec:nav:dstar}
 
-D* was created to remove the main weakness of the two previous methods. When the
-map changes, it does not start again from zero. It only updates the part of the
-path that is affected, and it keeps the rest~\cite{krayani2023goal}. This makes
-it much faster when new obstacles appear in a cluttered environment.
+D* addresses what happens when the map turns out to be wrong. Instead of
+searching again from the start, it keeps the costs already computed and updates
+only the nodes whose cost has changed~\cite{krayani2023goal}. If an obstacle
+appears in one aisle, the rest of the path is reused as it is.
 
-It also works on maps that are not grids and keeps a low computation
-time~\cite{kumar2025comprehensive}. On the other hand, it needs a good initial
-path, it can become expensive in some situations~\cite{kumar2025comprehensive},
-and it gives no guarantee on the quality of the result in a large environment
-that keeps changing~\cite{krayani2023goal}. As explained in
-\Cref{subsec:nav:closedloop-principle}, D* sits on the border of the open-loop
-family: it starts from a complete path, like the other methods here, but it
-corrects that path during the flight.
-
-The next two methods work differently. They do not search inside a graph. They
-write the mission as an optimisation problem and let a solver find the answer.
+The method needs a complete initial path to repair, and it gives no guarantee on
+the result when the environment keeps
+changing~\cite{kumar2025comprehensive, krayani2023goal}. It therefore sits on the
+border of the two families: the path is computed in advance, but it is revised
+during the flight.
 
 \subsection{Mixed-Integer Linear Programming}%
 \label{subsec:nav:milp}
 
-Linear programming looks for the minimum or the maximum of a linear function
-under a set of linear constraints. This fits path planning well, because the goal
-is often to minimise a distance, a time, or an
-energy~\cite{kumar2025comprehensive}. Mixed-integer linear programming, or
-\glsxtrshort{abb:milp}, extends this to problems that mix continuous values, such
-as a position, with discrete choices, such as visiting a point or
-not~\cite{kumar2025comprehensive}.
+The methods that follow do not search a graph. They state the mission as an
+optimisation problem and hand it to a solver.
 
-For a \gls{abb:uav}, the flight is cut into time steps, and each step describes
-the state of the drone. The solver then returns a complete trajectory before the
-mission starts~\cite{krayani2023goal}. This method is designed for offline
-planning, and it has two known limits: the search has no guide, so it can get
-stuck, and it does not work well for long trajectories in complex
-environments~\cite{krayani2023goal}.
+Linear programming minimises a linear function under linear constraints.
+Mixed-integer linear programming extends this to problems that mix continuous
+variables, such as a position, with discrete ones, such as the decision to visit
+a point or not~\cite{kumar2025comprehensive}.
 
-\subsection{Traveling Salesman Problem and Its Profit Variant}%
+For a drone, the flight is discretised into time steps. Each step becomes a set
+of variables describing the state of the vehicle, the constraints encode the
+obstacles, and the solver returns a complete trajectory before the mission
+starts. The formulation is offline by construction and does not scale to long
+trajectories~\cite{krayani2023goal}.
+
+\subsection{Coverage and Routing Formulations}%
 \label{subsec:nav:tsp}
 
-The travelling salesman problem, or \glsxtrshort{abb:tsp}, is used when the
-mission is not to reach one goal but to visit several places. The drone must pass
-through a fixed set of points, visit each one only once, and come back to its
-starting position before the battery runs out~\cite{krayani2023goal}.
+These formulations apply when the mission is to visit several places rather than
+reach one goal. In the travelling salesman problem, the drone passes through a
+fixed set of points, visits each one exactly once, and returns to its starting
+position before the battery runs out. The problem is NP-hard, so practice relies
+on local-search heuristics such as 2-OPT~\cite{krayani2023goal}.
 
-The problem is NP-hard, which means that finding the exact best tour takes too
-much time as soon as the number of points grows. In practice, two solutions are
-used: local-search methods such as 2-OPT and 3-OPT, which improve a tour step by
-step, or evolutionary algorithms~\cite{krayani2023goal}. The \gls{abb:tspwp} is a
-version where each point also carries a reward, and the algorithm then looks for
-the best compromise between the distance travelled and the reward
-collected~\cite{krayani2023goal}. This is useful when some targets matter more
-than others. Its main limit is being offline, so if a new target appears during the flight, the whole tour must be
-recomputed from the beginning~\cite{krayani2023goal}.
+Its profit variant gives each point a reward, and the objective becomes a
+compromise between distance travelled and reward collected. The limitation is
+structural: the tour is computed once, so a new target appearing during the
+flight forces the whole route to be recomputed~\cite{krayani2023goal}.
 
-\subsubsection*{Comparison}
+\subsection{Coverage Path Planning}%
+\label{subsec:nav:cpp}
 
-These six methods differ less in what they compute than in what they assume.
-\Cref{tab:nav:classical-comparison} compares them on three points: the quality of
-the result, the computational cost, and what happens when the environment
-changes.
+Coverage path planning applies when the mission is not to reach a position but to
+pass over every part of a known area. The workspace is first decomposed into
+regions that the vehicle can sweep without interruption, then an order is chosen
+between these regions, and finally a motion pattern fills each one. In a
+structured space such as a warehouse, the decomposition is given by the layout
+itself: each aisle is a region, and the pattern reduces to travelling along it
+while facing the racks.
 
-\begin{table}[!htb]
-    \centering
-    \caption{Comparison of the classical open-loop algorithms.}%
-    \label{tab:nav:classical-comparison}
-    \small
-    \setlength{\tabcolsep}{4pt}
-    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{3.1cm}
-            >{\raggedright\arraybackslash}p{3.5cm}
-            >{\raggedright\arraybackslash}p{3.3cm}
-            >{\raggedright\arraybackslash}p{3.5cm}@{}}
-        \toprule
-        \textbf{Method} & \textbf{Solution quality} & \textbf{Computational cost}
-        & \textbf{Environment changes} \\
-        \midrule
-        Dynamic programming                            & Optimal per stage        & Grows with node count & Not real-time          \\
-        \addlinespace
-        Dijkstra                                       & Shortest path guaranteed & High, slow            & Static only            \\
-        \addlinespace
-        A*                                             & Near-optimal             & Moderate, high memory & Impractical if dynamic \\
-        \addlinespace
-        D* and variants                                & Not guaranteed           & Low to moderate       & Local replanning       \\
-        \addlinespace
-        \glsxtrshort{abb:milp}                         & Feasible trajectory      & Poor scaling          & Offline only           \\
-        \addlinespace
-        \glsxtrshort{abb:tsp} / \glsxtrshort{abb:tspwp} & Near-optimal with 2-OPT & NP-hard               & Full replan needed     \\
-        \bottomrule
-    \end{tabular}
+The route is therefore complete before take-off, and it covers the whole area
+whatever it contains. What separates the existing systems is the criterion they
+optimise inside that route. Some weight the aisles by the density of codes
+detected, so that flight time is spent where there is something to
+read~\cite{kalinov2020warevision}. Others extend the problem to a heterogeneous
+team and solve the order of every operation in advance, including the moments
+when the ground robots carry the drones and deploy the
+beacons~\cite{guinand2021uavugv}. A third group keeps a safety margin along each
+aisle and revises the route over a short horizon when new risk information
+arrives, without claiming full real-time avoidance of moving
+obstacles~\cite{pore2026uavqr}.
 
-    \vspace{0.6em}
-    {\footnotesize Compiled from~\cite{kumar2025comprehensive, krayani2023goal}.}
-\end{table}
-
-\FloatBarrier
-
-Behind their differences, these methods share the same limitation. All of them
-need a description of the workspace before the flight, as a graph, a grid, or a
-list of targets with known costs. 
-Even D*, the most flexible of the six, still starts from a complete path and only
-repairs it. The next section presents a second group of open-loop methods. They
-keep the same assumption, but they replace exact search with stochastic
-optimisation.
+The limitation is the same in every case. The sweep is computed from a layout
+that must be known, and a region discovered during the flight has no place in a
+route that was already closed.
 
 \section{Open-Loop Methods: Biologically Inspired Algorithms}%
 \label{sec:nav:metaheuristics}
 
-The previous section ended on a difficulty: the \glsxtrshort{abb:tsp} is NP-hard,
-so exact solutions become impossible to compute as soon as the number of targets
-grows. One of the two answers proposed in the literature is to use evolutionary
-optimisation algorithms, which have proved effective at reducing the total
-distance travelled in real cases~\cite{krayani2023goal}. This is the second
-family of open-loop methods.
+The previous section ended on a difficulty: routing formulations are NP-hard, so
+the exact optimum becomes unreachable as soon as the number of targets grows.
+Evolutionary optimisation is the usual answer, and it has proved effective at
+reducing the total distance travelled in real cases~\cite{krayani2023goal}.
 
-These algorithms take their inspiration from the collective behaviour of natural
-systems, where a group of simple agents interacts to solve a problem
-together~\cite{kumar2025comprehensive}. They do not compute the best solution,
-they search for a good one. A population of candidate solutions is generated,
-evaluated, and improved over many iterations, until the result stops getting
-better. They are useful when the optimal solution is hard to define in advance,
-but they give no guarantee of optimality~\cite{kumar2025comprehensive}.
+These algorithms all work the same way. A population of candidate paths is
+generated, each one is scored, and the population is improved over many
+iterations until the result stops getting better. They do not compute the best
+solution but a good one, and they give no guarantee of
+optimality~\cite{kumar2025comprehensive}.
 
 \subsection{Genetic Algorithm}%
 \label{subsec:nav:ga}
 
-The genetic algorithm follows the principle of natural selection. A population of
-candidate paths is created, each one is scored, and the best ones are used to
-produce the next generation through selection, crossover, and
-mutation~\cite{kumar2025comprehensive}. Over the generations, the population
-moves towards better routes.
+The genetic algorithm imitates natural selection. The best paths of the current
+population are selected, then combined by crossover, which builds a new path from
+two existing ones, and altered by mutation, which changes a part of a path at
+random. Over the generations, the population drifts towards better
+routes~\cite{kumar2025comprehensive}.
 
-For \glspl{abb:uav}, the genetic algorithm has been used to obtain a suitable
-path, in particular in target-coverage problems~\cite{krayani2023goal}. Its main
-weakness is speed: convergence is slow, which makes it inefficient for path
-planning problems that need a fast answer~\cite{krayani2023goal}, and this
-becomes a real obstacle in real-time scenarios~\cite{kumar2025comprehensive}.
+Its weakness is speed. Convergence is slow, which makes it unsuitable for any
+planning problem that needs a fast answer~\cite{krayani2023goal}.
 
 \subsection{Particle Swarm Optimization}%
 \label{subsec:nav:pso}
 
-Particle swarm optimisation is inspired by the movement of bird flocks. Each
-particle represents a candidate solution and moves through the search space under
-two influences: the best position it has found itself, and the best position
-found by the whole swarm. Step by step, the swarm concentrates around the
-promising regions.
+Particle swarm optimisation imitates a flock of birds. Each particle is a
+candidate path, and it moves through the search space under two influences: the
+best position it has found itself, and the best position found by the whole
+swarm. The swarm therefore concentrates around the promising regions.
 
-It is widely used in \gls{abb:uav} path planning~\cite{kumar2025comprehensive}
-and is good at local optimisation, which is why it is often combined with a
-genetic algorithm, the latter handling the global search~\cite{krayani2023goal}.
-Two limits are reported. Standard versions converge too early and explore a
-limited part of the space~\cite{kumar2025comprehensive}, which means the swarm
-can settle on a solution that is not the best one. Variants have been proposed to
-correct this, for example by keeping the population diverse, or by encoding the
-motion of the vehicle directly in the particles in order to follow dynamic
-targets~\cite{kumar2025comprehensive}.
+It is fast and good at refining a solution locally, which is why it is often
+paired with a genetic algorithm handling the global search~\cite{krayani2023goal}.
+Its weakness is the other side of that strength: the swarm converges too early
+and settles on a solution that is not the best
+one~\cite{kumar2025comprehensive}.
 
 \subsection{Ant Colony Optimization}%
 \label{subsec:nav:aco}
 
-Ant colony optimisation copies the way ants find the shortest route between their
-nest and a food source~\cite{kumar2025comprehensive}. Artificial ants build
-candidate paths, and each one leaves a pheromone trail on the route it used.
-Short routes receive more pheromone, so they attract more ants in the next
-iteration, while the pheromone on the other routes slowly evaporates. The colony
-converges on a good tour without any central decision.
+Ant colony optimisation imitates how ants find the shortest route to a food
+source. Artificial ants build candidate paths and leave a pheromone trail on the
+route they used. A short route is travelled more often, so it accumulates more
+pheromone and attracts more ants, while the trails on the other routes evaporate.
+The colony converges on a good tour without any central
+decision~\cite{kumar2025comprehensive}.
 
-The method is effective for \gls{abb:uav} path planning, and it has been applied
-to low-altitude planning, to multi-\gls{abb:uav} missions, and to coverage
-planning~\cite{kumar2025comprehensive}. Its cost is the main drawback: it needs a
-large amount of data to find the optimal solution, its iterations are slow, and it
-requires much more simulation time than the other two~\cite{krayani2023goal}. It
-also struggles with local optima in complex
-scenarios~\cite{kumar2025comprehensive}.
+Its weakness is cost. The iterations are slow and the method needs a large amount
+of data before it converges~\cite{krayani2023goal}.
 
-\subsubsection*{Comparison}
 
-The three algorithms share the same logic and differ mainly in how they explore
-the search space and in what this exploration costs.
-\Cref{tab:nav:metaheuristics-comparison} uses the same criteria as the previous
-section.
 
-\begin{table}[!htb]
-    \centering
-    \caption{Comparison of the biologically inspired open-loop algorithms.}%
-    \label{tab:nav:metaheuristics-comparison}
-    \small
-    \setlength{\tabcolsep}{4pt}
-    \begin{tabular}{@{}>{\raggedright\arraybackslash}p{3.4cm}
-            >{\raggedright\arraybackslash}p{3.4cm}
-            >{\raggedright\arraybackslash}p{3.2cm}
-            >{\raggedright\arraybackslash}p{3.4cm}@{}}
-        \toprule
-        \textbf{Method} & \textbf{Solution quality} & \textbf{Computational cost}
-        & \textbf{Environment changes} \\
-        \midrule
-        Genetic algorithm           & Near-optimal, no guarantee      & Slow convergence          & Inefficient in real time    \\
-        \addlinespace
-        Particle swarm optimisation & Near-optimal, early convergence & Faster, good locally      & Variants for dynamic targets \\
-        \addlinespace
-        Ant colony optimisation     & Near-optimal                    & Slow iterations, long runs & Variants for dynamic 3D     \\
-        \bottomrule
-    \end{tabular}
 
-    \vspace{0.6em}
-    {\footnotesize Compiled from~\cite{kumar2025comprehensive, krayani2023goal}.}
-\end{table}
-
-\FloatBarrier
-
-None of the three dominates the other two, and the literature suggests that
-combining them may be necessary to solve \gls{abb:uav} path planning
-effectively~\cite{krayani2023goal}. This is why hybrid schemes are common, the
-most frequent one pairing a genetic algorithm for the global search with particle
-swarm optimisation for local refinement~\cite{krayani2023goal}.
-
-These methods remove the scalability barrier of the exact algorithms, but they do
-not remove the assumption behind them. They are optimisers, not decision loops:
-the candidate solutions, the cost function, and the set of targets must all be
-defined before the search starts. Variants designed for dynamic targets exist,
-yet they still re-optimise a model that is given in advance. 
 
 \section{Limits of Open-Loop Methods}%
 \label{sec:nav:openloop-limits}
 
-The two families presented above differ in the way they search for a solution.
-Classical algorithms explore a graph or solve an exact optimisation problem,
-while biologically inspired algorithms replace this exact search with a
-population that improves over iterations. They do not differ, however, in what
-they assume before the search starts. Four limits follow from that shared
-assumption.
+The two families presented above differ in the way they search for a solution,
+but not in what they assume before the search starts. Four limits follow from
+that shared assumption.
 
 \begin{itemize}[itemsep=0.5em]
-    \item \textbf{The environment must be known in advance}: Path planning begins
-          with a model of the environment, in which the obstacles are already
-          identified, and with a start point and a target that are already
-          fixed~\cite{kumar2025comprehensive}. Whatever form this model takes, a
-          graph, a grid, or a list of targets with their costs, it has to exist
-          before the flight.
+    \item \textbf{The environment must be known in advance}: Planning begins with
+          a model of the environment in which the obstacles are already
+          identified. Whatever form this model takes, a graph, a grid or a list
+          of targets with their costs, it has to exist before the
+          flight~\cite{kumar2025comprehensive}.
     \item \textbf{The plan does not adapt during the mission}: Offline planning
-          assumes a static environment~\cite{kumar2025comprehensive}, so a route
-          computed on the ground stays valid only as long as nothing changes.
-          Fixed waypoints and pre-computed paths are poorly suited to conditions
-          that evolve and to obstacles that were not known in advance, and this
-          increases the risk of collision~\cite{pore2026uavqr}.
+          assumes a static environment, so a route computed on the ground stays
+          valid only as long as nothing changes. Pre-computed paths handle poorly
+          the obstacles that were not anticipated, which raises the risk of
+          collision~\cite{pore2026uavqr}.
     \item \textbf{Replanning is expensive}: When something does change, most of
-          these methods have to start again. With the \glsxtrshort{abb:tsp}, the
-          appearance of a single new target forces the whole tour to be
-          recomputed from the beginning~\cite{krayani2023goal}. D* is the
-          exception, since it repairs only the affected part of the
-          path~\cite{krayani2023goal}, but even D* needs a complete initial path
-          to repair.
+          these methods start again from the beginning. D* is the exception,
+          since it repairs only the affected part of the path, but even D* needs
+          a complete initial path to repair~\cite{krayani2023goal}.
     \item \textbf{Coordination between drones is decided before take-off}: In a
-          multi-\gls{abb:uav} mission, the targets have to be assigned and the
-          workload balanced~\cite{kumar2025comprehensive}. With an open-loop
-          scheme, this assignment is part of the plan computed on the ground.
-          Allocation systems able to learn and adapt to environmental changes in
-          real time are presented in the literature as a future direction, not as
-          current practice~\cite{kumar2025comprehensive}.
+          multi-\gls{abb:uav} mission, the targets are assigned and the workload
+          balanced as part of the plan computed on the ground. Allocation able to
+          adapt in real time is presented in the literature as a future
+          direction, not as current practice~\cite{kumar2025comprehensive}.
 \end{itemize}
-
-These four limits are not independent. They all follow from the same requirement, namely that the environment be described before the flight. They therefore apply together whenever the layout is discovered during the mission, whenever obstacles move, or whenever new targets appear while the drone operates
-
-The next sections therefore turn to the closed-loop methods, which recompute the
-decision as new observations arrive. \Cref{sec:nav:learning} presents the
-learning-based approaches, \Cref{sec:nav:activeinf} active inference, and
-\Cref{sec:nav:genai} the recent use of language and vision-language models.
-
 \section{Closed-Loop Methods: Learning-Based Approaches}%
 \label{sec:nav:learning}
 
 Learning-based methods form the third family in the standard
-taxonomy~\cite{krayani2023goal}. They replace the explicit optimisation of the
-previous sections with a policy learned from interaction. The structure is a loop
-with four elements: an agent, an environment, an action, and a reward. The agent
-performs an action, the environment returns a new state and a reward, and both
-feed back into the next decision~\cite{chang2023review}.
+taxonomy~\cite{krayani2023goal}. They abandon the idea of computing a route
+altogether. Instead of planning, the agent tries an action, observes what happens
+and adjusts its behaviour, over and over, until it knows what to do in each
+situation. What it ends up with is not a path but a \emph{policy}: a rule that
+maps any situation to an action.
 
-The problem is usually written as a Markov decision process, or as its partially
-observable version, the \glsxtrshort{abb:pomdp}, when the drone cannot observe
-the true state of the world. A \glsxtrshort{abb:pomdp} is defined by the tuple
-$\langle S, A, T, R, O, Z, \gamma \rangle$, where $S$ is the set of states, $A$
-the set of actions, $T$ the transition probabilities, $R$ the reward, $O$ the set
-of observations, $Z$ the observation probabilities, and $\gamma$ the discount
-factor~\cite{sandino2020autonomous}. Since the state is hidden, the agent
-maintains a \emph{belief state}, a probability distribution over all possible
-states, updated from the history of actions, observations, and
-rewards~\cite{sandino2020autonomous}:
+The loop has four elements. The agent performs an action, the environment moves
+to a new state and returns a reward, and both feed back into the next
+decision~\cite{chang2023review}. The reward is the only signal the agent
+receives, and its entire behaviour is shaped by it.
 
-\begin{equation}
-    b(h) = \bigl( \prob[S_t = s^1 \mid H_t = h], \; \dots,
-    \; \prob[S_t = s^n \mid H_t = h] \bigr)
-    \label{eq:nav:belief}
-\end{equation}
+The problem is written as a Markov decision process. When the drone cannot
+observe the true state of the world, as happens indoors with noise and occlusion,
+it becomes a partially observable one: the agent no longer knows where it is and
+maintains a \emph{belief}, a probability distribution over the possible states,
+which it updates after every observation~\cite{sandino2020autonomous}. In both
+cases the objective is the same, namely to find the policy that maximises the sum
+of future rewards, each weighted by a discount factor that reduces the importance
+of what lies far ahead.
 
-The objective is then to find the policy $\pi$ that maps a belief to an action
-and maximises the discounted accumulated reward~\cite{sandino2020autonomous}:
+\subsection{Reinforcement Learning Methods}%
+\label{subsec:nav:rl}
 
-\begin{equation}
-    \pi^* = \argmax_{\pi} \; \esp_{\pi}\!\left[
-        \sum_{t=0}^{\infty} \gamma^t R_t \right]
-    \label{eq:nav:policy}
-\end{equation}
-
-The discount factor $\gamma \in [0, 1]$ controls how far into the future the
-agent looks. The methods below differ in how they compute or approximate this
-policy.
-
-\subsection{Q-Learning}%
-\label{subsec:nav:qlearning}
-
-Q-learning is the simplest of these methods. Instead of learning a policy
-directly, it learns a value $Q(s, a)$ for every state--action pair, which
-represents the expected return of taking action $a$ in state
-$s$~\cite{chang2023review}. The values are stored in a table and updated at each
-step:
+\textbf{Q-learning.} Rather than learning a policy directly, the agent learns a
+value $Q(s,a)$ for every state--action pair, which estimates the total return
+expected from taking action $a$ in state $s$~\cite{chang2023review}. These values
+are kept in a table, initialised arbitrarily, and corrected at every step:
 
 \begin{equation}
     Q(s_t, a_t) \leftarrow Q(s_t, a_t) + \alpha \Bigl[ r_t
@@ -438,326 +306,196 @@ step:
     \label{eq:nav:qlearning}
 \end{equation}
 
-In \gls{abb:uav} work, Q-learning has been used for trajectory design, for
-example to maximise the sum-rate, the quality of experience, or the fairness of
-user coverage in wireless networks~\cite{krayani2023goal}. Its main weakness is
-the speed of learning: each step produces a single update of the table, and the
-algorithm cannot explain why an action was wrong, which slows down
-convergence~\cite{krayani2022novel}.
+The bracket is the correction. The agent expected $Q(s_t, a_t)$; what it actually
+obtained is the immediate reward $r_t$ plus the best value available from the
+state it landed in, $\max_{a'} Q(s_{t+1}, a')$. The difference between the two is
+the error, and the learning rate $\alpha$ decides what fraction of it is applied.
+The discount factor $\gamma$ reduces the weight of what lies further ahead. Once
+the table has converged, acting consists in reading the line of the current state
+and taking the action with the highest value.
 
-\subsection{Deep Q-Networks and Their Variants}%
-\label{subsec:nav:dqn}
+Learning is slow, because each step corrects a single entry of the table, and the
+algorithm cannot explain why an action was wrong~\cite{krayani2022novel}.
 
-Deep Q-networks replace the table by a neural network, which allows the method to
-work with high-dimensional inputs such as images or maps. One example applies a
-Double Deep Q-Network with two convolutional models, fed at the same time with a
-local map around the drone and with the global map, the first handling collision
-avoidance and the second the general direction~\cite{chang2023review}.
+\textbf{Deep Q-networks.} A table becomes impossible when the state is an image
+or a map, since there are far too many states to enumerate. The table is
+therefore replaced by a neural network that takes the state as input and returns
+the value of each action. The network is trained on past transitions, stored and
+replayed in batches so that successive samples are no longer
+correlated~\cite{ding2024external}. The method still needs a large number of
+samples, and the action set must stay discrete, since the network returns one
+value per action.
 
-Two mechanisms make training possible. Past transitions are stored and replayed
-in mini-batches, which breaks the strong correlation between successive samples,
-and reusing this past experience reduces the amount of data needed to train the
-model~\cite{ding2024external}. Even with these mechanisms, the method still
-requires a large number of samples, and it remains limited to discrete actions.
+\textbf{Policy-gradient and actor-critic methods.} These learn the policy itself
+instead of the values, which lifts the discrete-action restriction and allows a
+continuous output such as a velocity or a heading. Two networks are used: the
+\emph{actor} produces the action, and the \emph{critic} estimates how good it
+was. The critic's judgement is what adjusts the actor. Training is unstable,
+because both networks change at once, so a delayed copy of each is kept as a
+fixed reference~\cite{ding2024external}.
 
-\subsection{Policy-Gradient and Actor-Critic Methods}%
-\label{subsec:nav:policygradient}
-
-Policy-gradient methods optimise the policy directly instead of learning a value
-table, which makes them suitable for continuous actions such as a velocity or a
-heading. They use two networks: an actor that produces the action from the
-current state, and a critic that estimates the value of that
-action~\cite{ding2024external}.
-
-\Glsxtrfull{abb:ddpg} follows this structure and has been used for continuous
-\gls{abb:uav} trajectory optimisation~\cite{ding2024external}. Training is
-unstable by nature, so target networks are added and updated slowly through a
-soft update rule, which keeps them behind the main networks and stabilises the
-process~\cite{ding2024external}.
-
-\subsection{Multi-Agent Reinforcement Learning}%
-\label{subsec:nav:marl}
-
-Multi-agent reinforcement learning extends this framework to several drones
-acting in the same environment. Each agent has its own local actor-critic
-network, selects its action from its own local state, and receives a global
-reward that measures the performance of the whole
-system~\cite{ding2024external}. Because the agents are fully decentralised, no
-central coordinator is needed, which simplifies the architecture and reduces the
-communication overhead~\cite{ding2024external}.
-
-Hybrid schemes combine several algorithms when the decisions are of different
-types. One framework uses a multi-agent actor-critic for the discrete part of the
-problem and \glsxtrshort{abb:ddpg} for the continuous
-trajectory~\cite{ding2024external}.
-
-\subsection{Hierarchical Reinforcement Learning}%
-\label{subsec:nav:hrl}
-
-Hierarchical reinforcement learning decomposes a long mission into a hierarchy of
-sub-tasks, each governed by its own policy. A high-level policy decides which
-sub-task to execute, and a low-level policy executes it until a termination
-condition is reached. The aim is to handle long-horizon missions, where a single
-flat policy would need too many steps to learn anything useful.
+\textbf{Multi-agent reinforcement learning.} The framework is extended to several
+drones. Each keeps its own actor-critic network and decides from its own local
+state, but the reward measures the performance of the whole team, which is what
+pushes the agents to cooperate. No central coordinator is needed, so the
+communication overhead stays low~\cite{ding2024external}.
 
 \subsection{Online POMDP Solvers}%
 \label{subsec:nav:pomdp-solvers}
 
-Online \glsxtrshort{abb:pomdp} solvers belong to the same decision framework but
-do not learn a policy. They compute the next action directly during the flight,
-by running Monte Carlo simulations from the current belief and selecting the
-action with the best estimated value. The Adaptive Belief Tree follows this
-principle and has been used for autonomous navigation in cluttered,
-\gls{abb:gps}-denied environments, where sensor noise and occlusion prevent the
-drone from observing the true state~\cite{sandino2020autonomous}.
+These solvers use the same formalism but learn nothing at all. There is no
+training phase and no policy: at every step, the agent simulates what would
+happen after each candidate action, starting from its current belief, and takes
+the action whose simulated outcome is best. The whole computation is repeated at
+the next step, from the updated belief.
 
-This avoids the training phase entirely, but it moves the cost to the flight
-itself. Running an expensive decision algorithm together with object detection on
-the limited onboard hardware of a small drone is identified as an open
-challenge~\cite{sandino2020autonomous}.
+The Adaptive Belief Tree follows this principle and has been used for navigation
+in cluttered, \gls{abb:gps}-denied environments, where noise and occlusion
+prevent the drone from observing the true state~\cite{sandino2020autonomous}.
+
+Removing the training phase moves the cost to the flight itself. Running these
+simulations together with object detection on the onboard computer of a small
+drone is an open challenge~\cite{sandino2020autonomous}.
 
 \subsection{Limits of Learning-Based Approaches}%
 \label{subsec:nav:learning-limits}
 
-Four limits are reported across this family.
-
 \begin{itemize}[itemsep=0.5em]
-    \item \textbf{Training cost}: Once the network is trained, a solution is
-          produced quickly, but training itself requires a large number of
-          samples and several epochs, which takes considerable
+    \item \textbf{Training cost}: A trained network answers quickly, but training
+          itself requires a large number of samples and considerable
           time~\cite{krayani2026bayesian}.
-    \item \textbf{Poor generalisation}: Most machine learning and reinforcement
-          learning methods cannot adapt to situations that were not part of their
-          training set. Adapting them requires extensive retraining, which is a
-          problem for real-time
-          decision-making~\cite{krayani2023goal, krayani2026bayesian}.
-    \item \textbf{Onboard computation}: Decision-making and perception must run
-          together on hardware with limited resources, and this remains an open
+    \item \textbf{Poor generalisation}: These methods adapt badly to situations
+          absent from their training set, and adapting them means retraining
+          them~\cite{krayani2023goal, krayani2026bayesian}.
+    \item \textbf{Onboard computation}: Decision and perception must run together
+          on limited hardware, which remains an open
           difficulty~\cite{sandino2020autonomous}.
     \item \textbf{Reward design}: The behaviour of the agent depends entirely on
-          the reward function, which has to be designed by hand. A typical
-          formulation combines several weighted objectives with penalty
-          terms~\cite{ding2024external}, and these weights must be tuned for each
-          mission.
-\end{itemize}
-
-
-
+          a reward function written by hand, whose weights must be tuned for each
+          mission~\cite{ding2024external}.
+\end{itemize}    
 \section{Closed-Loop Methods: Active Inference}%
 \label{sec:nav:activeinf}
 
-Active inference comes from neuroscience. The starting idea is that the brain
-does not passively receive information: it constantly predicts what it is about
-to perceive, and it reacts when reality does not match the prediction. This
-behaviour can be described by a single rule, the minimisation of what is called
-free energy~\cite{ding2024external}. Researchers in robotics then reused this
-rule to control machines~\cite{ji2023delay}.
+Active inference comes from neuroscience. The idea is that the brain does not
+passively receive information: it constantly predicts what it is about to
+perceive and reacts when reality does not match the prediction. This behaviour is
+described by a single rule, the minimisation of what is called free
+energy~\cite{ding2024external}, and robotics later reused that rule to control
+machines~\cite{ji2023delay}.
 
-To understand what changes compared with the previous section, it helps to
-compare the two. A reinforcement learning agent learns because the environment
-gives it a reward, and its whole behaviour depends on that
-signal~\cite{ding2024external}. An active inference agent receives no reward. It
-carries inside itself a model of the world, that is, an expectation of what it
-should observe. Its only objective is to reduce the difference between this
-expectation and what its sensors actually report. This is why the framework is
-often described as a filter plus a controller~\cite{ji2023delay}.
+The difference with the previous section lies in the objective. A reinforcement
+learning agent depends entirely on the reward the environment returns. An active
+inference agent receives no reward: it carries an internal model of the world, an
+expectation of what it should observe, and its only goal is to reduce the gap
+between that expectation and what its sensors report.
 
 \subsection{The Free Energy Principle}%
 \label{subsec:nav:fep}
 
-The principle says that an agent builds a model of its environment from what its
-sensors measure, and then acts so that its observations stay close to what it
-expects~\cite{ji2024integration}.
+When a gap appears between the model and reality, the agent has two ways of
+reducing it. It can update its beliefs to match the observations, or it can act
+on the world so that the observations match the model again. The two mechanisms
+form a loop: what the agent believes determines what it does, and what it does
+changes what it observes~\cite{ji2024integration}.
 
-When a difference appears between the model and reality, the agent has two ways
-of reducing it. It can change its mind, which means updating its beliefs to match
-the observations. Or it can change the world, which means moving or acting so
-that the observations match the model again. The two mechanisms work together in
-a loop: what the agent believes determines what it does, and what it does changes
-what it observes~\cite{ji2024integration}.
-
-Ideally, the agent should minimise its \emph{surprise}, meaning how unexpected
-its current observation is. This cannot be computed in practice, because it would
-require considering every possible cause of that
-observation~\cite{ji2024integration}. This is why the framework uses two
-quantities that can actually be computed: one for understanding the present, one
-for choosing the future.
+The quantity to minimise is \emph{surprise}, meaning how unexpected the current
+observation is. It cannot be computed, because that would require considering
+every possible cause of an observation. The framework therefore replaces it by
+two quantities that can be computed: one for understanding the present, one for
+choosing the future~\cite{ji2024integration}.
 
 \subsection{Variational Free Energy}%
 \label{subsec:nav:vfe}
 
-Variational free energy is used to answer the question ``where am I and what is
-happening around me?''.
+Variational free energy answers the question \emph{where am I and what is
+happening around me?}. The drone cannot know the true state of the world, only
+what its sensors show, so it maintains an approximate answer and brings it as
+close as possible to the truth. Free energy measures the distance that
+remains~\cite{ji2024integration}.
 
-The difficulty is that the drone cannot know the true state of the world, only
-what its sensors show. The exact answer cannot be computed, so an approximate one
-is used instead, written $q(z_t)$, and the agent brings it as close as possible
-to the truth~\cite{ji2024integration}. Free energy measures this remaining
-distance:
-
-\begin{equation}
-    F_{\text{AIF}} = D_{\mathrm{KL}}\bigl( q(z_t) \,\|\, p(x_t \mid y_t) \bigr)
-    - \ln p(y_t, a_t)
-    \label{eq:nav:vfe}
-\end{equation}
-
-The first term is a mathematical distance between what the agent believes and the
-best possible explanation of its observations. The second is the quality of the
-model itself.
-
-This single quantity plays two roles. If the agent minimises it by changing its
-beliefs, it is doing perception. If it minimises it by changing its actions, it
-is doing control~\cite{ji2024integration}. In both cases, the effect is the same:
-the model explains the observations better. In practice, free energy works like
-the loss function of a neural network, a number that the system tries to push
-down~\cite{ji2024integration}.
+The same quantity serves twice. Minimising it by changing beliefs is perception;
+minimising it by changing actions is control. In both cases the model ends up
+explaining the observations better. In practice it plays the role of a loss
+function: a number the system pushes down~\cite{ji2024integration}.
 
 \subsection{Expected Free Energy}%
 \label{subsec:nav:efe}
 
-Variational free energy only looks at the present. It says nothing about which
-action to take next, because it uses observations the agent has already
-received~\cite{ding2024external}. To plan ahead, the framework uses a second
-quantity, the expected free energy. For each possible action, the agent imagines
-what would happen, computes the free energy that this action would produce, and
-then chooses the action with the lowest value.
+Variational free energy only looks at the present, so it says nothing about the
+next action~\cite{ding2024external}. Expected free energy fills that gap: for
+each candidate action, the agent imagines what would follow, computes the free
+energy that action would produce, and keeps the lowest.
 
-The interesting part is what this quantity contains. When a drone minimises
-expected free energy, it selects actions that combine two behaviours at once:
-gathering information about the environment, and moving towards its
-objective~\cite{wang2026bridging}. The formula shows these two behaviours as two
-separate terms~\cite{fang2024resource}:
-
-\begin{equation}
-    \begin{aligned}
-        G_{\text{AIF}} = {} & \underbrace{-\,\esp_{q(o_t)}\bigl[
-            D_{\mathrm{KL}}\bigl[ q(s_t \mid o_t) \,\|\,
-                q(s_t \mid s_{t-1}, a_{t-1}) \bigr]
-        \bigr]}_{\text{belief error}}                                  \\[0.4em]
-                            & \underbrace{-\,\esp_{q(o_t)}\bigl[
-            \log p(\tilde{o}_t) \bigr]}_{\text{preference}}
-    \end{aligned}
-    \label{eq:nav:efe}
-\end{equation}
-
-The first term is high when an action would teach the agent something new, so it
-pushes towards exploration. The second term is high when an action brings the
-agent closer to the situation it wants, so it pushes towards the
-goal~\cite{fang2024resource}.
+What makes this quantity interesting is that it splits into two terms. The first
+is high when an action would teach the agent something new, which pushes towards
+exploration. The second is high when an action brings the agent closer to the
+situation it wants, which pushes towards the goal~\cite{fang2024resource}. A
+drone minimising expected free energy therefore gathers information and pursues
+its objective at the same time~\cite{wang2026bridging}.
 
 This is the main attraction of the framework. In reinforcement learning,
-exploration usually has to be added by hand, through an extra bonus in the
-reward. Here, it comes out of the same equation as the goal.
+exploration has to be added by hand through a bonus in the reward. Here it comes
+out of the same expression as the goal.
 
-\subsection{Active Inference for UAV Systems}%
-\label{subsec:nav:aif-uav}
-
-Several \gls{abb:uav} applications of this framework have been reported.
-
-\begin{itemize}[itemsep=0.5em]
-    \item \textbf{Resource allocation and anti-jamming}: Active inference has
-          been applied to spectrum allocation for a drone facing a jammer. The
-          reported advantage is speed of learning: the agent makes several
-          updates at each step and can identify why an action was wrong, whereas
-          Q-learning makes a single update without that
-          information~\cite{krayani2022novel}.
-    \item \textbf{Goal-directed trajectory design}: A model of the world is built
-          before the mission from solved instances of the travelling salesman
-          problem with profits. The drone then uses this model to infer its route
-          when it meets a new situation. The method is reported as faster, more
-          stable, and better at generalising than
-          Q-learning~\cite{krayani2023goal}. The same principle has been used for
-          anti-jamming trajectories, with an expert optimiser producing the
-          training examples~\cite{krayani2026bayesian}.
-    \item \textbf{Deep active inference}: For more complex tasks, neural networks
-          are used to approximate the probabilities involved in free energy,
-          which extends the framework beyond small
-          problems~\cite{ding2024external}.
-    \item \textbf{Low-level control}: Active inference has also been used to make
-          a quadrotor follow a trajectory, acting as a state estimator combined
-          with a controller. A variant handles the delay between a command and
-          its effect, which improves accuracy~\cite{ji2024integration}.
-    \item \textbf{Multi-UAV coordination}: Recent work places free-energy-based
-          inference inside the decision nodes of behaviour trees, so that several
-          drones can update their policies during the mission and adapt to each
-          other~\cite{wang2026bridging}. Active inference has also been proposed
-          for trajectory design in \gls{abb:uav}
-          swarms~\cite{arshid2024active}.
-\end{itemize}
 
 \subsection{Limits of Active Inference}%
 \label{subsec:nav:aif-limits}
 
-Four limits appear in this literature.
-
 \begin{itemize}[itemsep=0.5em]
-    \item \textbf{The model of the world must be built first}: The agent cannot
-          infer anything without an internal model of its environment. In the
-          trajectory design work, this model is learned before the mission from
-          examples produced by an expert
-          optimiser~\cite{krayani2023goal, krayani2026bayesian}. The difficulty
-          is therefore moved, not removed.
-    \item \textbf{The exact computation is impossible}: The true state of the
-          world cannot be computed directly, so the framework always works with
-          approximations, and in practice assumes that the distributions are
+    \item \textbf{The model of the world must be built first}: Nothing can be
+          inferred without an internal model. In the trajectory design work, it
+          is learned before the mission from examples produced by an expert
+          optimiser, so the difficulty is moved rather than
+          removed~\cite{krayani2023goal, krayani2026bayesian}.
+    \item \textbf{Exact computation is impossible}: The framework always works
+          with approximations, and in practice assumes that the distributions are
           Gaussian~\cite{ji2024integration}.
-    \item \textbf{Scaling up requires neural networks}: Applying the framework to
-          complex tasks means approximating free energy with neural
-          networks~\cite{ding2024external}, which brings back part of the
-          training cost that active inference was supposed to avoid.
+    \item \textbf{Scaling up requires neural networks}: Which brings back part of
+          the training cost that active inference was supposed to
+          avoid~\cite{ding2024external}.
     \item \textbf{Multi-agent use is still rare}: The framework works well for a
-          single agent, but its use for coordinating several drones remains
-          limited, and existing frameworks are often centralised, which makes
-          them hard to integrate into modular
-          architectures~\cite{wang2026bridging}.
+          single agent, but existing multi-drone frameworks are centralised,
+          which makes them hard to place inside a modular
+          architecture~\cite{wang2026bridging}.
 \end{itemize}
 
 The next section presents a more recent family of closed-loop methods, where the
 internal model of the environment is replaced by a pre-trained language or
 vision-language model.
-
 \section{Closed-Loop Methods: Language and Vision-Language Models}%
 \label{sec:nav:genai}
 
-The two previous families both need a model of the world, and both have to obtain
-it. Reinforcement learning builds it implicitly, through a large number of
-trials. Active inference receives it from the engineer, or learns it offline from
-examples produced by an expert. The family presented here takes a different
-route: the model already exists. It is a network trained on very large amounts of
-image and text data, and it carries a general knowledge of the world that can be
-reused without any training specific to the task. This property is what the
-literature calls zero-shot: the system is applied directly to a new problem,
-without fine-tuning~\cite{radford2021learning, yokoyama2024vlfm}.
+The two previous families both need a model of the world and both have to obtain
+it: reinforcement learning builds it through a large number of trials, active
+inference receives it from the engineer. The family presented here takes a
+different route, because the model already exists. It is a network trained on
+very large amounts of image and text data, and it carries a general knowledge of
+the world that can be reused without any training specific to the task. This
+property is what the literature calls zero-shot~\cite{radford2021learning}.
 
-What changes from one method to another is the role this pre-trained model plays
-inside the decision loop. Three roles can be distinguished, and each one gives
-the robot more autonomy than the previous one.
+What changes from one method to another is the role this model plays inside the
+decision loop. Three roles can be distinguished, each giving the robot more
+autonomy than the previous one.
 
 \subsection{The Model as an Instruction Interpreter}%
 \label{subsec:nav:genai-interface}
 
 In the first role, the model translates what a human asked for. The user
 describes the task in ordinary language, and the model produces a plan written in
-a command set defined for the robot. The method relies on the prompt: it contains
-the list of available functions, a few worked examples, and the rules the model
-must follow when it writes its answer~\cite{vemprala2023chatgpt}. TypeFly applies
-this to a drone. Its prompt gathers the user request, the current state of the
-scene, the syntax of the command language, and several examples showing how to
-build an executable solution~\cite{chen2024typefly}.
+a command set defined for the robot. Everything depends on the prompt, which
+lists the available functions, shows a few worked examples, and states the rules
+the answer must follow~\cite{vemprala2023chatgpt}. TypeFly applies this to a
+drone, adding the current state of the scene to that
+prompt~\cite{chen2024typefly}.
 
-A difficulty appears immediately. The language model knows a great deal about the
-world, but it knows nothing about the machine it controls. It can therefore
-propose an action that is sensible in principle and impossible in practice,
-because the robot cannot perform it or because the situation does not allow
-it~\cite{ahn2022saycan}.
-
-SayCan answers this problem by combining two scores. The language model estimates
-how useful each candidate action is for the requested task, and a value function,
-learned beforehand, estimates how likely that action is to succeed from the
-current state. The product of the two selects the action to execute. The
-important point is that the language model itself is never retrained: it is
-grounded through value functions that already exist, which keeps the approach
-zero-shot~\cite{ahn2022saycan}.
+The difficulty is that the model knows the world but not the machine it controls.
+It can propose an action that makes sense in principle and is impossible in
+practice. SayCan answers this by combining two scores: how useful the language
+model judges an action to be, and how likely a previously learned value function
+judges it to succeed from the current state. The product of the two selects the
+action, and the language model itself is never
+retrained~\cite{ahn2022saycan}.
 
 In this role, the robot executes rather than decides. Something still has to tell
 it what to do.
@@ -765,64 +503,53 @@ it what to do.
 \subsection{The Model as a Semantic Sensor}%
 \label{subsec:nav:genai-vlm}
 
-In the second role, the model interprets what the camera sees. This raises a
-practical problem: a language model does not see. For it to reason about a scene,
-that scene must first be described to it.
+In the second role, the model interprets what the camera sees. A language model
+does not see, so the scene must first be described to it, and there are two ways
+of doing so.
 
-The first way of doing this is a discrete description. A light detector produces
-the list of objects visible in the image, with their bounding boxes, and this
-list is inserted into the prompt. TypeFly uses YOLOv8 for this purpose: the
-object type is used by the language model to reason about the task, while the
-bounding box is used to locate the target and approach
-it~\cite{chen2024typefly}. The approach is simple and runs on board, but it has
-two costs. The vocabulary is closed, so the robot can only reason about
-categories the detector was trained on. More importantly, converting the image
-into text creates a bottleneck: every visual cue must pass through the detector
-before it can be used at all~\cite{yokoyama2024vlfm}.
+The first is a discrete description. A light detector lists the objects visible
+in the image with their bounding boxes, and this list enters the prompt. TypeFly
+uses YOLOv8 this way: the object type feeds the reasoning, the bounding box
+locates the target~\cite{chen2024typefly}. The vocabulary is closed, however, so
+the robot only reasons about categories the detector was trained on, and every
+visual cue has to pass through the detector before it can be
+used~\cite{yokoyama2024vlfm}.
 
-The second way avoids this conversion. CLIP trains an image encoder and a text
-encoder together, with a single objective: given a batch of images and a batch of
-texts, predict which pairs actually go together~\cite{radford2021learning}. After
-training, both modalities live in the same space, and the only operation needed
-to compare an image with a description is a dot product between their two
-vectors~\cite{radford2021learning}. This has a direct consequence for robotics. A
-class no longer has to be a label seen during training; it can be any sentence.
-The text encoder turns the names or the descriptions of the target classes into a
-classifier, which is how zero-shot recognition becomes
+The second avoids this conversion. CLIP trains an image encoder and a text
+encoder together on a single objective: given a batch of images and a batch of
+texts, predict which pairs go together. Both modalities then live in the same
+space, so comparing an image with a description reduces to a dot product between
+two vectors. A class no longer has to be a label seen during training; it can be
+any sentence, which is how zero-shot recognition becomes
 possible~\cite{radford2021learning}.
 
 \subsection{The Model as an Exploration Guide}%
 \label{subsec:nav:genai-navigation}
 
 In the third role, the model orients the decision itself. There is no human
-instruction and no map. The robot is given the name of a target and must explore
-an environment it has never seen in order to find it~\cite{yokoyama2024vlfm}.
+instruction and no map: the robot is given the name of a target and must explore
+an environment it has never seen in order to find it.
 
 The geometric basis of this behaviour is frontier-based exploration. A frontier
 is a boundary between the explored region of the map and the region still
-unknown, on a map the agent builds progressively as it moves. Exploring means
-going to these boundaries. Many rules have been proposed to decide which frontier
-to visit next, and classical methods select the one expected to bring the largest
-amount of new information~\cite{yokoyama2024vlfm}.
+unknown, on a map the agent builds as it moves, and exploring means going to
+these boundaries. Classical methods select the frontier expected to reveal the
+largest amount of new information~\cite{yokoyama2024vlfm}.
 
-Semantic guidance replaces this criterion. Instead of asking which frontier
-reveals the most, the robot asks which frontier most likely leads to the target.
-Two realisations illustrate this shift. L3MVN describes in text the objects
-located around each frontier, then asks a language model which of these
-descriptions best matches the target, using the common-sense knowledge the model
-acquired during pre-training~\cite{yu2023l3mvn}. VLFM removes the text step
-entirely. A vision-language model computes a cosine similarity directly between
-the current RGB image and a prompt containing the target, and this score is
-projected onto a top-down value map, where every explored pixel carries a
-semantic value. The frontier with the highest value becomes the next
+Semantic guidance replaces that criterion: instead of asking which frontier
+reveals the most, the robot asks which one most likely leads to the target. L3MVN
+describes in text the objects around each frontier and asks a language model
+which description best matches the target~\cite{yu2023l3mvn}. VLFM removes the
+text step: a vision-language model computes a similarity between the current
+image and a prompt containing the target, and this score is projected onto a
+top-down value map, whose highest frontier becomes the next
 waypoint~\cite{yokoyama2024vlfm}.
 
-Both approaches report strong results. VLFM reaches state-of-the-art performance
-on three photorealistic datasets, without task-specific training and without a
-pre-built map, and it was deployed on a Boston Dynamics Spot robot in an office
-building, with all its models running in real time on a single
-laptop~\cite{yokoyama2024vlfm}. L3MVN outperforms map-based methods in success
-rate and in generalisation, and was also validated on a real
+Both report strong results. VLFM reaches state-of-the-art performance on three
+photorealistic datasets without task-specific training and without a pre-built
+map, and was deployed on a Boston Dynamics Spot robot in an office
+building~\cite{yokoyama2024vlfm}. L3MVN outperforms map-based methods in success
+rate and generalisation, and was also validated on a real
 robot~\cite{yu2023l3mvn}.
 
 In this role, the pre-trained model neither executes nor describes. It selects
@@ -831,32 +558,22 @@ where the robot goes.
 \subsection{Limits of Language-Based Approaches}%
 \label{subsec:nav:genai-limits}
 
-Six limits emerge from these works.
-
 \begin{itemize}[itemsep=0.5em]
-    \item \textbf{Computation and latency}: Relying on a language model requires
-          a large amount of computing power, which often means connecting the
-          robot to a remote server~\cite{yokoyama2024vlfm}. TypeFly runs its
-          model on an edge server reached over Wi-Fi~\cite{chen2024typefly}.
-    \item \textbf{Cost of the prompt}: Detailed prompts, with examples and
-          explanations, are more expensive than short ones, and this cost is a
-          direct consequence of the method itself~\cite{chen2024typefly}.
-    \item \textbf{Reliability of the output}: Nothing guarantees that the action
-          proposed by the model can actually be executed, which is why a
-          grounding mechanism is required~\cite{ahn2022saycan}.
+    \item \textbf{Computation and latency}: These models require a large amount
+          of computing power, which usually means running them on a remote
+          server, and detailed prompts are more expensive than short
+          ones~\cite{chen2024typefly}.
+    \item \textbf{Reliability of the output}: Nothing guarantees that a proposed
+          action can be executed, which is why a grounding mechanism is
+          required~\cite{ahn2022saycan}.
     \item \textbf{Representation tied to a single target}: The value map built by
-          VLFM contains only the semantic information relevant to the current
-          target, so it cannot be reused for another object or for a different
-          navigation task~\cite{yokoyama2024vlfm}.
-    \item \textbf{Assumptions about the scene}: VLFM assumes that the target is
-          visible from the default height of the robot camera, and it does not
-          handle changes of floor, which causes a measurable share of its
-          failures~\cite{yokoyama2024vlfm}.
-    \item \textbf{Validation}: Results are obtained mainly on indoor household
-          benchmarks, and real deployments remain limited to a few
-          platforms~\cite{yokoyama2024vlfm, yu2023l3mvn}.
+          VLFM holds only the information relevant to the current target, so it
+          cannot be reused for another one~\cite{yokoyama2024vlfm}.
+    \item \textbf{Validation}: Results come mainly from indoor household
+          benchmarks, on ground platforms, and VLFM further assumes that the
+          target is visible from the default camera height and does not handle
+          changes of floor~\cite{yokoyama2024vlfm, yu2023l3mvn}.
 \end{itemize}
-
 \section{Comparative Synthesis and Identified Gaps}%
 \label{sec:nav:synthesis}
 
@@ -921,56 +638,50 @@ tested on a robot, and how it was evaluated.
 
 \FloatBarrier
 
-The table shows a clear split. The works that need nothing before the mission are
-also the works that choose their target during the flight. Among them, only four
-use the meaning of what they see to decide where to go. All the others decide
-from a distance, a time, or a numerical reward. Four gaps follow from this.
+\paragraph{No system inspects a warehouse it does not know.} Inventory systems
+receive the layout of the aisles before take-off and follow a route computed on
+the ground. The systems that explore without a map do not perform inventory, and
+none of them flies: they are ground robots looking for one designated object in a
+house or an office, and they stop as soon as they find
+it~\cite{yokoyama2024vlfm, yu2023l3mvn}. The only drone that reasons about the
+content of the scene executes an instruction given by a human rather than
+deciding for itself~\cite{chen2024typefly}.
 
-The first gap concerns the way several agents share the work. In every
-multi-agent work of the table, this sharing is decided before take-off. It can be
-a central schedule~\cite{guinand2021uavugv}, a fixed split between two
+\paragraph{No system redistributes the work when a drone stops flying.} The
+division is decided on the ground, through a central
+schedule~\cite{guinand2021uavugv}, a fixed split between two
 drones~\cite{pore2026uavqr}, or a leader that sends the waypoints to the
-group~\cite{chandran2024network}. In none of these cases can the drones
-redistribute the targets from what they find during the flight. The literature
-says the same thing more generally: allocation systems that adapt in real time
-are described as a future direction, not as something that exists
-today~\cite{kumar2025comprehensive}.
+group~\cite{chandran2024network}. Once the vehicles are in the air, nothing
+changes hands. If one of them stops flying, the share it was holding is left with
+no owner.
 
-The second gap appears when we cross two columns of the table: the criterion of
-choice and the number of agents. The four works that decide from the meaning of
-the scene all use a single agent. The four multi-agent works all decide from a
-coverage time, a path length, a reward, or a free energy, never from what they
-actually see. No line of the table has both. This matches what the literature
-reports, since cooperative inference is still rarely applied to several drones,
-and the existing frameworks are usually centralised, which makes them hard to
-place inside a modular architecture~\cite{wang2026bridging}.
+\paragraph{No system allocates targets from what the drones discover.}
+Multi-drone systems avoid duplicated readings because the division was fixed
+before take-off, and none of them reassigns a target that appears during the
+mission. The literature states the same thing: allocation able to adapt in real
+time is described as a future direction rather than as current
+practice~\cite{kumar2025comprehensive}.
 
-The third gap concerns the platform. Only two works start from nothing and decide
-where to go during the mission by reasoning about what they
-see~\cite{yokoyama2024vlfm, yu2023l3mvn}. Both were tested on ground robots, in
-houses and in an office building. A drone is not the same case. It moves in three
-dimensions, it flies for only twenty to thirty
-minutes~\cite{mohsan2023unmanned}, and running a decision algorithm and a
-perception module together on its small onboard computer is still an open
-problem~\cite{sandino2020autonomous}. There is no guarantee that results obtained
-on the ground also work in the air.
+\paragraph{No system knows when the inventory is complete.} Systems that follow a
+computed route stop at the end of that route. Ground robots that explore stop as
+soon as they have found the object they were looking for, since finding it is
+their mission~\cite{yokoyama2024vlfm}. None of them estimates what remains to be
+read in order to decide by itself when to stop.
 
-The fourth gap concerns the task. These two works solve Object Goal Navigation:
-the robot is given the name of one object, and the mission ends as soon as it
-reaches one example of it~\cite{yokoyama2024vlfm}. An inspection mission is
-different. It must cover the whole space instead of stopping at the first
-success, and it must handle several kinds of target at the same time. The authors
-of VLFM say this themselves: their value map only holds the information that
-concerns the current target, so it cannot be reused for another
-one~\cite{yokoyama2024vlfm}.
+\paragraph{No system decides from what it sees and cooperates at the same time.}
+Two separate worlds coexist. On one side, ground robots choose their direction
+from the content of the scene, but they work alone and look for a single object
+in a house or an office~\cite{yokoyama2024vlfm, yu2023l3mvn}. On the other,
+drones perform inventory as a team, but they decide from a time, a distance or a
+score, and they follow a route computed before take-off. No work carries the
+reasoning about the scene from the first world into the second.
 
-These four gaps describe the same missing system. Methods that explore an unknown
-space by reasoning about what they see do exist, but they run on one ground robot
-and look for one object. Methods that coordinate several drones also exist, but
-they share the work using a plan made before take-off, and they ignore what the
-scene contains. No work joins the two sides. There is no system where several
-drones explore an unknown warehouse, build several kinds of target from what they
-observe, and share these targets between them while the mission is running.
+\bigskip
+
+Taken together, these gaps describe one missing system. There is no system in
+which several drones explore an unknown warehouse, produce their targets from
+what they observe, and share those targets between them while the mission is
+running.
 
 \section{Chapter Conclusion}%
 \label{sec:nav:conclusion}
@@ -981,22 +692,22 @@ criterion, the moment when the path is decided, which separates the methods that
 compute the whole route before take-off from those that choose the next move
 during the flight.
 
-The open-loop methods came first, in their classical form and in their
-biologically inspired form. They search in different ways, but they need the same
-thing: a description of the workspace before the flight. When something changes,
-they have to replan, often from the beginning. The closed-loop methods came next,
-in three families. Learning-based methods handle the unknown, but they generalise
-poorly outside their training conditions. Active inference removes the external
-reward, but it needs a model of the world that must be built first. Language and
-vision-language models are the only family that explores an unknown space without
-a map and without specific training, by choosing where to go from the meaning of
-what the camera sees.
+The open-loop methods came first, in their classical and biologically inspired
+forms. They search in different ways but need the same thing, a description of
+the workspace before the flight, and when something changes they replan from the
+beginning. The closed-loop methods came next, in three families. Learning-based
+methods handle the unknown but generalise poorly outside their training
+conditions. Active inference removes the external reward but needs a model of the
+world that must be built first. Language and vision-language models are the only
+family that explores an unknown space without a map and without specific
+training, by choosing where to go from the meaning of what the camera sees.
 
-Comparing the individual works then revealed four gaps. The work is always shared
-before the mission starts. Semantic reasoning and cooperation never appear
-together. The methods that reason about an unknown space have only been tested on
-ground robots. And they solve a task, finding one object and stopping, that is
-not the task an inspection mission needs.
+Comparing the individual works then revealed five gaps. No system inspects a
+warehouse it does not know. No system redistributes the work when a drone stops
+flying, nor allocates targets from what the drones discover. No system knows when
+the inventory is complete. And no system decides from what it sees while
+cooperating with others, since the two capabilities belong to two separate bodies
+of work.
 
 These gaps define the space in which the rest of this work is placed. The next
 part presents the system built to fill it, its architecture, and the choices made
