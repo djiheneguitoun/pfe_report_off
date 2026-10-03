@@ -116,6 +116,15 @@
      \stepcounter{textcitecount}}}
 \makeatother
 
+% Webographie (webography.tex) : sites web des outils, numérotés [W1], [W2]...
+% dans l'ordre de citation. Une entrée : \webentry{clé}{nom}{url} ; dans le
+% texte, \webcite{clé} donne « [W1] », cliquable vers l'entrée.
+\newlist{webography}{enumerate}{1}
+\setlist[webography]{label={[W\arabic*]}, ref={W\arabic*}, widest=00,
+  leftmargin=*, align=left, itemsep=0pt}
+\newcommand{\webentry}[3]{\item\label{web:#1}#2. \url{#3}}
+\newcommand{\webcite}[1]{\hyperref[web:#1]{[\ref*{web:#1}]}}
+
 \usepackage{etoolbox}
 
 \usepackage{caption}
@@ -198,13 +207,21 @@
 % pas après \section). Conséquence : \ref/\Cref{part:...} et {chap:...} rendent
 % « ?? ». On enveloppe \@chapter et \@part (capturés à \AtBeginDocument, donc
 % APRÈS toutes les redéfinitions de babel) pour réinscrire les deux labels.
+% Après \appendix, le type cleveref est « appendix » (et non « chapter »), comme
+% le fait cleveref lui-même, pour que \Cref{app:...} rende « Appendix A ».
 \makeatletter
+\newif\ifbidifix@inappendix
+\appto\appendix{\global\bidifix@inappendixtrue}
 \AtBeginDocument{%
   \let\bidifix@chapter\@chapter
   \def\@chapter[#1]#2{%
     \bidifix@chapter[#1]{#2}%
     \protected@edef\@currentlabel{\csname p@chapter\endcsname\thechapter}%
-    \protected@edef\cref@currentlabel{[chapter][\the\value{chapter}][]\thechapter}%
+    \ifbidifix@inappendix
+      \protected@edef\cref@currentlabel{[appendix][\the\value{chapter}][2147483647]\thechapter}%
+    \else
+      \protected@edef\cref@currentlabel{[chapter][\the\value{chapter}][]\thechapter}%
+    \fi
   }%
   \let\bidifix@part\@part
   \def\@part[#1]#2{%

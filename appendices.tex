@@ -1,0 +1,83 @@
+\chapter{Technologies and Libraries}%
+\label{app:tools}
+
+This appendix describes the tools listed in \Cref{tab:impl:stack}, from the
+simulator outwards. The website of each tool is given in the
+\hyperref[chap:webography]{Webography}.
+
+\textbf{NVIDIA Isaac Sim}~\webcite{isaacsim}
+is a robotics simulator built on NVIDIA Omniverse. It runs the rigid-body
+physics, renders the camera images and simulates the rotating \gls{abb:lidar}.
+The warehouse is described as a \textbf{USD}~\webcite{openusd}
+scene.
+
+\textbf{Pegasus
+    Simulator}~\webcite{pegasus}
+is an Isaac Sim extension for aerial vehicles. It provides the multirotor model
+and the bridge between the simulator and the flight software.
+
+The \textbf{Iris quadrotor} is the vehicle model used for every drone. It is a
+four-rotor airframe widely used as a reference in drone simulation.
+
+\textbf{ArduPilot}~\webcite{ardupilot} is the autopilot
+software, run in \glsxtrshort{abb:sitl} (software-in-the-loop) mode. One process
+per vehicle flies the drone in GUIDED mode, following the commands sent by the
+system.
+
+\textbf{MAVLink}~\webcite{mavlink}, used through the
+\textbf{pymavlink}~\webcite{pymavlink}
+library, is the protocol between the system and the autopilots. It carries the
+take-off orders, the velocity commands and the position readings.
+
+\textbf{ns-3}~\webcite{ns3} is a discrete-event network
+simulator. In the networked version of the system, it simulates the
+communication stack of the vehicle links, either WiFi (IEEE 802.11n) or 5G NR
+through the \textbf{5G-LENA}~\webcite{5glena} module. It
+also provides the latency of each exchange.
+
+\textbf{Sionna}~\webcite{sionna} is NVIDIA's
+library for simulating wireless communication systems. Its ray tracer computes
+the radio channel inside the warehouse scene, which gives the signal strength of
+each link. The
+\textbf{ns3sionna}~\webcite{ns3sionna} module
+couples Sionna with ns-3 through ZeroMQ messages encoded with Protocol Buffers.
+
+\textbf{Python}~\webcite{python} is the implementation
+language of the whole system.
+
+\textbf{NumPy}~\webcite{numpy} and
+\textbf{SciPy}~\webcite{scipy} carry the numerical work. They
+compute the layers of the shared map and the candidate targets, and convert
+rotations between the frames of the system.
+
+\textbf{OpenCV}~\webcite{opencv} handles images and camera
+geometry, including the pose of a code estimated from its four corners.
+
+\textbf{zxing-cpp}~\webcite{zxingcpp} is the
+\glsxtrshort{abb:qr} decoder used in flight.
+\textbf{ZBar}~\webcite{zbar} and
+\textbf{BoofCV}~\webcite{boofcv} were compared with it on the
+same images (\Cref{sec:impl:perception}).
+
+\textbf{Ultralytics}~\webcite{ultralytics} is the framework
+used to train and run the learned detector, which belongs to the YOLO11 family.
+
+\textbf{PyTorch}~\webcite{pytorch} is the deep-learning
+framework on which both the detector and the semantic guide run.
+
+\textbf{Transformers}~\webcite{transformers}
+loads the vision-language model of the semantic guide and its processor.
+
+\textbf{bitsandbytes}~\webcite{bitsandbytes}
+quantises the guide's model to four bits.
+
+\textbf{PEFT}~\webcite{peft} provides the
+low-rank adapter (LoRA) that specialises the guide.
+
+\textbf{qrcode}~\webcite{qrcode} and
+\textbf{Pillow}~\webcite{pillow} generate the
+\glsxtrshort{abb:qr} images placed on the cartons when a warehouse is built.
+
+\textbf{Matplotlib}~\webcite{matplotlib} produces the figures,
+and \textbf{FFmpeg}~\webcite{ffmpeg} assembles the mission
+videos.

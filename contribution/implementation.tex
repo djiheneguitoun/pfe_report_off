@@ -30,9 +30,11 @@ methods. The chapter closes with a conclusion that brings these results together
 \section{Technologies and Libraries Used}%
 \label{sec:impl:stack}
 
-The system is written in Python and runs entirely in simulation. The tools are
-presented from the simulator outwards, and \Cref{tab:impl:stack} summarises them
-by component.
+The system is written in Python and runs entirely in simulation.
+\Cref{tab:impl:stack} lists the tools on which it is built, from the simulator
+outwards, with the version used and the role of each. Each tool is described in
+\Cref{app:tools}, and its website is given in the
+\hyperref[chap:webography]{Webography}.
 
 \begin{table}[H]
     \centering
@@ -77,83 +79,6 @@ by component.
     \end{tabular}
 \end{table}
 
-\textbf{NVIDIA Isaac Sim}\footnote{\url{https://developer.nvidia.com/isaac/sim}}
-is a robotics simulator built on NVIDIA Omniverse. It runs the rigid-body
-physics, renders the camera images and simulates the rotating \gls{abb:lidar}.
-The warehouse is described as a \textbf{USD}\footnote{\url{https://openusd.org}}
-scene.
-
-\textbf{Pegasus
-    Simulator}\footnote{\url{https://pegasussimulator.github.io/PegasusSimulator/}}
-is an Isaac Sim extension for aerial vehicles. It provides the multirotor model
-and the bridge between the simulator and the flight software.
-
-The \textbf{Iris quadrotor} is the vehicle model used for every drone. It is a
-four-rotor airframe widely used as a reference in drone simulation.
-
-\textbf{ArduPilot}\footnote{\url{https://ardupilot.org}} is the autopilot
-software, run in \glsxtrshort{abb:sitl} (software-in-the-loop) mode. One process
-per vehicle flies the drone in GUIDED mode, following the commands sent by the
-system.
-
-\textbf{MAVLink}, used through the
-\textbf{pymavlink}\footnote{\url{https://github.com/ArduPilot/pymavlink}}
-library, is the protocol between the system and the autopilots. It carries the
-take-off orders, the velocity commands and the position readings.
-
-\textbf{ns-3}\footnote{\url{https://www.nsnam.org}} is a discrete-event network
-simulator. In the networked version of the system, it simulates the
-communication stack of the vehicle links, either WiFi (IEEE 802.11n) or 5G NR
-through the \textbf{5G-LENA}\footnote{\url{https://5g-lena.cttc.es}} module. It
-also provides the latency of each exchange.
-
-\textbf{Sionna}\footnote{\url{https://nvlabs.github.io/sionna/}} is NVIDIA's
-library for simulating wireless communication systems. Its ray tracer computes
-the radio channel inside the warehouse scene, which gives the signal strength of
-each link. The
-\textbf{ns3sionna}\footnote{\url{https://github.com/tkn-tub/ns3sionna}} module
-couples Sionna with ns-3 through ZeroMQ messages encoded with Protocol Buffers.
-
-\textbf{Python}\footnote{\url{https://www.python.org}} is the implementation
-language of the whole system.
-
-\textbf{NumPy}\footnote{\url{https://numpy.org}} and
-\textbf{SciPy}\footnote{\url{https://scipy.org}} carry the numerical work. They
-compute the layers of the shared map and the candidate targets, and convert
-rotations between the frames of the system.
-
-\textbf{OpenCV}\footnote{\url{https://opencv.org}} handles images and camera
-geometry, including the pose of a code estimated from its four corners.
-
-\textbf{zxing-cpp}\footnote{\url{https://github.com/zxing-cpp/zxing-cpp}} is the
-\glsxtrshort{abb:qr} decoder used in flight.
-\textbf{ZBar}\footnote{\url{https://github.com/mchehab/zbar}} and
-\textbf{BoofCV}\footnote{\url{https://boofcv.org}} were compared with it on the
-same images (\Cref{sec:impl:perception}).
-
-\textbf{Ultralytics}\footnote{\url{https://docs.ultralytics.com}} is the framework
-used to train and run the learned detector, which belongs to the YOLO11 family.
-
-\textbf{PyTorch}\footnote{\url{https://pytorch.org}} is the deep-learning
-framework on which both the detector and the semantic guide run.
-
-\textbf{Transformers}\footnote{\url{https://huggingface.co/docs/transformers}}
-loads the vision-language model of the semantic guide and its processor.
-
-\textbf{bitsandbytes}\footnote{\url{https://github.com/bitsandbytes-foundation/bitsandbytes}}
-quantises the guide's model to four bits.
-
-\textbf{PEFT}\footnote{\url{https://huggingface.co/docs/peft}} provides the
-low-rank adapter (LoRA) that specialises the guide.
-
-\textbf{qrcode}\footnote{\url{https://github.com/lincolnloop/python-qrcode}} and
-\textbf{Pillow}\footnote{\url{https://python-pillow.org}} generate the
-\glsxtrshort{abb:qr} images placed on the cartons when a warehouse is built.
-
-\textbf{Matplotlib}\footnote{\url{https://matplotlib.org}} produces the figures,
-and \textbf{FFmpeg}\footnote{\url{https://ffmpeg.org}} assembles the mission
-videos.
-
 \section{Execution Environment}%
 \label{sec:impl:environment}
 
@@ -182,7 +107,6 @@ versions listed in \Cref{tab:impl:stack}.
         \bottomrule
     \end{tabular}
 \end{table}
-\newpage
 \section{Technical Architecture}%
 \label{sec:impl:architecture}
 
