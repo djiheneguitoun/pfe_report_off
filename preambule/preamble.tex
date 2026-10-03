@@ -45,6 +45,77 @@
 
 \ExecuteBibliographyOptions{maxcitenames=2,mincitenames=1,uniquelist=false}
 
+
+\DeclareFieldFormat{citehyperref}{%
+  \DeclareFieldAlias{bibhyperref}{noformat}%
+  \bibhyperref{#1}}
+\DeclareFieldFormat{textcitehyperref}{%
+  \DeclareFieldAlias{bibhyperref}{noformat}%
+  \bibhyperref{%
+    #1%
+    % parenthèse fermante dans le lien, sauf si une postnote doit la précéder
+    \ifboolexpr{test {\ifnumequal{\value{citecount}}{\value{citetotal}}}
+                and test {\iffieldundef{postnote}}
+                and bool {cbx:parens}}
+      {\bibcloseparen\global\boolfalse{cbx:parens}}
+      {}}}
+\makeatletter
+\renewbibmacro*{cite}{%
+  \iffieldequals{namehash}{\cbx@lasthash}
+   {\setunit{\compcitedelim}%
+    \usebibmacro{cite:plabelyear+extradate}}%
+   {\printtext[citehyperref]{%
+      \ifnameundef{labelname}
+        {\usebibmacro{cite:noname}}
+        {\ifnameundef{shortauthor}
+          {\printnames{labelname}}%
+          {\cbx@apa@ifnamesaved
+            {\printnames{shortauthor}}
+            {\printnames[labelname]{author}%
+             \addspace\printnames[sabrackets]{shortauthor}}}}%
+      \setunit{\printdelim{nameyeardelim}}%
+      \usebibmacro{cite:plabelyear+extradate}}%
+    \savefield{namehash}{\cbx@lasthash}}%
+  \setunit{\multicitedelim}}
+\renewbibmacro*{textcite}{%
+  \iffieldequals{namehash}{\cbx@lasthash}
+    {\setunit{\compcitedelim}%
+     \usebibmacro{cite:plabelyear+extradate}}
+    {\ifbool{cbx:parens}
+       {\bibcloseparen\global\boolfalse{cbx:parens}}
+       {}%
+     \setunit{\textcitedelim}%
+     \printtext[textcitehyperref]{%
+       \ifnameundef{labelname}
+         {\iffieldundef{shorthand}%
+           {\usebibmacro{cite:noname}%
+            \setunit{\global\booltrue{cbx:parens}%
+                     \printdelim{nonameyeardelim}%
+                     \bibopenparen}%
+            \usebibmacro{cite:plabelyear+extradate}}
+           {\usebibmacro{cite:shorthand}}}
+         {\ifnameundef{shortauthor}%
+           {\printnames{labelname}}
+           {\cbx@apa@ifnamesaved
+             {\printnames{shortauthor}}
+             {\printnames[labelname]{author}}}%
+          \setunit{\global\booltrue{cbx:parens}%
+                   \printdelim{nameyeardelim}%
+                   \bibopenparen}%
+          \ifnameundef{shortauthor}
+           {}
+           {\cbx@apa@ifnamesaved
+             {}
+             {\printnames{shortauthor}%
+              \setunit{\printdelim{innernameyeardelim}}}}%
+          \ifnumequal{\value{citecount}}{1}
+             {\usebibmacro{prenote}}
+             {}%
+          \usebibmacro{cite:plabelyear+extradate}%
+          \savefield{namehash}{\cbx@lasthash}}}%
+     \stepcounter{textcitecount}}}
+\makeatother
+
 \usepackage{etoolbox}
 
 \usepackage{caption}
