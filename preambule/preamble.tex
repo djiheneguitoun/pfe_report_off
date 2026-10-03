@@ -202,30 +202,24 @@
 \usepackage{cleveref}
 
 % --- Correctif babel-arabic + \part/\chapter ---------------------------------
-% Avec l'option « arabic » de babel, \@currentlabel ET le label interne de
-% cleveref (\cref@currentlabel) sont vidés juste après \part et \chapter (mais
-% pas après \section). Conséquence : \ref/\Cref{part:...} et {chap:...} rendent
-% « ?? ». On enveloppe \@chapter et \@part (capturés à \AtBeginDocument, donc
-% APRÈS toutes les redéfinitions de babel) pour réinscrire les deux labels.
-% Après \appendix, le type cleveref est « appendix » (et non « chapter »), comme
-% le fait cleveref lui-même, pour que \Cref{app:...} rende « Appendix A ».
 \makeatletter
-\newif\ifbidifix@inappendix
-\appto\appendix{\global\bidifix@inappendixtrue}
 \AtBeginDocument{%
   \let\bidifix@chapter\@chapter
   \def\@chapter[#1]#2{%
     \bidifix@chapter[#1]{#2}%
-    \protected@edef\@currentlabel{\csname p@chapter\endcsname\thechapter}%
-    \ifbidifix@inappendix
-      \protected@edef\cref@currentlabel{[appendix][\the\value{chapter}][2147483647]\thechapter}%
-    \else
-      \protected@edef\cref@currentlabel{[chapter][\the\value{chapter}][]\thechapter}%
+    \expandafter\ifx\@chapapp\appendixname
+      \def\cref@chapter@alias{appendix}%
     \fi
+    \def\@currentcounter{chapter}%
+    \protected@edef\@currentlabel{\csname p@chapter\endcsname\thechapter}%
+    \protected@edef\cref@currentlabel{%
+      [\expandafter\ifx\@chapapp\appendixname appendix\else chapter\fi]%
+      [\the\value{chapter}][]\thechapter}%
   }%
   \let\bidifix@part\@part
   \def\@part[#1]#2{%
     \bidifix@part[#1]{#2}%
+    \def\@currentcounter{part}%
     \protected@edef\@currentlabel{\csname p@part\endcsname\thepart}%
     \protected@edef\cref@currentlabel{[part][\the\value{part}][]\thepart}%
   }%

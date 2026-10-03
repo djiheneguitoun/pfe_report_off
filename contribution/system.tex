@@ -1719,7 +1719,7 @@ system.
 The previous sections described six components separately. This section shows how
 they run together during a mission. The flight controller that executes a chosen
 pose is not described here: it belongs to the vehicle platform rather than to the
-contribution of this work, and it is presented in Chapter 4.
+contribution of this work, and it is presented in \Cref{sec:impl:architecture}.
 
 \subsection{Three Rhythms}%
 \label{subsec:sys:rhythms}
@@ -1886,5 +1886,5 @@ component observing their health. That the range of the learned detector, rather
 than that of the decoder, governs how quickly the inventory is collected. And
 that a pre-trained \gls{abb:vlm}, given only what the team has itself observed,
 improves the result over pure geometry---a claim that is equally reportable if it
-turns out to be false. Chapter 4 describes how this design was implemented, and
-Chapter 5 tests each of these claims in turn.
+turns out to be false. \Cref{chap:implementation} describes how this design was
+implemented, and then tests each of these claims in turn.
